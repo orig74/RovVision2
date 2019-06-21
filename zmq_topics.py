@@ -1,4 +1,4 @@
-topic_groud_truth_pos=b'topic_groud_truth_pos'
-topic_groud_truth_pos_port=3998
-
+# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
+topic_sitl_position_report=b'position_rep'
+topic_sitl_position_report_port=7755
 
