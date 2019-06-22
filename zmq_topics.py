@@ -3,7 +3,7 @@ topic_sitl_position_report=b'position_rep'
 topic_sitl_position_report_port=7755
 
 topic_thrusters_comand=b'thruster_cmd'
-topic_thrusters_comand_port=7788
+topic_controller_port=topic_thrusters_comand_port=7788
 
 topic_button = b'joy_button'
 topic_axes = b'joy_axes'

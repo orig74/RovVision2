@@ -40,7 +40,7 @@ async def pubposition():
         next_q,next_u=next_q.flatten(),next_u.flatten()
         curr_q,curr_u=next_q,next_u
         pub_pos_sim.send_multipart([zmq_topics.topic_sitl_position_report,pickle.dumps((time.time(),curr_q))])
-        #print('---',time.time()) 
+        print('---',time.time(),curr_q) 
 
 async def recv_and_process():
     global current_command
