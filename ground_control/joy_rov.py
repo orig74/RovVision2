@@ -3,7 +3,6 @@ import pygame,time,zmq,pickle,sys
 sys.path.append('../')
 import zmq_topics
 import utils
-import config
 
 pygame.display.init()
 pygame.joystick.init()

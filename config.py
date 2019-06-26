@@ -6,3 +6,7 @@ class Joy_map:
     fb=4
     lr=3
 
+
+#cameras info
+cam_resx,cam_resy=1920,1200
+
