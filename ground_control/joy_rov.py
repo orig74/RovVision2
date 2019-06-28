@@ -43,6 +43,8 @@ while not done:
             pub(zmq_topics.topic_button,pickle.dumps(buttons))
         if event.type == pygame.JOYBUTTONUP:
             print("Joystick button released.")
+            buttons = [joystick.get_button(i) for i in range(n_buttons)]
+            pub(zmq_topics.topic_button,pickle.dumps(buttons))
 
 
         if joystick.get_numhats()>0:

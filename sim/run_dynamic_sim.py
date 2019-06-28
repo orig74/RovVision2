@@ -47,9 +47,10 @@ async def pubposition():
         ps=position_struct
         print('{:4.2f} {:4.2f} {:4.2f} {:3.1f} {:3.1f} {:3.1f}'.format(*curr_q),current_command)
         ps['posx'],ps['posy'],ps['posz']=curr_q[:3]
-        ps['yaw'],ps['pitch'],ps['roll']=np.rad2deg(curr_q[3:])
+        ps['yaw'],ps['roll'],ps['pitch']=np.rad2deg(curr_q[3:])
         ps['yaw']=-ps['yaw']
-        ps['pitch']+=00
+        ps['pitch']=-ps['pitch']
+        ps['posz']=-ps['posz']
         ps['roll']+=90
         #pub_pos_sim.send_multipart([xzmq_topics.topic_sitl_position_report,pickle.dumps((time.time(),curr_q))])
         pub_pos_sim.send_multipart([ue4_zmq_topics.topic_sitl_position_report,pickle.dumps(position_struct)])
