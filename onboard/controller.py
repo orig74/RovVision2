@@ -9,7 +9,8 @@ import mixer
 
 
 sys.path.append('..')
-import utils
+sys.path.append('../utils')
+import zmq_wrapper as utils
 import zmq_topics
 import config
 from config import Joy_map as jm

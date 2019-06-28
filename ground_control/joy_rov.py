@@ -1,8 +1,9 @@
 import pygame,time,zmq,pickle,sys
 #pygame.init() ### =100%cpu
 sys.path.append('../')
+sys.path.append('../utils')
 import zmq_topics
-import utils
+import zmq_wrapper as utils
 
 pygame.display.init()
 pygame.joystick.init()

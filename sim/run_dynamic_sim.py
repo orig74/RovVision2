@@ -8,8 +8,9 @@ import time
 import pickle
 
 sys.path.append('..')
+sys.path.append('../utils')
 sys.path.append('unreal_proxy')
-import utils
+import zmq_wrapper as utils
 import zmq_topics
 import ue4_zmq_topics
 
