@@ -28,8 +28,8 @@ async def recv_and_process():
             ret=sock.recv_multipart()
             if ret[0]==zmq_topics.topic_axes:
                 ret=pickle.loads(ret[1])
-                print('joy ',ret)
-                thruster_cmd = mixer.mix(ret[jm.ud],ret[jm.lr],ret[jm.fb],0,0,ret[jm.yaw])
+                print('joy ',ret[jm.yaw])
+                thruster_cmd = mixer.mix(ret[jm.ud],ret[jm.lr],-ret[jm.fb],0,0,-ret[jm.yaw])
                 pub_sock.send_multipart([zmq_topics.topic_thrusters_comand,pickle.dumps((time.time(),thruster_cmd))])
 
         await asyncio.sleep(0.001)

@@ -114,7 +114,7 @@ def main_loop(gworld):
 
             position=positions[drone_index]
             if position is not None:
-                new_pos=drone_start_positions[drone_index]+np.array([position['posx'],position['posy'],position['posz']])*100 #turn to cm
+                new_pos=drone_start_positions[drone_index]+np.array([position['posy'],position['posx'],-position['posz']])*100 #turn to cm
                 #print('-----',drone_index,position)
                 ph.SetActorLocation(drone_actor,new_pos)
                 ph.SetActorRotation(drone_actor,(position['roll'],position['pitch'],position['yaw']))
@@ -129,7 +129,12 @@ def main_loop(gworld):
         #topics.append(config.topic_unreal_drone_rgb_camera%0)
         topics.append(config.topic_unreal_drone_rgb_camera%0+b'l')
         topics.append(config.topic_unreal_drone_rgb_camera%0+b'r')
+
+        img_depth=ph.GetTextureData(drone_textures_depth[0],channels=[2]) #depth data will be in red componnent
+        topics.append(config.topic_unreal_drone_depth%0)
+
         imgs=[imgl,imgr]
+        imgs.append(img_depth)
         
         if pub_cv:
             for topic,img in zip(topics,imgs):

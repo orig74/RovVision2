@@ -9,7 +9,8 @@ pygame.joystick.init()
 joystick = pygame.joystick.Joystick(0)
 joystick.init()
 name = joystick.get_name()
-isxbox = 'Microsoft X-Box One pad' in name
+#isxbox = 'Microsoft X-Box One pad' in name
+isxbox = 'X-Box' in name
 print("Joystick name: {}".format(name))
 axes = joystick.get_numaxes()
 print( "Number of axes: {}".format(axes))

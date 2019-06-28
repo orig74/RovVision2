@@ -16,7 +16,7 @@ import ue4_zmq_topics
 dill.settings['recurse'] = True
 lamb=dill.load(open('lambda.pkl','rb'))
 current_command=[0 for _ in range(8)] # 8 thrusters
-dt=0.050
+dt=1/60.0
 keep_running=True
 
 
@@ -43,15 +43,16 @@ async def pubposition():
         next_q,next_u=get_next_state(curr_q,curr_u,current_command,dt,lamb)
         next_q,next_u=next_q.flatten(),next_u.flatten()
         curr_q,curr_u=next_q,next_u
+        #next_u=next_u*.97
         ps=position_struct
-        print('----',curr_q)
+        print('{:4.2f} {:4.2f} {:4.2f} {:3.1f} {:3.1f} {:3.1f}'.format(*curr_q),current_command)
         ps['posx'],ps['posy'],ps['posz']=curr_q[:3]
-        ps['yaw'],ps['pitch'],ps['roll']=curr_q[3:]
+        ps['yaw'],ps['pitch'],ps['roll']=np.rad2deg(curr_q[3:])
+        ps['yaw']=-ps['yaw']
         ps['pitch']+=00
         ps['roll']+=90
         #pub_pos_sim.send_multipart([xzmq_topics.topic_sitl_position_report,pickle.dumps((time.time(),curr_q))])
         pub_pos_sim.send_multipart([ue4_zmq_topics.topic_sitl_position_report,pickle.dumps(position_struct)])
-        print('---',time.time(),curr_q) 
 
 async def recv_and_process():
     global current_command
