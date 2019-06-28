@@ -10,3 +10,4 @@ class Joy_map:
 #cameras info
 cam_resx,cam_resy=1920,1200
 
+gst_bitrate=1024

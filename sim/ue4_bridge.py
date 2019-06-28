@@ -3,15 +3,17 @@
 import sys,os,time
 sys.path.append('unreal_proxy')
 sys.path.append('..')
+sys.path.append('../utils')
 import zmq
 import struct
 import cv2,os
 import numpy as np
 import pickle
-import utils
+import zmq_wrapper as utils
 import ue4_zmq_topics
 import zmq_topics
 import config
+import bayer
 topicl=ue4_zmq_topics.topic_unreal_drone_rgb_camera%0+b'l'
 topicr=ue4_zmq_topics.topic_unreal_drone_rgb_camera%0+b'r'
 topicd=ue4_zmq_topics.topic_unreal_drone_depth%0
@@ -58,7 +60,9 @@ def listener():
             if topic==topicr:
                 topic_to_send=zmq_topics.topic_camera_right
             if topic in [topicl,topicr]:
-                zmq_pub.send_multipart([topic_to_send,pickle.dumps([frame_cnt,rgb],-1)])
+                #convert to beyer format
+                bayerim=bayer.convert_to_bayer(rgb)
+                zmq_pub.send_multipart([topic_to_send,pickle.dumps([frame_cnt,bayerim],-1)])
 
                 
         
