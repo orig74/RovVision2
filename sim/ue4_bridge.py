@@ -33,8 +33,8 @@ def listener():
             info=struct.unpack('llll',info)
             shape=info[:3]
             frame_cnt=info[3]
-            img=np.fromstring(data,'uint8').reshape(shape)
             if topic in [topicl,topicr]:
+                img=np.fromstring(data,'uint8').reshape(shape)
                 rgb=cv2.resize(img[...,::-1],(config.cam_resx,config.cam_resy))
                 if cvshow:
                     #if 'depth' in topic:
@@ -45,7 +45,9 @@ def listener():
                     cv2.imshow(topic.decode(),img_shrk)
                     cv2.waitKey(1)
             if topic==topicd:
+                img=np.fromstring(data,'float16').reshape(shape)
                 img=np.squeeze(img)
+                img=img.clip(0,255).astype('uint8')
                 if cvshow:
                     cv2.imshow(topic.decode(),img)
                     cv2.waitKey(1)

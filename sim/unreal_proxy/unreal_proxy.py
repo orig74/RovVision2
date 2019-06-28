@@ -130,7 +130,8 @@ def main_loop(gworld):
         topics.append(config.topic_unreal_drone_rgb_camera%0+b'l')
         topics.append(config.topic_unreal_drone_rgb_camera%0+b'r')
 
-        img_depth=ph.GetTextureData(drone_textures_depth[0],channels=[2]) #depth data will be in red componnent
+        img_depth=ph.GetTextureData16f(drone_textures_depth[0],channels=[3],verbose=0) #depth data will be in red componnent
+        #img_depth=ph.GetTextureData(drone_textures_depth[0],channels=[2]) #depth data will be in red componnent
         topics.append(config.topic_unreal_drone_depth%0)
 
         imgs=[imgl,imgr]
