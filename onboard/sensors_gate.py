@@ -21,9 +21,8 @@ import
 
 pub_sock = zmq_wrapper.publisher(zmq_topics.topic_controller_port)
 subs_socks=[]
-camera_topics = [zmq_topics.topic_camera_left,zmq_topics.topic_camera_left]
 subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_axes,zmq_topics.topic_button],zmq_topics.topic_joy_port))
-
+subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_stereo_camera],zmq_topics.topic_camera_port))
 keep_running=True
 joy_buttons=[0]*8
 
@@ -33,8 +32,13 @@ async def recv_and_process():
         socks=zmq.select(subs_socks,[],[],0.000)[0]
         for sock in socks:
             ret=sock.recv_multipart()
-            if ret[0] in camera_topics:
-                pass 
+            if ret[0]=zmq_topics.topic_stereo_camera:
+                frame_cnt,shape=pickle.loads(ret[1])
+                imgl=np.frombuffer(ret[2],'uint8').reshape(shape)
+                imgr=np.frombuffer(ret[3],'uint8').reshape(shape)
+                imgl=image_enc_dec.encode(imgl,frame_cnt)
+                imgr=image_enc_dec.encode(imgr,frame_cnt)
+                gst.send_gst([imgl,imgr])
 
         await asyncio.sleep(0.001)
  
@@ -44,7 +48,7 @@ async def main():
             )
 
 if __name__=='__main__':
-    gst.init_gst(config.cam_resx,config.cam_resy,2)
+    gst.init_gst(config.cam_res_rgbx,config.cam_res_rgby,2)
     asyncio.run(main())
 
 

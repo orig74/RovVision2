@@ -15,9 +15,14 @@ topic_axes = b'joy_axes'
 topic_hat = b'joy_hat'
 topic_joy_port=8899
 
+topic_imu = b'topic_imu'
+topic_sensors_port = 8897
 
 #messages:
 #stop/start recording
 #opration modes
 topic_controller_messages=b'controller_messages'
 topic_controler_port=8898
+
+topic_local_route_port=9995
+
