@@ -10,16 +10,19 @@ import mixer
 
 
 sys.path.append('..')
-import utils
+sys.path.append('../utils')
+import zmq_wrapper
 import zmq_topics
+import image_enc_dec
 import config
 import gst
 from config import Joy_map as jm
+import 
 
-pub_sock = utils.publisher(zmq_topics.topic_controller_port)
+pub_sock = zmq_wrapper.publisher(zmq_topics.topic_controller_port)
 subs_socks=[]
 camera_topics = [zmq_topics.topic_camera_left,zmq_topics.topic_camera_left]
-subs_socks.append(utils.subscribe([zmq_topics.topic_axes,zmq_topics.topic_button],zmq_topics.topic_joy_port))
+subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_axes,zmq_topics.topic_button],zmq_topics.topic_joy_port))
 
 keep_running=True
 joy_buttons=[0]*8
