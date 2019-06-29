@@ -130,8 +130,8 @@ def main_loop(gworld):
 
         img_depth=ph.GetTextureData16f(drone_textures_depth[0],channels=[3],verbose=0) #depth data will be in red componnent
         #img_depth=ph.GetTextureData(drone_textures_depth[0],channels=[2]) #depth data will be in red componnent
-        socket_pub.send_multipart([config.topic_unreal_stereo_camera%0,pickle.dumps([frame_cnt,imgl,imgr],-1)])
-        socket_pub.send_multipart([config.topic_unreal_depth%0,pickle.dumps([frame_cnt,img_depth],-1)])
+        socket_pub.send_multipart([config.topic_unreal_stereo_camera%0,pickle.dumps((frame_cnt,imgl.shape)),imgl.tostring(),imgr.tostring()])
+        socket_pub.send_multipart([config.topic_unreal_depth%0,pickle.dumps((frame_cnt,img_depth.shape)),img_depth.tostring()])
 
         if show_cv:
             cv2.imshow('drone camera %d'%drone_index,img)

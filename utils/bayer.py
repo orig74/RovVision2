@@ -16,3 +16,7 @@ def convert_to_bayer(im):
     outptr=out.ctypes.data_as(c_void_p)
     libc.convertRGBtoBayer(w,h,inptr,outptr)
     return out
+
+def shrink_bayer_to_rgb(im):
+    #todo
+    pass

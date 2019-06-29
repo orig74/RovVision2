@@ -31,10 +31,10 @@ def listener():
         while len(zmq.select([zmq_sub],[],[],0.001)[0])>0:
             data = zmq_sub.recv_multipart()
             topic=data[0]
+            frame_cnt,shape=pickle.loads(data[1])
             if topic==topic_stereo:
-                frame_cnt,imgl,imgr=pickle.loads(data[1])
-                imglf=cv2.resize(imgl[...,::-1],(config.cam_resx,config.cam_resy))
-                imgrf=cv2.resize(imgr[...,::-1],(config.cam_resx,config.cam_resy))
+                imgl=np.frombuffer(data[2],'uint8').reshape(shape)
+                imgr=np.frombuffer(data[3],'uint8').reshape(shape)
                 if cvshow:
                     #if 'depth' in topic:
                     #    cv2.imshow(topic,img)
@@ -45,11 +45,9 @@ def listener():
                     cv2.imshow(topic.decode()+'l',imgls)
                     cv2.imshow(topic.decode()+'r',imgrs)
                     cv2.waitKey(1)
-                bayerim_l=bayer.convert_to_bayer(imglf)
-                bayerim_r=bayer.convert_to_bayer(imgrf)
-                zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,bayerim_r,bayerim_r],-1)])
+                zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,shape]),imgl.tostring(),imgr.tostring()])
             if topic==topic_depth:
-                frame_cnt,img=pickle.loads(data[1])
+                img=np.frombuffer(data[2],'float16').reshape(shape)
                 img=np.squeeze(img)
                 img=img.clip(0,255).astype('uint8')
                 if cvshow:

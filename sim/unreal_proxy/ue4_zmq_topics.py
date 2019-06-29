@@ -10,5 +10,6 @@ topic_unreal_state=b'unreal_state'
 #topic_unreal_drone_rgb_camera=b'rgb_camera_%d'
 topic_unreal_stereo_camera=b'ue4_stereo_camera_%d'
 topic_unreal_depth=b'depth_camera_%d'
+
 n_drones = 1
 
