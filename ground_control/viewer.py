@@ -11,6 +11,7 @@ import cv2,os
 import signal
 import argparse
 import numpy as np
+import zmq_topics
 import config
 from gst import init_gst_reader,get_imgs,set_files_fds,get_files_fds,save_main_camera_stream
 from annotations import draw_txt
@@ -24,7 +25,7 @@ args = parser.parse_args()
 subs_socks=[]
 subs_socks.append(utils.subscribe([zmq_topics.topic_controller_messages],zmq_topics.topic_controler_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_button, zmq_topics.topic_hat ], zmq_topics.topic_joy_port))
-subs_socks.append( utils.subscribe([zmq_topic.topic_imu ], config.topic_sensors_port) )
+subs_socks.append(utils.subscribe([zmq_topics.topic_imu ], zmq_topics.topic_sensors_port) )
 
 #socket_pub = utils.publisher(config.zmq_local_route)
 socket_pub = utils.publisher(zmq_topics.topic_local_route_port,'0.0.0.0')
@@ -36,9 +37,7 @@ if __name__=='__main__':
     join=np.zeros((sy,sx*2,3),'uint8')
     data_file_fd=None
     #main_camera_fd=None
-    imu_data = {} #annotations dict
-    controller_data={}
-    sensor_gate_data={}
+    message_dict={}
     rcv_cnt=0
     while 1:
         images=get_imgs()
@@ -50,14 +49,16 @@ if __name__=='__main__':
             topic , data = ret
             data=pickle.loads(ret[1])
 
-            if ret[0]==config.topic_imu:
-                socket_pub.send_multipart([config.topic_imu,ret[1]])
-                imu_data.update(pickle.loads(ret[1])) 
+            #if ret[0]==config.topic_imu:
+            #    socket_pub.send_multipart([config.topic_imu,ret[1]])
+            #    message_dict[ret[0]]=pickle.loads(ret[1])
 
-            if vis_data.get('record_state',False):
+            record_data=message_dict.get(zmq_topics.record_state,False)
+            if record_data:
                 if get_files_fds()[0] is None:
                     fds=[]
-                    datestr=sensor_gate_data['record_date_str']
+                    #datestr=sensor_gate_data['record_date_str']
+                    datestr=record_data
                     save_path=args.data_path+'/'+datestr
                     if not os.path.isdir(save_path):
                         os.mkdir(save_path)
@@ -82,7 +83,7 @@ if __name__=='__main__':
             join[:,0:sx,:]=images[0]
             join[:,sx:,:]=images[1]
             images=[None,None]
-            draw_txt(join,vis_data,main_data)
+            draw_txt(join,message_dict,fmt_cnt_l,fmt_cnt_r)
             cv2.imshow('3dviewer',join)
             #cv2.imshow('left',images[0])
             #cv2.imshow('right',images[1])

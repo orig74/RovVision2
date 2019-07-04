@@ -13,7 +13,6 @@ import zmq_wrapper as utils
 import ue4_zmq_topics
 import zmq_topics
 import config
-import bayer
 topic_stereo=ue4_zmq_topics.topic_unreal_stereo_camera%0
 topic_depth=ue4_zmq_topics.topic_unreal_depth%0
 

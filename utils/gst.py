@@ -37,7 +37,7 @@ def init_gst_files(sx,sy):
 
 ############# gst read #########
 gst_pipes_264=None
-sx,sy=config.pixelwidthx, config.pixelwidthy
+sx,sy=config.cam_res_rgbx,config.cam_res_rgby
 shape = (sx, sy, 3)
 
 def init_gst_reader(npipes):
