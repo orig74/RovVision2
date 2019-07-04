@@ -52,15 +52,6 @@ tmux new-window
 new_4_win
 run 0 ground_control joy_rov.py
 run 1 ground_control viewer.py
-#tmux select-pane -t 0
-#init_docker_image
-#tmux send-keys "cd ../ground_control" ENTER
-#tmux send-keys "/miniconda/bin/python joy_rov.py" ENTER
-#tmux select-pane -t 1
-#init_docker_image
-#tmux send-keys "cd ../ground_control" ENTER
-#tmux send-keys "/miniconda/bin/python viewer.py" ENTER
-
 
 
 tmux select-window -t 0

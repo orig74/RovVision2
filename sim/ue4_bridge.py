@@ -34,7 +34,7 @@ def listener():
             if topic==topic_stereo:
                 imgl=np.frombuffer(data[2],'uint8').reshape(shape)
                 imgr=np.frombuffer(data[3],'uint8').reshape(shape)
-                if cvshow:
+                if 0 and cvshow:
                     #if 'depth' in topic:
                     #    cv2.imshow(topic,img)
                     #else:
