@@ -14,7 +14,7 @@ import numpy as np
 import zmq_topics
 import config
 from gst import init_gst_reader,get_imgs,set_files_fds,get_files_fds,save_main_camera_stream
-from annotations import draw_txt
+from annotations import draw
 import zmq_wrapper as utils
 import image_enc_dec
 
@@ -26,6 +26,8 @@ subs_socks=[]
 subs_socks.append(utils.subscribe([zmq_topics.topic_controller_messages],zmq_topics.topic_controler_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_button, zmq_topics.topic_hat ], zmq_topics.topic_joy_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_imu ], zmq_topics.topic_sensors_port) )
+subs_socks.append(utils.subscribe([zmq_topics.topic_depth ], zmq_topics.topic_depth_port) )
+subs_socks.append(utils.subscribe([zmq_topics.topic_sonar ], zmq_topics.topic_sonar_port) )
 
 #socket_pub = utils.publisher(config.zmq_local_route)
 socket_pub = utils.publisher(zmq_topics.topic_local_route_port,'0.0.0.0')
@@ -43,37 +45,41 @@ if __name__=='__main__':
         images=get_imgs()
         rcv_cnt+=1
         #if all(images):
-        socks=zmq.select(subs_socks,[],[],0.001)[0]
-        for sock in socks:
-            ret = sock.recv_multipart()
-            topic , data = ret
-            data=pickle.loads(ret[1])
+        while 1:
+            socks=zmq.select(subs_socks,[],[],0.001)[0]
+            if len(socks)==0: #flush msg buffer
+                break
+            for sock in socks:
+                ret = sock.recv_multipart()
+                topic , data = ret
+                data=pickle.loads(ret[1])
+                
+                message_dict[topic]=data
+                #if ret[0]==config.topic_imu:
+                #    socket_pub.send_multipart([config.topic_imu,ret[1]])
+                #    message_dict[ret[0]]=pickle.loads(ret[1])
 
-            #if ret[0]==config.topic_imu:
-            #    socket_pub.send_multipart([config.topic_imu,ret[1]])
-            #    message_dict[ret[0]]=pickle.loads(ret[1])
+                record_data=message_dict.get(zmq_topics.record_state,False)
+                if record_data:
+                    if get_files_fds()[0] is None:
+                        fds=[]
+                        #datestr=sensor_gate_data['record_date_str']
+                        datestr=record_data
+                        save_path=args.data_path+'/'+datestr
+                        if not os.path.isdir(save_path):
+                            os.mkdir(save_path)
+                        for i in [0,1]:
+                            #datestr=datetime.now().strftime('%y%m%d-%H%M%S')
+                            fds.append(open(save_path+'/vid_{}.mp4'.format('lr'[i]),'wb'))
+                        set_files_fds(fds)
+                        data_file_fd=open(save_path+'/viewer_data.pkl','wb')
+                else:
+                    set_files_fds([None,None])
+                    data_file_fd=None
 
-            record_data=message_dict.get(zmq_topics.record_state,False)
-            if record_data:
-                if get_files_fds()[0] is None:
-                    fds=[]
-                    #datestr=sensor_gate_data['record_date_str']
-                    datestr=record_data
-                    save_path=args.data_path+'/'+datestr
-                    if not os.path.isdir(save_path):
-                        os.mkdir(save_path)
-                    for i in [0,1]:
-                        #datestr=datetime.now().strftime('%y%m%d-%H%M%S')
-                        fds.append(open(save_path+'/vid_{}.mp4'.format('lr'[i]),'wb'))
-                    set_files_fds(fds)
-                    data_file_fd=open(save_path+'/viewer_data.pkl','wb')
-            else:
-                set_files_fds([None,None])
-                data_file_fd=None
-
-            if data_file_fd is not None:
-                pickle.dump([topic,data],data_file_fd,-1)
-                pickle.dump([b'viewer_data',{'rcv_cnt':rcv_cnt}],data_file_fd,-1)
+                if data_file_fd is not None:
+                    pickle.dump([topic,data],data_file_fd,-1)
+                    pickle.dump([b'viewer_data',{'rcv_cnt':rcv_cnt}],data_file_fd,-1)
 
         #print('-1-',main_data)
 
@@ -83,7 +89,7 @@ if __name__=='__main__':
             join[:,0:sx,:]=images[0]
             join[:,sx:,:]=images[1]
             images=[None,None]
-            draw_txt(join,message_dict,fmt_cnt_l,fmt_cnt_r)
+            draw(join,message_dict,fmt_cnt_l,fmt_cnt_r)
             cv2.imshow('3dviewer',join)
             #cv2.imshow('left',images[0])
             #cv2.imshow('right',images[1])

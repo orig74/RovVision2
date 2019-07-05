@@ -2,13 +2,14 @@
 import cv2
 import time
 import config
+import zmq_topics
 
 fps_time=time.time()
 frame_start_time=None
 frame_start_number=None
 fps_last_num=0
 fps=None
-def draw_txt(img,message_dict,fmt_cnt_l,fmt_cnt_r):
+def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
     global fps_time,fps,fps_last_num,frame_start_time,frame_start_number
     font = cv2.FONT_HERSHEY_SIMPLEX
     #print('-2-',md)
@@ -34,6 +35,12 @@ def draw_txt(img,message_dict,fmt_cnt_l,fmt_cnt_r):
                 (fmt_cnt_l-frame_start_number)-\
                 config.fps*(time.time()-frame_start_time))
         cv2.putText(img,line,(10,500), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+    if zmq_topics.topic_imu in message_dict:
+        m=message_dict[zmq_topics.topic_imu]
+        yaw,pitch,roll=m['yaw'],m['pitch'],m['roll']
+        draw_compass(img,1000,500,yaw)
+    if zmq_topics.topic_depth in message_dict:
+        draw_depth(img,0,0,message_dict[zmq_topics.topic_depth])
 
 from math import cos,sin,pi
 def draw_compass(img,x,y,heading):

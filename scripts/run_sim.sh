@@ -41,11 +41,15 @@ tmux select-pane -t 2
 init_docker_image
 tmux send-keys "cd $GAME_PATH;PATH=/miniconda/bin/:$PATH ./run.sh" ENTER
 
+sleep 1
+
 ################## onboard part
 tmux new-window 
 new_4_win
 run 0 onboard controller.py
 run 1 onboard sensors_gate.py
+
+sleep 2
 
 ################## ground control part
 tmux new-window 
