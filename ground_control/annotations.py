@@ -45,7 +45,7 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
 from math import cos,sin,pi
 def draw_compass(img,x,y,heading,pitch,roll):
     font = cv2.FONT_HERSHEY_SIMPLEX
-    cv2.putText(img,str(int(heading%360)),(x,y), font, 0.5,(0,200,255),1,cv2.LINE_AA)
+    cv2.putText(img,str(int(heading%360)),(x,y+30), font, 0.5,(0,200,255),1,cv2.LINE_AA)
 
     r=50.0
     #mt=r-3
@@ -72,7 +72,26 @@ def draw_compass(img,x,y,heading,pitch,roll):
     mt=3
     cv2.line(img,
         (int(x+cs*(r-mt)),int(y+si*(r-mt))),
-        (int(x+cs*r),int(y+si*r)),(0,255,255),1)
+        (int(x+cs*r),int(y+si*r)),(0,255,255),3)
+
+    r=30
+    mt=5
+    hfov=40/180.0*pi/2.0*config.cam_resy/2.0
+    pt=pitch/180.0*pi
+    xx=x
+    yy=y-sin(pt)*hfov
+    rl=-roll/180.0*pi
+    cs=cos(rl)
+    si=sin(rl)
+    cv2.line(img,
+        (int(xx+cs*(r-mt)),int(yy+si*(r-mt))),
+        (int(xx+cs*r),int(yy+si*r)),(0,255,255),2)
+    cv2.line(img,
+        (int(xx-cs*(r-mt)),int(yy-si*(r-mt))),
+        (int(xx-cs*r),int(yy-si*r)),(0,255,255),2)
+
+
+
 
 def draw_depth(img,x,y,depth):
     l=450
