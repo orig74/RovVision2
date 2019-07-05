@@ -38,23 +38,17 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
     if zmq_topics.topic_imu in message_dict:
         m=message_dict[zmq_topics.topic_imu]
         yaw,pitch,roll=m['yaw'],m['pitch'],m['roll']
-        draw_compass(img,1000,500,yaw)
+        draw_compass(img,1000,500,yaw,pitch,roll)
     if zmq_topics.topic_depth in message_dict:
         draw_depth(img,0,0,message_dict[zmq_topics.topic_depth])
 
 from math import cos,sin,pi
-def draw_compass(img,x,y,heading):
+def draw_compass(img,x,y,heading,pitch,roll):
     font = cv2.FONT_HERSHEY_SIMPLEX
     cv2.putText(img,str(int(heading%360)),(x,y), font, 0.5,(0,200,255),1,cv2.LINE_AA)
 
     r=50.0
-    t=(heading-90)/180.0*pi
-    cs=cos(t)
-    si=sin(t)
-    mt=r-3
-    cv2.line(img,
-        (int(x+cs*(r-mt)),int(y+si*(r-mt))),
-        (int(x+cs*r),int(y+si*r)),(0,255,255),1)
+    #mt=r-3
 
 
     cv2.circle(img, (x,y), int(r), (0,0,255), 1)
@@ -72,6 +66,13 @@ def draw_compass(img,x,y,heading):
                 (int(x+cs*(r-mt)),int(y+si*(r-mt))),
                 (int(x+cs*r),int(y+si*r)),(0,0,255),1)
 
+    t=(heading-90)/180.0*pi
+    cs=cos(t)
+    si=sin(t)
+    mt=3
+    cv2.line(img,
+        (int(x+cs*(r-mt)),int(y+si*(r-mt))),
+        (int(x+cs*r),int(y+si*r)),(0,255,255),1)
 
 def draw_depth(img,x,y,depth):
     l=450
