@@ -34,13 +34,17 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
             line+=' {:>05.2f}delay'.format(\
                 (fmt_cnt_l-frame_start_number)-\
                 config.fps*(time.time()-frame_start_time))
-        cv2.putText(img,line,(10,500), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+        cv2.putText(img,line,(10,550), font, 0.5,(0,0,255),1,cv2.LINE_AA)
     if zmq_topics.topic_imu in message_dict:
         m=message_dict[zmq_topics.topic_imu]
         yaw,pitch,roll=m['yaw'],m['pitch'],m['roll']
         draw_compass(img,1000,500,yaw,pitch,roll)
     if zmq_topics.topic_depth in message_dict:
         draw_depth(img,0,0,message_dict[zmq_topics.topic_depth])
+    if zmq_topics.topic_sonar in message_dict:
+        sonar_rng = message_dict[zmq_topics.topic_sonar]
+        line=' {:>.2f},{:>.2f}Rng'.format(*sonar_rng)
+        cv2.putText(img,line,(350,550), font, 0.5,(0,0,255),1,cv2.LINE_AA)
 
 from math import cos,sin,pi
 def draw_compass(img,x,y,heading,pitch,roll):
