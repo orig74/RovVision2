@@ -18,6 +18,8 @@ topic_depth=ue4_zmq_topics.topic_unreal_depth%0
 
 zmq_sub=utils.subscribe([topic_stereo,topic_depth],ue4_zmq_topics.zmq_pub_unreal_proxy[1])
 zmq_pub=utils.publisher(zmq_topics.topic_camera_port)
+
+pub_sonar = utils.publisher(zmq_topics.topic_sonar_port)
 cvshow=1
 #cvshow=False
 test=1
@@ -47,10 +49,17 @@ def listener():
                 zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,shape]),imgl.tostring(),imgr.tostring()])
             if topic==topic_depth:
                 img=np.frombuffer(data[2],'float16').reshape(shape)
-                img=np.squeeze(img)
-                img=img.clip(0,255).astype('uint8')
+                min_range=img.min() 
+                img=np.squeeze(img).copy()
+
+                img_show=(img/10.0).clip(0,255).astype('uint8')
+                img[img>5000]=np.nan
+                max_range=np.nanmax(img)
+                #print('sonar::',min_range,max_range)
+                pub_sonar.send_multipart([zmq_topics.topic_sonar,pickle.dumps([min_range,max_range])])
+
                 if cvshow:
-                    cv2.imshow(topic.decode(),img)
+                    cv2.imshow(topic.decode(),img_show)
                     cv2.waitKey(1)
 
             ### test

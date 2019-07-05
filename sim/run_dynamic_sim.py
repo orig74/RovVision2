@@ -23,6 +23,9 @@ keep_running=True
 
 #pub_pos_sim = utils.publisher(zmq_topics.topic_sitl_position_report_port)
 pub_pos_sim = utils.publisher(ue4_zmq_topics.zmq_pub_drone_fdm[1])
+pub_imu = utils.publisher(zmq_topics.topic_sensors_port)
+pub_depth = utils.publisher(zmq_topics.topic_depth_port)
+
 subs_socks=[]
 subs_socks.append(utils.subscribe([zmq_topics.topic_thrusters_comand],zmq_topics.topic_thrusters_comand_port))
 
@@ -55,6 +58,11 @@ async def pubposition():
         ps['roll']+=90
         #pub_pos_sim.send_multipart([xzmq_topics.topic_sitl_position_report,pickle.dumps((time.time(),curr_q))])
         pub_pos_sim.send_multipart([ue4_zmq_topics.topic_sitl_position_report,pickle.dumps(position_struct)])
+
+        imu={}
+        imu['yaw'],imu['pitch'],imu['roll']=np.rad2deg(curr_q[3:])
+        pub_imu.send_multipart([zmq_topics.topic_imu,pickle.dumps(imu)])
+        pub_depth.send_multipart([zmq_topics.topic_depth,pickle.dumps(curr_q[2])])
 
 async def recv_and_process():
     global current_command
