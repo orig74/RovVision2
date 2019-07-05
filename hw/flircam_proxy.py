@@ -22,7 +22,7 @@ parser.add_argument("--cvshow",help="show opencv mode", action='store_true')
 args = parser.parse_args()
 #
 subs_socks=[]
-subs_socks.append( utils.subscribe([ zmq_topics.topic_controller_messages ],zmq_topics.topic_controller_port)
+subs_socks.append( utils.subscribe([ zmq_topics.topic_record_state ],zmq_topics.topic_record_state_port)
 
 socket_pub = utils.publisher(zmq_topics.topic_camera_port)
 
@@ -455,9 +455,13 @@ def run_single_camera(cams):
                                 ret  = sock.recv_multipart()
                                 if ret[0]==zmq_topics.topic_controller_messages:
                                     controller_data=pickle.loads(ret[1])
+                                    if not record_state and controller_data['record_state']:
+                                        #switch to recording
+                                        os.mkdir('../data/'+record_date_str)
+
                                     record_state=controller_data['record_state']
                                     if record_state:
-                                    record_date_str=controller_data['record_date_str']
+                                        record_date_str=controller_data['record_state']
                         sleep(0.001)
         for cam in cams:
             cam.EndAcquisition()

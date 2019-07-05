@@ -13,6 +13,7 @@ import argparse
 import numpy as np
 import zmq_topics
 import config
+from config import Joy_map as jm
 from gst import init_gst_reader,get_imgs,set_files_fds,get_files_fds,save_main_camera_stream
 from annotations import draw
 import zmq_wrapper as utils
@@ -31,7 +32,7 @@ subs_socks.append(utils.subscribe([zmq_topics.topic_sonar ], zmq_topics.topic_so
 
 #socket_pub = utils.publisher(config.zmq_local_route)
 socket_pub = utils.publisher(zmq_topics.topic_local_route_port,'0.0.0.0')
-
+pub_record_state = utils.publisher(zmq_topics.topic_record_state_port)
 
 if __name__=='__main__':
     init_gst_reader(2)
@@ -41,6 +42,8 @@ if __name__=='__main__':
     #main_camera_fd=None
     message_dict={}
     rcv_cnt=0
+    record_state=False
+    joy_buttons=[0]*16
     while 1:
         images=get_imgs()
         rcv_cnt+=1
@@ -55,16 +58,24 @@ if __name__=='__main__':
                 data=pickle.loads(ret[1])
                 
                 message_dict[topic]=data
-                #if ret[0]==config.topic_imu:
-                #    socket_pub.send_multipart([config.topic_imu,ret[1]])
-                #    message_dict[ret[0]]=pickle.loads(ret[1])
+                
+                if topic==zmq_topics.topic_button:
+                    new_joy_buttons=pickle.loads(ret[1])
+                    if new_joy_buttons[jm.record_bt]==1 and joy_buttons[jm.record_bt]==0:
+                        #togel recording
+                        if not record_state:
+                            record_state=datetime.now().strftime('%y%m%d-%H%M%S') 
+                        else:
+                            record_state=False
+                    joy_buttons=new_joy_buttons
+                    pub_record_state.send_multipart([zmq_topics.topic_record_state,pickle.dumps(record_state)])
+                    message_dict[zmq_topics.topic_record_state]=record_state
 
-                record_data=message_dict.get(zmq_topics.record_state,False)
-                if record_data:
+                if record_state:
                     if get_files_fds()[0] is None:
                         fds=[]
                         #datestr=sensor_gate_data['record_date_str']
-                        datestr=record_data
+                        datestr=record_state
                         save_path=args.data_path+'/'+datestr
                         if not os.path.isdir(save_path):
                             os.mkdir(save_path)
@@ -79,7 +90,7 @@ if __name__=='__main__':
 
                 if data_file_fd is not None:
                     pickle.dump([topic,data],data_file_fd,-1)
-                    pickle.dump([b'viewer_data',{'rcv_cnt':rcv_cnt}],data_file_fd,-1)
+                    #pickle.dump([b'viewer_data',{'rcv_cnt':rcv_cnt}],data_file_fd,-1)
 
         #print('-1-',main_data)
 
@@ -91,6 +102,8 @@ if __name__=='__main__':
             images=[None,None]
             draw(join,message_dict,fmt_cnt_l,fmt_cnt_r)
             cv2.imshow('3dviewer',join)
+            if data_file_fd is not None:
+                pickle.dump([b'viewer_data',{'frame_cnt':(rcv_cnt,fmt_cnt_l,fmt_cnt_r)}],data_file_fd,-1)
             #cv2.imshow('left',images[0])
             #cv2.imshow('right',images[1])
         k=cv2.waitKey(10)

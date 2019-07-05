@@ -23,7 +23,7 @@ keep_running=True
 joy_buttons=[0]*8
 
 async def recv_and_process():
-    global current_command,joy_buttons
+    global current_command,joy_buttons,record_state
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.000)[0]
         for sock in socks:
@@ -36,8 +36,7 @@ async def recv_and_process():
                 else: #shift mode
                     thruster_cmd = mixer.mix(ret[jm.ud],0,0,ret[jm.lr],-ret[jm.fb],-ret[jm.yaw])
                 pub_sock.send_multipart([zmq_topics.topic_thrusters_comand,pickle.dumps((time.time(),thruster_cmd))])
-            if ret[0]==zmq_topics.topic_button:
-                joy_buttons=pickle.loads(ret[1])
+
                 #print('botton',ret)
 
         await asyncio.sleep(0.001)

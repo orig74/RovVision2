@@ -32,5 +32,8 @@ topic_depth_port = 9302
 topic_controller_messages=b'controller_messages'
 topic_controler_port=8898
 
+topic_record_state=b'record_state'
+topic_record_state_port=9303
+
 topic_local_route_port=9995
 
