@@ -73,6 +73,7 @@ if __name__=='__main__':
 
                 if record_state:
                     if get_files_fds()[0] is None:
+                        print('start recording...')
                         fds=[]
                         #datestr=sensor_gate_data['record_date_str']
                         datestr=record_state
@@ -84,8 +85,10 @@ if __name__=='__main__':
                             fds.append(open(save_path+'/vid_{}.mp4'.format('lr'[i]),'wb'))
                         set_files_fds(fds)
                         data_file_fd=open(save_path+'/viewer_data.pkl','wb')
-                        pickle.dump({b'start_time':time.time()},data_file_fd,-1)
-                    else:
+                        pickle.dump([b'start_time',time.time()],data_file_fd,-1)
+                else:
+                    if get_files_fds()[0] is not None:
+                        print('done recording...')
                         set_files_fds([None,None])
                         data_file_fd=None
 
@@ -104,7 +107,7 @@ if __name__=='__main__':
             draw(join,message_dict,fmt_cnt_l,fmt_cnt_r)
             cv2.imshow('3dviewer',join)
             if data_file_fd is not None:
-                pickle.dump([b'viewer_data',{'frame_cnt':(rcv_cnt,fmt_cnt_l,fmt_cnt_r),'ts':time.time()}],data_file_fd,-1)
+                pickle.dump([zmq_topics.topic_viewer_data,{'frame_cnt':(rcv_cnt,fmt_cnt_l,fmt_cnt_r),'ts':time.time()}],data_file_fd,-1)
             #cv2.imshow('left',images[0])
             #cv2.imshow('right',images[1])
         k=cv2.waitKey(10)
