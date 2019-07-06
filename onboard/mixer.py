@@ -37,7 +37,7 @@ def mix(up_down,left_right,fwd_back,roll,pitch,yaw,pitch_copensate=0.0,roll_cope
             v=v/nv
 
         #dcm_in_r=dcm.T @ todcm(*v) @ dcm 
-        dcm_in_r=todcm(*v) @ dcm 
+        dcm_in_r=dcm.T @ todcm(*v) @ dcm 
 
         yaw,pitch,roll=fromdcm(dcm_in_r)*nv #command in reference frame
 
@@ -55,8 +55,8 @@ def mix(up_down,left_right,fwd_back,roll,pitch,yaw,pitch_copensate=0.0,roll_cope
     thrusters[[0,1]]+=pitch
     thrusters[[2,3]]-=pitch
 
-    thrusters[[4,7]]+=yaw
-    thrusters[[5,6]]-=yaw
+    thrusters[[4,7]]+=yaw/2.0 #/2.0 since yaw command using all 4 thrusters  
+    thrusters[[5,6]]-=yaw/2.0
 
     thrusters=np.clip(thrusters,-1,1)
 
