@@ -6,6 +6,7 @@ class Joy_map:
     fb=4
     lr=3
     shift_bt=4
+    shift2_bt=5
     record_bt=10
 
 #cameras info

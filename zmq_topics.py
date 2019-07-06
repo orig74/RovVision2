@@ -18,7 +18,7 @@ topic_joy_port=8899
 
 #diffrent topics due to difrent freq devices
 topic_imu = b'topic_imu'
-topic_sensors_port = 8897
+topic_imu_port = 8897
 
 topic_sonar = b'topic_sonar'
 topic_sonar_port = 9301

@@ -18,29 +18,37 @@ from config import Joy_map as jm
 pub_sock = utils.publisher(zmq_topics.topic_controller_port)
 subs_socks=[]
 subs_socks.append(utils.subscribe([zmq_topics.topic_axes,zmq_topics.topic_button],zmq_topics.topic_joy_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_imu],zmq_topics.topic_imu_port))
 
-keep_running=True
-joy_buttons=[0]*16
 
 async def recv_and_process():
-    global current_command,joy_buttons,record_state
+    keep_running=True
+    joy_buttons=[0]*16
+    yaw,pitch,roll=0,0,0
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.000)[0]
         for sock in socks:
             ret=sock.recv_multipart()
-            if ret[0]==zmq_topics.topic_axes:
-                ret=pickle.loads(ret[1])
+            topic,data=ret[0],pickle.loads(ret[1])
+            if topic==zmq_topics.topic_axes:
                 #print('joy ',ret[jm.yaw])
+                roll_copensate,pitch_copensate=0,0
+                
+                if joy_buttons[jm.shift2_bt]==1:
+                    roll_copensate,pitch_copensate=roll,pitch
+                
                 if joy_buttons[jm.shift_bt]==0:
-                    thruster_cmd = mixer.mix(ret[jm.ud],ret[jm.lr],-ret[jm.fb],0,0,-ret[jm.yaw])
+                    thruster_cmd = mixer.mix(data[jm.ud],data[jm.lr],-data[jm.fb],0,0,-data[jm.yaw],pitch_copensate,roll_copensate)
                 else: #shift mode
-                    thruster_cmd = mixer.mix(ret[jm.ud],0,0,ret[jm.lr],-ret[jm.fb],-ret[jm.yaw])
+                    thruster_cmd = mixer.mix(data[jm.ud],0,0,data[jm.lr],-data[jm.fb],-data[jm.yaw],pitch_copensate,roll_copensate)
                 pub_sock.send_multipart([zmq_topics.topic_thrusters_comand,pickle.dumps((time.time(),thruster_cmd))])
-            if ret[0]==zmq_topics.topic_button:
-                new_joy_buttons=pickle.loads(ret[1])
+            if topic==zmq_topics.topic_button:
+                new_joy_buttons=data
                 #if new_joy_buttons[jm.record_bt]==1 and joy_buttons[jm.record_bt]==0:
                     #togel functions here
                 joy_buttons=new_joy_buttons
+            if topic==zmq_topics.topic_imu:
+                yaw,pitch,roll=data['yaw'],data['pitch'],data['roll']
  
 
                 #print('botton',ret)

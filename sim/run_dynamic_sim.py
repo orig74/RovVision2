@@ -23,7 +23,7 @@ keep_running=True
 
 #pub_pos_sim = utils.publisher(zmq_topics.topic_sitl_position_report_port)
 pub_pos_sim = utils.publisher(ue4_zmq_topics.zmq_pub_drone_fdm[1])
-pub_imu = utils.publisher(zmq_topics.topic_sensors_port)
+pub_imu = utils.publisher(zmq_topics.topic_imu_port)
 pub_depth = utils.publisher(zmq_topics.topic_depth_port)
 
 subs_socks=[]
@@ -53,12 +53,13 @@ async def pubposition():
         ps['posx'],ps['posy'],ps['posz']=curr_q[:3]
         ps['yaw'],ps['roll'],ps['pitch']=-np.rad2deg(curr_q[3:])
         ps['roll']+=90
-        print('dsim Y{:4.2f} P{:4.2f} R{:4.2f}'.format(ps['yaw'],ps['pitch'],ps['roll']))
         #pub_pos_sim.send_multipart([xzmq_topics.topic_sitl_position_report,pickle.dumps((time.time(),curr_q))])
         pub_pos_sim.send_multipart([ue4_zmq_topics.topic_sitl_position_report,pickle.dumps(position_struct)])
 
         imu={}
         imu['yaw'],imu['pitch'],imu['roll']=-np.rad2deg(curr_q[3:])
+        print('dsim Y{:4.2f} P{:4.2f} R{:4.2f}'.format(imu['yaw'],imu['pitch'],imu['roll'])
+                +' X{:4.2f} Y{:4.2f} Z{:4.2f}'.format(*curr_q[:3]))
         pub_imu.send_multipart([zmq_topics.topic_imu,pickle.dumps(imu)])
         pub_depth.send_multipart([zmq_topics.topic_depth,pickle.dumps(curr_q[2])])
 
