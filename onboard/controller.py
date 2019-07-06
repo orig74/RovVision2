@@ -20,7 +20,7 @@ subs_socks=[]
 subs_socks.append(utils.subscribe([zmq_topics.topic_axes,zmq_topics.topic_button],zmq_topics.topic_joy_port))
 
 keep_running=True
-joy_buttons=[0]*8
+joy_buttons=[0]*16
 
 async def recv_and_process():
     global current_command,joy_buttons,record_state
@@ -36,6 +36,12 @@ async def recv_and_process():
                 else: #shift mode
                     thruster_cmd = mixer.mix(ret[jm.ud],0,0,ret[jm.lr],-ret[jm.fb],-ret[jm.yaw])
                 pub_sock.send_multipart([zmq_topics.topic_thrusters_comand,pickle.dumps((time.time(),thruster_cmd))])
+            if ret[0]==zmq_topics.topic_button:
+                new_joy_buttons=pickle.loads(ret[1])
+                #if new_joy_buttons[jm.record_bt]==1 and joy_buttons[jm.record_bt]==0:
+                    #togel functions here
+                joy_buttons=new_joy_buttons
+ 
 
                 #print('botton',ret)
 

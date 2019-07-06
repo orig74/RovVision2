@@ -84,9 +84,10 @@ if __name__=='__main__':
                             fds.append(open(save_path+'/vid_{}.mp4'.format('lr'[i]),'wb'))
                         set_files_fds(fds)
                         data_file_fd=open(save_path+'/viewer_data.pkl','wb')
-                else:
-                    set_files_fds([None,None])
-                    data_file_fd=None
+                        pickle.dump({b'start_time':time.time()},data_file_fd,-1)
+                    else:
+                        set_files_fds([None,None])
+                        data_file_fd=None
 
                 if data_file_fd is not None:
                     pickle.dump([topic,data],data_file_fd,-1)
@@ -103,7 +104,7 @@ if __name__=='__main__':
             draw(join,message_dict,fmt_cnt_l,fmt_cnt_r)
             cv2.imshow('3dviewer',join)
             if data_file_fd is not None:
-                pickle.dump([b'viewer_data',{'frame_cnt':(rcv_cnt,fmt_cnt_l,fmt_cnt_r)}],data_file_fd,-1)
+                pickle.dump([b'viewer_data',{'frame_cnt':(rcv_cnt,fmt_cnt_l,fmt_cnt_r),'ts':time.time()}],data_file_fd,-1)
             #cv2.imshow('left',images[0])
             #cv2.imshow('right',images[1])
         k=cv2.waitKey(10)
