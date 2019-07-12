@@ -14,7 +14,6 @@ import zmq_topics
 current_command=[0 for _ in range(8)] # 8 thrusters
 keep_running=True
 
-DSHOT_FRAME_WIDTHS = [4, 4, 8]
 subs_socks=[]
 subs_socks.append(utils.subscribe([zmq_topics.topic_thrusters_comand],zmq_topics.topic_thrusters_comand_port))
 
