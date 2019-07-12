@@ -2,59 +2,54 @@ void setup() {
   DDRB = DDRB | B11111111;
   DDRC = DDRC | B11111111;
   TCCR0B = 0x01;  //No prescalars
+  //Serial.begin(250000);
   Serial.begin(115200);
 }
 
 // get serial to write into this
-word throttle_vals[8] = {1048, 1048, 1048, 1048, 1048, 1048, 1048, 1048}; //{0, 0, 0, 0, 0, 0, 0, 0};
+//word throttle_vals[8] = {0, 0, 0, 0, 0, 0, 0, 0}; //{1048, 1048, 1048, 1048, 1048, 1048, 1048, 1048};
 
 word computeChecksum(word packet) {
   return (packet << 4) | (packet ^ (packet >> 4) ^ (packet >> 8)) & 0xf; 
 }
 
-void fillDShotReg(byte* reg, word* messages) {
-  for (int frame_idx = 0; frame_idx < 16; frame_idx++){
-       *(reg + frame_idx) = bitRead(messages[0], frame_idx) | 
-                            bitRead(messages[1], frame_idx) << 1 |
-                            bitRead(messages[2], frame_idx) << 2 |
-                            bitRead(messages[3], frame_idx) << 3 | 
-                            bitRead(messages[4], frame_idx) << 4 | 
-                            bitRead(messages[5], frame_idx) << 5 | 
-                            bitRead(messages[6], frame_idx) << 6 | 
-                            bitRead(messages[7], frame_idx) << 7;
-  }
-}
-
 void loop() {
-  static byte dshotREG[16];
-  static word messages[8];
+  static byte portB_buff[16];
+  static byte portC_buff[16];
+  static char serial_buff[16];
 
-  if (Serial.available() > 2) {
-    throttle_vals[0] = (word) Serial.parseInt();
-    Serial.println(throttle_vals[0]);
+  boolean start_verified = false;
+  while (!start_verified) {  // Keep reading bytes until the start nibble is found
+    byte start_id_B = Serial.read();
+    start_verified = (start_id_B >> 4 == 0b00001001);
   }
-    
-  for (int msg_idx = 0; msg_idx < 8; msg_idx++) {
-    messages[msg_idx] = computeChecksum(throttle_vals[msg_idx] << 1);
+  // wait for full message and transfer following bytes to DShot registers:
+  Serial.readBytes(serial_buff, 16);
+
+  // PORTB and PORTC registers, bits 1->4
+  for (int buff_idx = 0; buff_idx < 16; buff_idx++) {
+    portB_buff[buff_idx] &= 11110000 | serial_buff[buff_idx]; 
+    portC_buff[buff_idx] &= 11110000 | serial_buff[buff_idx >> 4]; 
   }
-  fillDShotReg(dshotREG, messages);
+
   
   while (true){
+    delayMicroseconds(30);
     for (int frame_bit = 0; frame_bit < 16; frame_bit++) {
       while (TCNT0 < 0x66) {}
       TCNT0 = 0x00;
       PORTB = 0b11111111;
       PORTC = 0b11111111;
       while (TCNT0 < 0x1F) {}
-      PORTB &= dshotREG[15 - frame_bit];
-      PORTC &= dshotREG[15 - frame_bit] >> 6;
+      PORTB &= portB_buff[frame_bit];
+      PORTC &= portC_buff[frame_bit];
       while (TCNT0 < 0x4C) {}
       PORTB = 0b00000000;
       PORTC = 0b00000000;
-      TCNT2 = 0x00;
+      //TCNT2 = 0x00;
     }
-    if (Serial.available()) break;
-    delayMicroseconds(2000);
+    if (Serial.available() > 10) break;
+    delayMicroseconds(30);
   }
 }
 
