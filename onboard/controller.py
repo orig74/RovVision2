@@ -30,7 +30,7 @@ async def recv_and_process():
     timer20hz=time.time()+1/20.0
     system_state={'arm':False,'mode':'MANUAL'}
     while keep_running:
-        socks=zmq.select(subs_socks,[],[],0.000)[0]
+        socks=zmq.select(subs_socks,[],[],0.005)[0]
         for sock in socks:
             ret=sock.recv_multipart()
             topic,data=ret[0],pickle.loads(ret[1])

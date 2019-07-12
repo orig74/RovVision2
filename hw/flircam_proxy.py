@@ -442,7 +442,7 @@ def run_single_camera(cams):
                         frame_cntr,imgr=qr.get()
                         if frame_cntl!=frame_cntr:
                             print('Error somthing wrong frame_cntl!=frame_cntr',frame_cntl,frame_cntr)
-                            socket_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps((frame_cntl,imgl.shape)),imgl.tostring(),imgr.tostring())
+                            socket_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps((frame_cntl,imgl.shape)),imgl.tobytes(),imgr.tobytes())
 
                                     cnt=frame_cntl
                     else:

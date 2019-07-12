@@ -27,7 +27,7 @@ joy_buttons=[0]*8
 async def recv_and_process():
     global current_command,joy_buttons
     while keep_running:
-        socks=zmq.select(subs_socks,[],[],0.000)[0]
+        socks=zmq.select(subs_socks,[],[],0.005)[0]
         for sock in socks:
             ret=sock.recv_multipart()
             if ret[0]==zmq_topics.topic_stereo_camera:
