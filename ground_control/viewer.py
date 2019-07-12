@@ -49,7 +49,7 @@ if __name__=='__main__':
         rcv_cnt+=1
         #if all(images):
         while 1:
-            socks=zmq.select(subs_socks,[],[],0.001)[0]
+            socks=zmq.select(subs_socks,[],[],0.005)[0]
             if len(socks)==0: #flush msg buffer
                 break
             for sock in socks:
