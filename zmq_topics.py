@@ -3,6 +3,9 @@ topic_sitl_position_report=b'position_rep'
 topic_sitl_position_report_port=7755
 
 topic_thrusters_comand=b'thruster_cmd'
+#opration modes
+topic_system_state=b'system_state'
+
 record_state=b'record_state'
 topic_controller_port=topic_thrusters_comand_port=7788
 
@@ -28,9 +31,6 @@ topic_depth_port = 9302
 
 #messages:
 #stop/start recording
-#opration modes
-topic_controller_messages=b'controller_messages'
-topic_controler_port=8898
 
 topic_record_state=b'record_state'
 topic_record_state_port=9303
