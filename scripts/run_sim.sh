@@ -4,6 +4,8 @@
 GAME_PATH=/project_files/Ocean1_packed/LinuxNoEditor/
 PROJECT_PATH=/home/host/projects/RovVision2/
 DRONESIMLAB_PATH=../../DroneSimLab/
+SIM=
+PYTHON=/miniconda/bin/python 
 
 source run_common.sh
 
@@ -23,18 +25,11 @@ tmux send-keys "cd $GAME_PATH;PATH=/miniconda/bin/:$PATH ./run.sh" ENTER
 sleep 1
 
 ################## onboard part
-tmux new-window 
-new_6_win
-run 0 onboard controller.py
-run 1 onboard sensors_gate.py
-
+source run_onboard.sh
 sleep 2
 
 ################## ground control part
-tmux new-window 
-new_4_win
-run 0 ground_control joy_rov.py
-run 1 ground_control viewer.py
+source run_ground_control.sh
 
 
 tmux select-window -t 0

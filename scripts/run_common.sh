@@ -30,7 +30,7 @@ tmux select-pane -t $1
 init_docker_image
 tmux send-keys "bash" ENTER
 tmux send-keys "cd $PROJECT_PATH/$2" ENTER
-tmux send-keys "/miniconda/bin/python $3" ENTER
+tmux send-keys "$PYTHON $3" ENTER
 
 }
 
