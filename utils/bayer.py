@@ -4,6 +4,8 @@ from ctypes import *
 import numpy as np
 
 libpath=os.path.join(os.path.dirname(__file__), '../bin')
+if not os.path.isdir(libpath):
+    os.mkdir(libpath)
 
 libfile=libpath+'/bayer_conv.so'
 
