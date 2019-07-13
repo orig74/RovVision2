@@ -23,6 +23,18 @@ def convert_to_bayer(im):
     libc.convertRGBtoBayer(w,h,inptr,outptr)
     return out
 
+libc.shrinkToRGB.argtypes=[c_int,c_int,c_void_p,c_void_p]
+libc.shrinkToRGB.restype=c_int
 def shrink_bayer_to_rgb(im):
-    #todo
-    pass
+    h,w=im.shape
+    out=np.zeros((h//2,w//2,3),dtype='uint8')
+    inptr=im.ctypes.data_as(c_void_p)
+    outptr=out.ctypes.data_as(c_void_p)
+    libc.shrinkToRGB(w,h,inptr,outptr)
+    return out
+
+if __name__=='__main__':
+    im=np.ones((100,100),dtype='uint8')
+    imout=shrink_bayer_to_rgb(im)
+    print(imout.shape)
+    print(imout[:2,:2,:])
