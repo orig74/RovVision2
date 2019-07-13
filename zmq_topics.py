@@ -12,6 +12,7 @@ topic_controller_port=topic_thrusters_comand_port=7788
 #topic_camera_left=b'topic_camera_left'
 #topic_camera_right=b'topic_camera_right'
 topic_stereo_camera=b'topic_stereo_camera'
+topic_stereo_camera_ts=b'topic_stereo_camera_ts'
 topic_camera_port=7789
 
 topic_button = b'joy_button'
