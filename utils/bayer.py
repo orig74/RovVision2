@@ -2,9 +2,13 @@
 import ctypes,os
 from ctypes import *
 import numpy as np
-libfile='bayer_conv.so'
-#if not os.path.isfile(libfile):
-#    os.system('gcc -o bayer_conv.so -shared -O3 bayer_conv.c')
+
+libpath=os.path.join(os.path.dirname(__file__), '../bin')
+
+libfile=libpath+'/bayer_conv.so'
+
+if not os.path.isfile(libfile):
+    os.system('gcc -o {0}/../bin/bayer_conv.so -shared -O3 {0}/bayer_conv.c'.format(os.path.dirname(__file__)))
 libc=ctypes.CDLL(libfile,mode=ctypes.RTLD_GLOBAL)
 
 libc.convertRGBtoBayer.argtypes=[c_int,c_int,c_void_p,c_void_p]
