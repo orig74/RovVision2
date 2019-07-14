@@ -1,5 +1,7 @@
 #!/bin/bash
 source run_common.sh
+PROJECT_PATH=/home/host/projects/RovVision2/
+PYTHON=/miniconda/bin/python 
 
 if [ ! -v SIM ]
 then
