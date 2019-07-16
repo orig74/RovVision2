@@ -1,6 +1,6 @@
 void setup() {
-  DDRB = DDRB | B11111111;
-  DDRC = DDRC | B11111111;
+  DDRB = DDRB | B00001111;
+  DDRC = DDRC | B00001111;
   TCCR0B = 0x01;  //No prescalars
   //Serial.begin(250000);
   Serial.begin(115200);
@@ -18,38 +18,32 @@ void loop() {
   static byte portC_buff[16];
   static char serial_buff[16];
 
-  boolean start_verified = false;
-  while (!start_verified) {  // Keep reading bytes until the start nibble is found
-    byte start_id_B = Serial.read();
-    start_verified = (start_id_B >> 4 == 0b00001001);
-  }
+  while (!Serial.read() == 0b10010000) {}  // Keep reading bytes until the start nibble is found
   // wait for full message and transfer following bytes to DShot registers:
   Serial.readBytes(serial_buff, 16);
-
   // PORTB and PORTC registers, bits 1->4
   for (int buff_idx = 0; buff_idx < 16; buff_idx++) {
-    portB_buff[buff_idx] &= 11110000 | serial_buff[buff_idx]; 
-    portC_buff[buff_idx] &= 11110000 | serial_buff[buff_idx >> 4]; 
+    portB_buff[buff_idx] = 0b11110000 | (serial_buff[buff_idx] >> 4); 
+    portC_buff[buff_idx] = 0b11110000 | serial_buff[buff_idx]; 
   }
 
   
   while (true){
-    delayMicroseconds(30);
+    delayMicroseconds(10);
     for (int frame_bit = 0; frame_bit < 16; frame_bit++) {
       while (TCNT0 < 0x66) {}
       TCNT0 = 0x00;
       PORTB = 0b11111111;
       PORTC = 0b11111111;
-      while (TCNT0 < 0x1F) {}
+      while (TCNT0 < 0x1B) {}
       PORTB &= portB_buff[frame_bit];
       PORTC &= portC_buff[frame_bit];
-      while (TCNT0 < 0x4C) {}
+      while (TCNT0 < 0x4B) {}
       PORTB = 0b00000000;
       PORTC = 0b00000000;
-      //TCNT2 = 0x00;
     }
-    if (Serial.available() > 10) break;
-    delayMicroseconds(30);
+    if (Serial.available() > 16) break;
+    delayMicroseconds(10);
   }
 }
 
