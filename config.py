@@ -8,6 +8,7 @@ class Joy_map:
     shift_bt=4
     shift2_bt=5
     record_bt=10
+    arm_disarm=9
 
 #cameras info
 cam_resx,cam_resy=1920,1200

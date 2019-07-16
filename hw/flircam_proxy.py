@@ -22,7 +22,7 @@ parser.add_argument("--cvshow",help="show opencv mode", action='store_true')
 args = parser.parse_args()
 #
 subs_socks=[]
-subs_socks.append( utils.subscribe([ zmq_topics.topic_record_state ],zmq_topics.topic_record_state_port)
+subs_socks.append( utils.subscribe([ zmq_topics.topic_record_state ],zmq_topics.topic_record_state_port))
 
 socket_pub = utils.publisher(zmq_topics.topic_camera_port)
 
@@ -71,7 +71,7 @@ class ImageEventHandler(PySpin.ImageEvent):
 
         # Initialize image counter to 0
         self._image_count = 0
-        self.theimage = (-1,None)
+        self.theimage = (time.time(),-1,None)
         self.q = queue.Queue()
         self.name='U' #unassigned yet
         # Release reference to camera
@@ -95,6 +95,9 @@ class ImageEventHandler(PySpin.ImageEvent):
         :rtype: None
         """
         # Save max of _NUM_IMAGES Images
+
+        ts=time.time()
+
         if 1 or self._image_count < self._NUM_IMAGES:
             if self._image_count < self._NUM_IMAGES:
                 print('Image event occurred...')
@@ -119,9 +122,9 @@ class ImageEventHandler(PySpin.ImageEvent):
                 #self.theimage=(self._image_count,image_converted.GetData().reshape((height,width,3)))
 
                 #newcode
-                self.theimage = bayer.shrink_bayer_to_rgb(image.GetData())
+                self.theimage = (time.time(), self._image_count, bayer.shrink_bayer_to_rgb(image.GetData()))
 
-                if record_state and (self._image_count%5==0): #save every 0.5 sec
+                if record_state and self._image_count%5==0: #save every 0.5 sec
                     raw_data=image.GetData().reshape((height,width))
                     imgname='../data/'+record_date_str+'/{}{:08d}.{}'\
                     .format(self.name[0],self._image_count,'pgm')
@@ -133,7 +136,7 @@ class ImageEventHandler(PySpin.ImageEvent):
                     print('saving took',time.time()-tic)
 
                 if not args.cvshow:
-                    self.q.put(self.theimage)
+                    self.q.put((ts,self.theimage))
                 self._image_count += 1
 
 
@@ -438,13 +441,15 @@ def run_single_camera(cams):
                         #    socket_pub.send_multipart([topic,struct.pack('llll',*img.shape,frame_cnt),img.tostring()])
                         
                         ######## new code
-                        frame_cntl,imgl=ql.get()
-                        frame_cntr,imgr=qr.get()
+                        ts_l,frame_cntl,imgl=ql.get()
+                        ts_r,frame_cntr,imgr=qr.get()
+                        ts=min(ts_r,ts_l)
                         if frame_cntl!=frame_cntr:
                             print('Error somthing wrong frame_cntl!=frame_cntr',frame_cntl,frame_cntr)
-                            socket_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps((frame_cntl,imgl.shape)),imgl.tostring(),imgr.tostring())
-
-                                    cnt=frame_cntl
+                        socket_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps((frame_cntl,imgl.shape)),imgl.tobytes(),imgr.tobytes()])
+                        time.sleep(0.001) 
+                        socket_pub.send_multipart([zmq_topics.topic_stereo_camera_ts,pickle.dumps((frame_cntl,ts))])
+                        cnt=frame_cntl
                     else:
                         #print('---',tim_l[0],tim_r[0],cnt)
                         while 1:

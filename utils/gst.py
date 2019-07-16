@@ -27,7 +27,7 @@ def send_gst(imgs):
     global gst_pipes
     for i,im in enumerate(imgs):
         time.sleep(0.001)
-        if len(select.select([],[gst_pipes[i].stdin],[],0)[1])>0:
+        if len(select.select([],[gst_pipes[i].stdin],[],0.005)[1])>0:
             gst_pipes[i].stdin.write(im.tostring())
             send_cnt[i]+=1
 
@@ -79,10 +79,10 @@ def set_files_fds(fds):
 def get_imgs():
     global images
     for i in range(len(images)):
-        if len(select.select([ gst_pipes[i] ],[],[],0.001)[0])>0 :
+        if len(select.select([ gst_pipes[i] ],[],[],0.005)[0])>0 :
             data=os.read(gst_pipes[i],sx*sy*3)
             images[i]=np.fromstring(data,'uint8').reshape([sy,sx,3])
-        if len(select.select([ gst_pipes_264[i] ],[],[],0.001)[0])>0:
+        if len(select.select([ gst_pipes_264[i] ],[],[],0.005)[0])>0:
             data=os.read(gst_pipes_264[i],1*1000*1000)
             if save_files_fds[0] is not None:
                 save_files_fds[i].write(data)
@@ -98,7 +98,7 @@ def save_main_camera_stream(fname):
 ############ gst from files #################
 import glob
 def read_image_from_pipe(p, prevcnt=-1):
-    if len(select.select([p],[],[],5.9)[0])==0:
+    if len(select.select([p],[],[],5)[0])==0:
         print('got None!!')
         return None,-1
     data=os.read(p,sx*sy*3)

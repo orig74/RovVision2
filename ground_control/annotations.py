@@ -47,7 +47,13 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
         cv2.putText(img,line,(350,550), font, 0.5,(0,0,255),1,cv2.LINE_AA)
     if zmq_topics.record_state in message_dict:
         if message_dict[zmq_topics.record_state]:
-            cv2.putText(img,'REC',(10,10), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+            cv2.putText(img,'REC',(10,15), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+    if zmq_topics.topic_system_state in message_dict:
+        ss = message_dict[zmq_topics.topic_system_state][1]
+        cv2.putText(img,'ARM' if ss['arm'] else 'DISARM' \
+                ,(50,15), font, 0.5,(0,0,255) if ss['arm'] else (0,255,0),1,cv2.LINE_AA)
+        cv2.putText(img, ss['mode']\
+                ,(140,15), font, 0.5,(0,255,0),1,cv2.LINE_AA)
 
 from math import cos,sin,pi
 def draw_compass(img,x,y,heading,pitch,roll):

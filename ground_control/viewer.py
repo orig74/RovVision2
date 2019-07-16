@@ -24,11 +24,12 @@ parser.add_argument("--data_path", help="path for data" , default='../../data')
 args = parser.parse_args()
 
 subs_socks=[]
-subs_socks.append(utils.subscribe([zmq_topics.topic_controller_messages],zmq_topics.topic_controler_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_thrusters_comand,zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_button, zmq_topics.topic_hat ], zmq_topics.topic_joy_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_imu ], zmq_topics.topic_imu_port) )
 subs_socks.append(utils.subscribe([zmq_topics.topic_depth ], zmq_topics.topic_depth_port) )
 subs_socks.append(utils.subscribe([zmq_topics.topic_sonar ], zmq_topics.topic_sonar_port) )
+subs_socks.append(utils.subscribe([zmq_topics.topic_stereo_camera_ts ], zmq_topics.topic_camera_port) ) #for sync perposes
 
 #socket_pub = utils.publisher(config.zmq_local_route)
 socket_pub = utils.publisher(zmq_topics.topic_local_route_port,'0.0.0.0')
@@ -49,7 +50,7 @@ if __name__=='__main__':
         rcv_cnt+=1
         #if all(images):
         while 1:
-            socks=zmq.select(subs_socks,[],[],0.001)[0]
+            socks=zmq.select(subs_socks,[],[],0.005)[0]
             if len(socks)==0: #flush msg buffer
                 break
             for sock in socks:

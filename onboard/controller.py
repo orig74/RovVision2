@@ -25,8 +25,12 @@ async def recv_and_process():
     keep_running=True
     joy_buttons=[0]*16
     yaw,pitch,roll=0,0,0
+    thruster_cmd=[0.0]*8
+    timer10hz=time.time()+1/10.0
+    timer20hz=time.time()+1/20.0
+    system_state={'arm':False,'mode':'MANUAL'}
     while keep_running:
-        socks=zmq.select(subs_socks,[],[],0.000)[0]
+        socks=zmq.select(subs_socks,[],[],0.005)[0]
         for sock in socks:
             ret=sock.recv_multipart()
             topic,data=ret[0],pickle.loads(ret[1])
@@ -36,12 +40,14 @@ async def recv_and_process():
                 
                 if joy_buttons[jm.shift2_bt]==1:
                     roll_copensate,pitch_copensate=roll,pitch
-                
+               
+                if joy_buttons[jm.arm_disarm]==1:
+                    system_state['arm']=not system_state['arm']
+
                 if joy_buttons[jm.shift_bt]==0:
                     thruster_cmd = mixer.mix(data[jm.ud],data[jm.lr],-data[jm.fb],0,0,-data[jm.yaw],pitch_copensate,roll_copensate)
                 else: #shift mode
                     thruster_cmd = mixer.mix(data[jm.ud],0,0,data[jm.lr],-data[jm.fb],-data[jm.yaw],pitch_copensate,roll_copensate)
-                pub_sock.send_multipart([zmq_topics.topic_thrusters_comand,pickle.dumps((time.time(),thruster_cmd))])
             if topic==zmq_topics.topic_button:
                 new_joy_buttons=data
                 #if new_joy_buttons[jm.record_bt]==1 and joy_buttons[jm.record_bt]==0:
@@ -49,7 +55,17 @@ async def recv_and_process():
                 joy_buttons=new_joy_buttons
             if topic==zmq_topics.topic_imu:
                 yaw,pitch,roll=data['yaw'],data['pitch'],data['roll']
- 
+
+        tic=time.time()
+        if tic-timer10hz>0:
+            timer10hz=tic+1/10.0
+            pub_sock.send_multipart([zmq_topics.topic_system_state,pickle.dumps((tic,system_state))]) 
+        if tic-timer20hz>0:
+            timer20hz=tic+1/20.0
+            if not system_state['arm']:
+                thruster_cmd=[0.0]*8
+            pub_sock.send_multipart([zmq_topics.topic_thrusters_comand,pickle.dumps((tic,thruster_cmd))])
+
 
                 #print('botton',ret)
 

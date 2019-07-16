@@ -47,6 +47,9 @@ def listener():
                     cv2.imshow(topic.decode()+'r',imgrs)
                     cv2.waitKey(1)
                 zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,shape]),imgl.tostring(),imgr.tostring()])
+                time.sleep(0.001) 
+                zmq_pub.send_multipart([zmq_topics.topic_stereo_camera_ts,pickle.dumps((frame_cnt,time.time()))]) #for sync
+            
             if topic==topic_depth:
                 img=np.frombuffer(data[2],'float16').reshape(shape)
                 min_range=img.min() 
