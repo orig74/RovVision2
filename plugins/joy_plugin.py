@@ -15,10 +15,13 @@ import zmq_topics
 import config
 from config import Joy_map as jm
 
+
+### plugin inputs
 subs_socks=[]
 subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_axes,zmq_topics.topic_button],zmq_topics.topic_joy_port))
 subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_imu],zmq_topics.topic_imu_port))
 
+### plugin outputs
 thrusters_source = zmq_wrapper.push_source(zmq_topics.thrusters_sink_port) 
 
 async def recv_and_process():
