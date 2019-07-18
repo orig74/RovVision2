@@ -6,6 +6,7 @@ import sys
 import asyncio
 import time
 import pickle
+from numpy import cos,sin
 
 sys.path.append('..')
 sys.path.append('../utils')
@@ -59,6 +60,16 @@ async def pubposition():
         tic=time.time()
         imu={'ts':tic}
         imu['yaw'],imu['pitch'],imu['roll']=-np.rad2deg(curr_q[3:])
+
+        #rates from dsym notebook
+        #(-u4*sin(q3) + u5*cos(q3)*cos(q4))*N.x + (u4*cos(q3) + u5*sin(q3)*cos(q4))*N.y + (u3 - u5*sin(q4))*N.z
+        q3,q4,q5=curr_q[3:]
+        u3,u4,u5=curr_u[3:]
+        imu['rates']=(\
+                -u4*sin(q3) + u5*cos(q3)*cos(q4),\
+                u4*cos(q3) + u5*sin(q3)*cos(q4),\
+                u3 - u5*sin(q4))
+
         print('dsim Y{:4.2f} P{:4.2f} R{:4.2f}'.format(imu['yaw'],imu['pitch'],imu['roll'])
                 +' X{:4.2f} Y{:4.2f} Z{:4.2f}'.format(*curr_q[:3]))
         pub_imu.send_multipart([zmq_topics.topic_imu,pickle.dumps(imu)])

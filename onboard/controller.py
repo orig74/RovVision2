@@ -25,7 +25,8 @@ async def recv_and_process():
     keep_running=True
     joy_buttons=[0]*16
     yaw,pitch,roll=0,0,0
-    thruster_cmd=[0.0]*8
+    thruster_cmd=np.zeros(8)
+    thruster_joy_cmd=np.zeros(8)
     timer10hz=time.time()+1/10.0
     timer20hz=time.time()+1/20.0
     system_state={'arm':False,'mode':'MANUAL'}
@@ -45,9 +46,9 @@ async def recv_and_process():
                     system_state['arm']=not system_state['arm']
 
                 if joy_buttons[jm.shift_bt]==0:
-                    thruster_cmd = mixer.mix(data[jm.ud],data[jm.lr],-data[jm.fb],0,0,-data[jm.yaw],pitch_copensate,roll_copensate)
+                    thruster_joy_cmd = mixer.mix(data[jm.ud],data[jm.lr],-data[jm.fb],0,0,-data[jm.yaw],pitch_copensate,roll_copensate)
                 else: #shift mode
-                    thruster_cmd = mixer.mix(data[jm.ud],0,0,data[jm.lr],-data[jm.fb],-data[jm.yaw],pitch_copensate,roll_copensate)
+                    thruster_joy_cmd = mixer.mix(data[jm.ud],0,0,data[jm.lr],-data[jm.fb],-data[jm.yaw],pitch_copensate,roll_copensate)
             if topic==zmq_topics.topic_button:
                 new_joy_buttons=data
                 #if new_joy_buttons[jm.record_bt]==1 and joy_buttons[jm.record_bt]==0:
@@ -63,8 +64,10 @@ async def recv_and_process():
         if tic-timer20hz>0:
             timer20hz=tic+1/20.0
             if not system_state['arm']:
-                thruster_cmd=[0.0]*8
-            pub_sock.send_multipart([zmq_topics.topic_thrusters_comand,pickle.dumps((tic,thruster_cmd))])
+                thruster_cmd=np.zeros(8)
+            thruster_cmd += thruster_joy_cmd
+            pub_sock.send_multipart([zmq_topics.topic_thrusters_comand,pickle.dumps((tic,list(thruster_cmd)))])
+            thruster_cmd = np.zeros(8)
 
 
                 #print('botton',ret)
