@@ -18,7 +18,7 @@ new_6_win
 run 0 onboard controller.py
 run 1 onboard sensors_gate.py
 sleep 1
-run 2 plugins joy_plugin.py
+run 2 plugins manual_plugin.py
 
 #only hw from here
 if [ ! -v SIM ]
