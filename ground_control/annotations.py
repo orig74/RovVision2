@@ -63,7 +63,7 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
 from math import cos,sin,pi
 def draw_compass(img,x,y,heading,pitch,roll):
     font = cv2.FONT_HERSHEY_SIMPLEX
-    cv2.putText(img,str(int(heading%360)),(x,y+30), font, 0.5,(0,200,255),1,cv2.LINE_AA)
+    cv2.putText(img,str(int(heading%360)),(x,y+30), font, 0.5,(0,000,255),1,cv2.LINE_AA)
 
     r=50.0
     #mt=r-3
@@ -107,6 +107,7 @@ def draw_compass(img,x,y,heading,pitch,roll):
     cv2.line(img,
         (int(xx-cs*(r-mt)),int(yy-si*(r-mt))),
         (int(xx-cs*r),int(yy-si*r)),(0,255,255),2)
+    cv2.putText(img,str(int(pitch)),(x,y+60), font, 0.5,(0,255,255),1,cv2.LINE_AA)
 
 
 
@@ -125,3 +126,9 @@ def draw_depth(img,x,y,depth):
     d=int(depth*s)
     cv2.line(img,(x,y+d),(x+10,y+d),(0,255,255))
     cv2.line(img,(x,y+d+1),(x+10,y+d+1),(255,0,255))
+
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    cv2.putText(img,'%.2f'%depth \
+            ,(x,l+y+20), font, 0.5,(255,0,255),1,cv2.LINE_AA)
+
+
