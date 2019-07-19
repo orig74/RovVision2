@@ -35,7 +35,7 @@ void loop() {
       TCNT0 = 0x00;
       PORTB = 0b11111111;
       PORTC = 0b11111111;
-      while (TCNT0 < 0x1B) {}
+      while (TCNT0 < 0x1A) {}
       PORTB &= portB_buff[frame_bit];
       PORTC &= portC_buff[frame_bit];
       while (TCNT0 < 0x4B) {}
