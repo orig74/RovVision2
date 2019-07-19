@@ -15,6 +15,16 @@ def publisher(port,ip='127.0.0.1'):
     socket_pub.bind("tcp://%s:%d" % (ip,port) )
     return socket_pub
 
+def pull_sink(port,ip='127.0.0.1'):
+    socket = context.socket(zmq.PULL)
+    socket.bind("tcp://%s:%d" % (ip,port) )
+    return socket
+
+def push_source(port,ip='127.0.0.1'):
+    socket = context.socket(zmq.PUSH)
+    socket.connect("tcp://%s:%d" % (ip,port) ) 
+    return socket
+
 
 class ab_filt():
     def __init__(self,xv=[0,0],alpha=0.5,beta=0.1):
@@ -33,4 +43,6 @@ class ab_filt():
         self.x += self.alpha * rk;
         self.v += ( self.beta * rk ) / dt;
         return (self.x,self.v)
+
+
 

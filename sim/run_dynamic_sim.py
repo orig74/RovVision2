@@ -6,6 +6,7 @@ import sys
 import asyncio
 import time
 import pickle
+from numpy import cos,sin
 
 sys.path.append('..')
 sys.path.append('../utils')
@@ -56,12 +57,23 @@ async def pubposition():
         #pub_pos_sim.send_multipart([xzmq_topics.topic_sitl_position_report,pickle.dumps((time.time(),curr_q))])
         pub_pos_sim.send_multipart([ue4_zmq_topics.topic_sitl_position_report,pickle.dumps(position_struct)])
 
-        imu={'ts':time.time()}
+        tic=time.time()
+        imu={'ts':tic}
         imu['yaw'],imu['pitch'],imu['roll']=-np.rad2deg(curr_q[3:])
+
+        #rates from dsym notebook
+        #(-u4*sin(q3) + u5*cos(q3)*cos(q4))*N.x + (u4*cos(q3) + u5*sin(q3)*cos(q4))*N.y + (u3 - u5*sin(q4))*N.z
+        q3,q4,q5=curr_q[3:]
+        u3,u4,u5=curr_u[3:]
+        imu['rates']=(\
+                -u4*sin(q3) + u5*cos(q3)*cos(q4),\
+                u4*cos(q3) + u5*sin(q3)*cos(q4),\
+                u3 - u5*sin(q4))
+
         print('dsim Y{:4.2f} P{:4.2f} R{:4.2f}'.format(imu['yaw'],imu['pitch'],imu['roll'])
                 +' X{:4.2f} Y{:4.2f} Z{:4.2f}'.format(*curr_q[:3]))
         pub_imu.send_multipart([zmq_topics.topic_imu,pickle.dumps(imu)])
-        pub_depth.send_multipart([zmq_topics.topic_depth,pickle.dumps(curr_q[2])])
+        pub_depth.send_multipart([zmq_topics.topic_depth,pickle.dumps({'ts':tic,'depth':curr_q[2]})])
 
 async def recv_and_process():
     global current_command

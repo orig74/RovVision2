@@ -40,7 +40,7 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
         yaw,pitch,roll=m['yaw'],m['pitch'],m['roll']
         draw_compass(img,1000,500,yaw,pitch,roll)
     if zmq_topics.topic_depth in message_dict:
-        draw_depth(img,0,0,message_dict[zmq_topics.topic_depth])
+        draw_depth(img,0,0,message_dict[zmq_topics.topic_depth]['depth'])
     if zmq_topics.topic_sonar in message_dict:
         sonar_rng = message_dict[zmq_topics.topic_sonar]
         line=' {:>.2f},{:>.2f}Rng'.format(*sonar_rng)

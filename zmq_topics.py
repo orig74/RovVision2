@@ -8,6 +8,8 @@ topic_system_state=b'system_state'
 
 record_state=b'record_state'
 topic_controller_port=topic_thrusters_comand_port=7788
+thrusters_sink_port = 7787
+
 
 #topic_camera_left=b'topic_camera_left'
 #topic_camera_right=b'topic_camera_right'
