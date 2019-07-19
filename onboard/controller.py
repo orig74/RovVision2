@@ -5,14 +5,11 @@ import sys
 import asyncio
 import time
 import pickle
-import mixer
-
 
 sys.path.append('..')
 sys.path.append('../utils')
 import zmq_wrapper as utils
 import zmq_topics
-import config
 from config import Joy_map as jm
 
 pub_sock = utils.publisher(zmq_topics.topic_controller_port)
@@ -29,8 +26,20 @@ async def recv_and_process():
     thruster_cmd=np.zeros(8)
     timer10hz=time.time()+1/10.0
     timer20hz=time.time()+1/20.0
-    system_state={'arm':False,'mode':'MANUAL'}
+    system_state={'arm':False,'mode':[]}
     thrusters_dict={}
+
+
+    def togle_mode(m):
+        s=system_state
+        if m in s['mode']:
+            s['mode'].remove(m)
+        else:
+            s['mode'].append(m)
+
+    def test_togle(b):
+        return new_joy_buttons[b]==1 and joy_buttons[b]==0
+
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.005)[0]
         for sock in socks:
@@ -42,8 +51,9 @@ async def recv_and_process():
                 topic,data=ret[0],pickle.loads(ret[1])
                 if topic==zmq_topics.topic_button:
                     new_joy_buttons=data
-                    #if new_joy_buttons[jm.record_bt]==1 and joy_buttons[jm.record_bt]==0:
-                        #togel functions here
+                    if test_togle(jm.depth_hold_bt):
+                        togle_mode('DEPTH_HOLD')
+
                     joy_buttons=new_joy_buttons
                     if joy_buttons[jm.arm_disarm]==1:
                         system_state['arm']=not system_state['arm']

@@ -52,7 +52,12 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
         ss = message_dict[zmq_topics.topic_system_state][1]
         cv2.putText(img,'ARM' if ss['arm'] else 'DISARM' \
                 ,(50,15), font, 0.5,(0,0,255) if ss['arm'] else (0,255,0),1,cv2.LINE_AA)
-        cv2.putText(img, ss['mode']\
+        modes = sorted(ss['mode'])
+        if len(modes)==0:
+            modes_str='MANUAL'
+        else:
+            modes_str=' '.join(modes)
+        cv2.putText(img, modes_str\
                 ,(140,15), font, 0.5,(0,255,0),1,cv2.LINE_AA)
 
 from math import cos,sin,pi
