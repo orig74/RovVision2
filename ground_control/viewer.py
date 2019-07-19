@@ -28,6 +28,7 @@ subs_socks.append(utils.subscribe([zmq_topics.topic_thrusters_comand,zmq_topics.
 subs_socks.append(utils.subscribe([zmq_topics.topic_button, zmq_topics.topic_hat ], zmq_topics.topic_joy_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_imu ], zmq_topics.topic_imu_port) )
 subs_socks.append(utils.subscribe([zmq_topics.topic_depth ], zmq_topics.topic_depth_port) )
+subs_socks.append(utils.subscribe([zmq_topics.topic_depth_hold_pid ], zmq_topics.topic_depth_hold_port) )
 subs_socks.append(utils.subscribe([zmq_topics.topic_sonar ], zmq_topics.topic_sonar_port) )
 subs_socks.append(utils.subscribe([zmq_topics.topic_stereo_camera_ts ], zmq_topics.topic_camera_port) ) #for sync perposes
 

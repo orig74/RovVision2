@@ -40,7 +40,8 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
         yaw,pitch,roll=m['yaw'],m['pitch'],m['roll']
         draw_compass(img,1000,500,yaw,pitch,roll)
     if zmq_topics.topic_depth in message_dict:
-        draw_depth(img,0,0,message_dict[zmq_topics.topic_depth]['depth'])
+        target_depth = message_dict.get(zmq_topics.topic_depth_hold_pid,{}).get('T',0)
+        draw_depth(img,0,0,message_dict[zmq_topics.topic_depth]['depth'],target_depth)
     if zmq_topics.topic_sonar in message_dict:
         sonar_rng = message_dict[zmq_topics.topic_sonar]
         line=' {:>.2f},{:>.2f}Rng'.format(*sonar_rng)
@@ -112,7 +113,7 @@ def draw_compass(img,x,y,heading,pitch,roll):
 
 
 
-def draw_depth(img,x,y,depth):
+def draw_depth(img,x,y,depth,tdepth):
     l=450
     s=15
     cv2.line(img,(x,y),(x,y+l),(0,0,255))
@@ -124,7 +125,9 @@ def draw_depth(img,x,y,depth):
         cv2.line(img,(x,y+i),(x+mt,y+i),(0,0,255))
 
     d=int(depth*s)
-    cv2.line(img,(x,y+d),(x+10,y+d),(0,255,255))
+    dt=int(tdepth*s)
+    cv2.line(img,(x,y+dt),(x+10,y+dt),(0,100,100),thickness=3)
+    cv2.line(img,(x,y+d),(x+10,y+d),(0,255,255),thickness=2)
     cv2.line(img,(x,y+d+1),(x+10,y+d+1),(255,0,255))
 
     font = cv2.FONT_HERSHEY_SIMPLEX

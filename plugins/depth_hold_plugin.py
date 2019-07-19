@@ -45,6 +45,8 @@ async def recv_and_process():
                         pid=PID(**depth_pid)
                     else:
                         ud_command = pid(depth,target_depth,rate,0)
+                        debug_pid = {'P':pid.P,'I':pid.I,'D':pid.D,'C':ud_command,'T':target_depth,'N':depth,'TS':new_depth_ts}
+                        pub_sock.send_multipart([zmq_topics.topic_depth_hold_pid, pickle.dumps(debug_pid,-1)])
                         thruster_cmd = mixer.mix(ud_command,0,0,0,0,0,pitch,roll)
                         thrusters_source.send_pyobj(['depth',time.time(),thruster_cmd])
                 else:
@@ -79,6 +81,8 @@ if __name__=='__main__':
 
     ### plugin outputs
     thrusters_source = zmq_wrapper.push_source(zmq_topics.thrusters_sink_port) 
+    pub_sock = zmq_wrapper.publisher(zmq_topics.topic_depth_hold_port)
+
 
     loop = asyncio.get_event_loop()
     result = loop.run_until_complete(main())

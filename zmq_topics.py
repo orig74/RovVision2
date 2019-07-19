@@ -41,3 +41,6 @@ topic_record_state_port=9303
 topic_local_route_port=9995
 
 topic_viewer_data=b'topic_viewer_data'
+
+topic_depth_hold_pid=b'topic_depth_control'
+topic_depth_hold_port=9996
