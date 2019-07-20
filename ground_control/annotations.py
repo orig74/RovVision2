@@ -108,7 +108,9 @@ def draw_compass(img,x,y,heading,pitch,roll):
     cv2.line(img,
         (int(xx-cs*(r-mt)),int(yy-si*(r-mt))),
         (int(xx-cs*r),int(yy-si*r)),(0,255,255),2)
-    cv2.putText(img,str(int(pitch)),(x,y+60), font, 0.5,(0,255,255),1,cv2.LINE_AA)
+    cv2.putText(img,'Y:'+str(int(heading)),(x-3,y+60), font, 0.5,(0,255,255),1,cv2.LINE_AA)
+    cv2.putText(img,'P:'+str(int(pitch)),(x-3,y+75), font, 0.5,(0,255,255),1,cv2.LINE_AA)
+    cv2.putText(img,'R:'+str(int(roll)),(x-3,y+90), font, 0.5,(0,255,255),1,cv2.LINE_AA)
 
 
 
