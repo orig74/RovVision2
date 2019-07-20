@@ -46,10 +46,10 @@ async def recv_and_process():
                         pid_r=PID(**roll_pid)
                     else:
                         yaw_cmd = pid_y(yaw,target_att[0],rz,0)
-                        pitch_cmd = pid_p(pitch,target_att[1],ry,0)
+                        pitch_cmd = -pid_p(pitch,target_att[1],ry,0)
                         roll_cmd = pid_r(roll,target_att[2],rx,0)
 
-                        print('---',pitch_pid)
+                        print('---',pitch_cmd)
                         #debug_pid = {'P':pid.P,'I':pid.I,'D':pid.D,'C':ud_command,'T':target_depth,'N':depth,'TS':new_depth_ts}
                         #pub_sock.send_multipart([zmq_topics.topic_depth_hold_pid, pickle.dumps(debug_pid,-1)])
                         thruster_cmd = mixer.mix(0,0,0,roll_cmd,pitch_cmd,yaw_cmd,0,0)
