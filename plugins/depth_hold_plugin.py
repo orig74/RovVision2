@@ -12,7 +12,7 @@ import mixer
 import zmq_wrapper 
 import zmq_topics
 from config import Joy_map as jm
-from config import depth_pid
+from config_pid import depth_pid
 from pid import PID
 from filters import ab_filt
 

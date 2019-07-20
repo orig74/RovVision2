@@ -62,6 +62,7 @@ async def pubposition():
         imu['yaw'],imu['pitch'],imu['roll']=-np.rad2deg(curr_q[3:])
 
         #rates from dsym notebook
+        #print(R.ang_vel_in(N).express(N))
         #(-u4*sin(q3) + u5*cos(q3)*cos(q4))*N.x + (u4*cos(q3) + u5*sin(q3)*cos(q4))*N.y + (u3 - u5*sin(q4))*N.z
         q3,q4,q5=curr_q[3:]
         u3,u4,u5=curr_u[3:]

@@ -53,6 +53,8 @@ async def recv_and_process():
                     new_joy_buttons=data
                     if test_togle(jm.depth_hold_bt):
                         togle_mode('DEPTH_HOLD')
+                    if test_togle(jm.att_hold_bt):
+                        togle_mode('ATT_HOLD')
 
                     joy_buttons=new_joy_buttons
                     if joy_buttons[jm.arm_disarm]==1:
