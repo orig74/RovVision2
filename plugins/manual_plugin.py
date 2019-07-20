@@ -13,8 +13,8 @@ import mixer
 import zmq_wrapper 
 import zmq_topics
 import config
-from config import Joy_map as jm
-
+#from config import Joy_map as jm
+from joy_mix import joy_mix  
 
 
 async def recv_and_process():
@@ -29,14 +29,11 @@ async def recv_and_process():
             if topic==zmq_topics.topic_axes:
                 #print('joy ',ret[jm.yaw])
                 roll_copensate,pitch_copensate=0,0
-                
-                if joy_buttons[jm.shift2_bt]==1:
+                joy = joy_mix(data,joy_buttons) 
+                if joy['inertial']:
                     roll_copensate,pitch_copensate=roll,pitch
-               
-                if joy_buttons[jm.shift_bt]==0:
-                    thruster_joy_cmd = mixer.mix(data[jm.ud],data[jm.lr],-data[jm.fb],0,0,data[jm.yaw],pitch_copensate,roll_copensate)
-                else: #shift mode
-                    thruster_joy_cmd = mixer.mix(data[jm.ud],0,0,data[jm.lr],data[jm.fb],data[jm.yaw],pitch_copensate,roll_copensate)
+              
+                thruster_joy_cmd = mixer.mix(joy['ud'],joy['lr'],joy['fb'],joy['roll'],joy['pitch'],joy['yaw'],pitch_copensate,roll_copensate)
 
                 thrusters_source.send_pyobj(['joy',time.time(),thruster_joy_cmd])
             if topic==zmq_topics.topic_button:

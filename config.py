@@ -5,7 +5,7 @@ class Joy_map:
     yaw=0
     fb=4
     lr=3
-    shift_bt=4
+    shift1_bt=4
     shift2_bt=5
     record_bt=10
     arm_disarm=9
