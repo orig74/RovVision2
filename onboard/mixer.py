@@ -26,10 +26,10 @@ def mix(up_down,left_right,fwd_back,roll,pitch,yaw,pitch_copensate=0.0,roll_cope
     mix all comands to thrusters
     """
     #roll_copensate=0 #for now
-    dcm=todcm(0,np.deg2rad(pitch_copensate),np.deg2rad(roll_copensate)).T
+    dcm=todcm(0,np.deg2rad(pitch_copensate),np.deg2rad(roll_copensate))
     v=np.array([[fwd_back,left_right,up_down]]).T
     fwd_back,left_right,up_down=(dcm @ v).flatten()
-    if abs(pitch_copensate-90)>0.01: ## test for singularity
+    if 0 and abs(pitch_copensate-90)>0.01: ## test for singularity
 
         v=np.array([yaw,pitch,roll]) #command mat in inertial frame
         nv=np.linalg.norm(v)*10000 #multiply by large number to get eps for rotation
@@ -40,17 +40,28 @@ def mix(up_down,left_right,fwd_back,roll,pitch,yaw,pitch_copensate=0.0,roll_cope
         dcm_in_r=dcm.T @ todcm(*v) @ dcm 
 
         yaw,pitch,roll=fromdcm(dcm_in_r)*nv #command in reference frame
+    if 1 and abs(pitch_copensate-90)>0.01: ## test for singularity
+        v=np.array([roll,pitch,yaw]).reshape(3,1) #rot arround x,y,z
+        #nv=np.linalg.norm(v)*10000 #multiply by large number to get eps for rotation
+        #if nv>0:
+        #    v=v/nv
+
+        #dcm_in_r=dcm.T @ todcm(*v) @ dcm 
+        #dcm_in_r=dcm.T @ todcm(*v) @ dcm 
+
+        roll,pitch,yaw=(dcm @ v).flatten() #command in reference frame
+
 
     thrusters=np.zeros(8)
     thrusters[:4]+=up_down#/2.0 #/2.0 since thrusters are dircted strait up
     
-    thrusters[[4,6]]-=left_right*np.sqrt(2) # sqrt orient in 45 deg compensation
-    thrusters[[5,7]]+=left_right*np.sqrt(2)
+    thrusters[[4,6]]+=left_right*np.sqrt(2) # sqrt orient in 45 deg compensation
+    thrusters[[5,7]]-=left_right*np.sqrt(2)
 
     thrusters[4:]+=fwd_back*np.sqrt(2)
 
-    thrusters[[0,3]]+=roll
-    thrusters[[1,2]]-=roll
+    thrusters[[0,3]]-=roll
+    thrusters[[1,2]]+=roll
 
     thrusters[[0,1]]+=pitch
     thrusters[[2,3]]-=pitch

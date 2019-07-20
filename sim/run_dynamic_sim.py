@@ -53,13 +53,15 @@ async def pubposition():
         #print('dsim {:4.2f} {:4.2f} {:4.2f} {:3.1f} {:3.1f} {:3.1f}'.format(*curr_q),current_command)
         ps['posx'],ps['posy'],ps['posz']=curr_q[:3]
         ps['yaw'],ps['roll'],ps['pitch']=-np.rad2deg(curr_q[3:])
+        ps['yaw']=-ps['yaw']
+        ps['posy']=-ps['posy']
         ps['roll']+=90
         #pub_pos_sim.send_multipart([xzmq_topics.topic_sitl_position_report,pickle.dumps((time.time(),curr_q))])
         pub_pos_sim.send_multipart([ue4_zmq_topics.topic_sitl_position_report,pickle.dumps(position_struct)])
 
         tic=time.time()
         imu={'ts':tic}
-        imu['yaw'],imu['pitch'],imu['roll']=-np.rad2deg(curr_q[3:])
+        imu['yaw'],imu['pitch'],imu['roll']=np.rad2deg(curr_q[3:])
 
         #rates from dsym notebook
         #print(R.ang_vel_in(N).express(N))

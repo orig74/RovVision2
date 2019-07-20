@@ -68,8 +68,9 @@ async def recv_and_process():
             timer20hz=tic+1/20.0
             if not system_state['arm']:
                 thruster_cmd=np.zeros(8)
-            for k in thrusters_dict:
-                thruster_cmd += thrusters_dict[k]
+            else:
+                for k in thrusters_dict:
+                    thruster_cmd += thrusters_dict[k]
             pub_sock.send_multipart([zmq_topics.topic_thrusters_comand,pickle.dumps((tic,list(thruster_cmd)))])
             thruster_cmd = np.zeros(8)
 
