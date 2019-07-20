@@ -12,7 +12,7 @@ sys.path.append('../onboard')
 import mixer
 import zmq_wrapper 
 import zmq_topics
-from config import Joy_map as jm
+from joy_mix import joy_mix  
 from config_pid import yaw_pid,pitch_pid,roll_pid,roll_target_0
 from pid import PID
 
@@ -27,6 +27,7 @@ async def recv_and_process():
     target_att=np.zeros(3)
     pid_y,pid_p,pid_r=[None]*3
     system_state={'mode':[]}
+    joy,joy_axis,joy_buttons=None,None,None
 
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.005)[0]
@@ -39,6 +40,9 @@ async def recv_and_process():
                 ans=mixer.from_ang_rates_to_euler_rates(yaw,pitch,roll,data['rates'])
                 if ans is not None:
                     yawr,pitchr,rollr=mixer.from_ang_rates_to_euler_rates(yaw,pitch,roll,data['rates']) 
+                
+                if joy_buttons and joy_axis:
+                    joy = joy_mix(joy_axis,joy_buttons)
 
                 if 'ATT_HOLD' in system_state['mode'] and ans is not None:
                     if pid_y is None:
@@ -46,9 +50,18 @@ async def recv_and_process():
                         pid_p=PID(**pitch_pid)
                         pid_r=PID(**roll_pid)
                     else:
-                        yaw_cmd = pid_y(yaw,target_att[0],yawr,0)
+                        if joy and joy['inertial'] and abs(joy['yaw'])<0.05:
+                            yaw_cmd = pid_y(yaw,target_att[0],yawr,0)
+                        else:
+                            target_att[0]=yaw
+                            yaw_cmd=0
                         #print('R{:06.3f} Y{:06.3f} YT{:06.3f} C{:06.3f}'.format(yawr,yaw,target_att[0],yaw_cmd))
-                        pitch_cmd = pid_p(pitch,target_att[1],pitchr,0)
+                        
+                        if joy and abs(joy['pitch'])<0.05:
+                            pitch_cmd = pid_p(pitch,target_att[1],pitchr,0)
+                        else:
+                            target_att[1]=pitch
+                            pitch_cmd=0	
                         #print('R{:06.3f} P{:06.3f} PT{:06.3f} C{:06.3f}'.format(pitchr,pitch,target_att[1],pitch_cmd))
                         roll_cmd = pid_r(roll,0 if roll_target_0 else target_att[2],rollr,0)
                         #print('RR{:06.3f} R{:06.3f} RT{:06.3f} C{:06.3f}'.format(rollr,roll,target_att[2],roll_cmd))
@@ -65,7 +78,11 @@ async def recv_and_process():
 
 
             if topic==zmq_topics.topic_axes:
-                pass
+                joy_axis=data
+
+
+            if topic==zmq_topics.topic_button:
+                joy_buttons=data
                 #target_depth+=data[jm.ud] 
 
             
@@ -82,7 +99,8 @@ async def main():
 if __name__=='__main__':
     ### plugin inputs
     subs_socks=[]
-    subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_axes],zmq_topics.topic_joy_port))
+    #subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_axes],zmq_topics.topic_joy_port))
+    subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_axes,zmq_topics.topic_button],zmq_topics.topic_joy_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_imu],zmq_topics.topic_imu_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
 
