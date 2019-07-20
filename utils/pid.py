@@ -39,7 +39,7 @@ class PID(object):
         self.prev_state=self.current_state
         self.current_state=state
         self.target=target
-        self.err=getDiffAng(state,target) if self.angle_deg_type else target-state
+        self.err=getDiffAng(target,state) if self.angle_deg_type else target-state
         if self.func_in_err is not None:
             self.p=self.func_in_err(self.err)*self.P
         else:

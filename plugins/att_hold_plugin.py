@@ -16,17 +16,16 @@ from config import Joy_map as jm
 from config_pid import yaw_pid,pitch_pid,roll_pid
 from pid import PID
 
-def rates_in_body_frame(yaw,pitch,roll,rot_rates):
-    dcm=mixer.todcm(yaw,pitch,roll)
-    v=np.array(rot_rates).reshape(3,1)
-    rx,ry,rz=(dcm @ v).flatten()
-    return rx,ry,rz
+#def rates_in_body_frame(yaw,pitch,roll,rot_rates):
+#    dcm=mixer.todcm(yaw,pitch,roll)
+#    v=np.array(rot_rates).reshape(3,1)
+#    rx,ry,rz=(dcm.T @ v).flatten()
+#    return rx,ry,rz
 
 async def recv_and_process():
     keep_running=True
     target_att=np.zeros(3)
     pid_y,pid_p,pid_r=[None]*3
-    pids=[pid_y,pid_p,pid_r]
     system_state={'mode':[]}
 
     while keep_running:
@@ -37,27 +36,32 @@ async def recv_and_process():
 
             if topic==zmq_topics.topic_imu:
                 yaw,pitch,roll=data['yaw'],data['pitch'],data['roll']
-                rx,ry,rz=rates_in_body_frame(yaw,pitch,roll,data['rates']) 
-                
-                if 'ATT_HOLD' in system_state['mode']:
+                ans=mixer.from_ang_rates_to_euler_rates(yaw,pitch,roll,data['rates'])
+                if ans is not None:
+                    yawr,pitchr,rollr=mixer.from_ang_rates_to_euler_rates(yaw,pitch,roll,data['rates']) 
+
+                if 'ATT_HOLD' in system_state['mode'] and ans is not None:
                     if pid_y is None:
                         pid_y=PID(**yaw_pid)
                         pid_p=PID(**pitch_pid)
                         pid_r=PID(**roll_pid)
                     else:
-                        yaw_cmd = pid_y(yaw,target_att[0],rz,0)
-                        pitch_cmd = -pid_p(pitch,target_att[1],ry,0)
-                        roll_cmd = pid_r(roll,target_att[2],rx,0)
+                        yaw_cmd = pid_y(yaw,target_att[0],yawr,0)
+                        #print('R{:06.3f} Y{:06.3f} YT{:06.3f} C{:06.3f}'.format(yawr,yaw,target_att[0],yaw_cmd))
+                        pitch_cmd = pid_p(pitch,target_att[1],pitchr,0)
+                        #print('R{:06.3f} P{:06.3f} PT{:06.3f} C{:06.3f}'.format(pitchr,pitch,target_att[1],pitch_cmd))
+                        roll_cmd = pid_r(roll,target_att[2],rollr,0)
+                        #print('RR{:06.3f} R{:06.3f} RT{:06.3f} C{:06.3f}'.format(rollr,roll,target_att[2],roll_cmd))
 
-                        print('---',pitch_cmd)
                         #debug_pid = {'P':pid.P,'I':pid.I,'D':pid.D,'C':ud_command,'T':target_depth,'N':depth,'TS':new_depth_ts}
                         #pub_sock.send_multipart([zmq_topics.topic_depth_hold_pid, pickle.dumps(debug_pid,-1)])
                         thruster_cmd = mixer.mix(0,0,0,roll_cmd,pitch_cmd,yaw_cmd,0,0)
                         thrusters_source.send_pyobj(['att',time.time(),thruster_cmd])
                 else:
                     if pid_y is not None:
-                        for p in pids: p.reset()
+                        pid_y.reset(),pid_r.reset(),pid_y.reset()
                     target_att=[yaw,pitch,roll]
+                    thrusters_source.send_pyobj(['att',time.time(),mixer.zero_cmd()])
 
 
             if topic==zmq_topics.topic_axes:

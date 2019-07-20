@@ -36,7 +36,7 @@ async def recv_and_process():
                 if joy_buttons[jm.shift_bt]==0:
                     thruster_joy_cmd = mixer.mix(data[jm.ud],data[jm.lr],-data[jm.fb],0,0,data[jm.yaw],pitch_copensate,roll_copensate)
                 else: #shift mode
-                    thruster_joy_cmd = mixer.mix(data[jm.ud],0,0,data[jm.lr],-data[jm.fb],data[jm.yaw],pitch_copensate,roll_copensate)
+                    thruster_joy_cmd = mixer.mix(data[jm.ud],0,0,data[jm.lr],data[jm.fb],data[jm.yaw],pitch_copensate,roll_copensate)
 
                 thrusters_source.send_pyobj(['joy',time.time(),thruster_joy_cmd])
             if topic==zmq_topics.topic_button:

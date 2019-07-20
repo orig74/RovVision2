@@ -52,6 +52,7 @@ async def recv_and_process():
                 else:
                     if pid is not None:
                         pid.reset()
+                    thrusters_source.send_pyobj(['depth',time.time(),mixer.zero_cmd()])
                     target_depth=depth
 
 

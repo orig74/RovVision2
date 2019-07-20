@@ -1,5 +1,5 @@
 import numpy as np
-from numpy import cos,sin
+from numpy import cos,sin,tan
 
 
 #output dcm from dynamic sim file
@@ -20,6 +20,27 @@ def fromdcm(dcm):
     yaw=np.arctan2(dcm[0,1],dcm[0,0])
     roll=np.arctan2(dcm[1,2],dcm[2,2])
     return np.array([yaw,pitch,roll])
+
+def from_ang_rates_to_euler_rates(yaw,pitch,roll,rates):
+    rates_vec=np.array(rates).reshape(3,1)
+    #output from dynamic sim file
+    #Matrix([
+    # [cos(q3(t))*tan(q4(t)), sin(q3(t))*tan(q4(t)), 1], 
+    # [-sin(q3(t)), cos(q3(t)), 0], 
+    # [cos(q3(t))/cos(q4(t)), sin(q3(t))/cos(q4(t)), 0]])
+    if abs(pitch-90)<0.001: #singular
+        return None
+    q3,q4,q5=np.deg2rad([yaw,pitch,roll])
+    M=np.array([\
+            [cos(q3)*tan(q4), sin(q3)*tan(q4), 1],
+            [-sin(q3), cos(q3), 0],
+            [cos(q3)/cos(q4), sin(q3)/cos(q4), 0]])
+    yawr,pitchr,rollr=np.rad2deg((M @ rates_vec).flatten())
+    return yawr,pitchr,rollr
+
+
+def zero_cmd():
+    return [0]*8
 
 def mix(up_down,left_right,fwd_back,roll,pitch,yaw,pitch_copensate=0.0,roll_copensate=0.0):
     """
@@ -45,8 +66,8 @@ def mix(up_down,left_right,fwd_back,roll,pitch,yaw,pitch_copensate=0.0,roll_cope
     thrusters[[0,3]]-=roll
     thrusters[[1,2]]+=roll
 
-    thrusters[[0,1]]+=pitch
-    thrusters[[2,3]]-=pitch
+    thrusters[[0,1]]-=pitch
+    thrusters[[2,3]]+=pitch
 
     thrusters[[4,7]]+=yaw/2.0 #/2.0 since yaw command using all 4 thrusters  
     thrusters[[5,6]]-=yaw/2.0
