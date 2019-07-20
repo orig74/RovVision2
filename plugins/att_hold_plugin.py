@@ -13,7 +13,7 @@ import mixer
 import zmq_wrapper 
 import zmq_topics
 from config import Joy_map as jm
-from config_pid import yaw_pid,pitch_pid,roll_pid
+from config_pid import yaw_pid,pitch_pid,roll_pid,roll_target_0
 from pid import PID
 
 #def rates_in_body_frame(yaw,pitch,roll,rot_rates):
@@ -50,7 +50,7 @@ async def recv_and_process():
                         #print('R{:06.3f} Y{:06.3f} YT{:06.3f} C{:06.3f}'.format(yawr,yaw,target_att[0],yaw_cmd))
                         pitch_cmd = pid_p(pitch,target_att[1],pitchr,0)
                         #print('R{:06.3f} P{:06.3f} PT{:06.3f} C{:06.3f}'.format(pitchr,pitch,target_att[1],pitch_cmd))
-                        roll_cmd = pid_r(roll,target_att[2],rollr,0)
+                        roll_cmd = pid_r(roll,0 if roll_target_0 else target_att[2],rollr,0)
                         #print('RR{:06.3f} R{:06.3f} RT{:06.3f} C{:06.3f}'.format(rollr,roll,target_att[2],roll_cmd))
 
                         #debug_pid = {'P':pid.P,'I':pid.I,'D':pid.D,'C':ud_command,'T':target_depth,'N':depth,'TS':new_depth_ts}

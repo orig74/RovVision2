@@ -57,7 +57,7 @@ async def recv_and_process():
 
 
             if topic==zmq_topics.topic_axes:
-                target_depth+=data[jm.ud] 
+                target_depth+=data[jm.ud]/10.0 
 
             if topic==zmq_topics.topic_imu:
                 pitch,roll=data['pitch'],data['roll']
