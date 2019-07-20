@@ -55,7 +55,7 @@ async def recv_and_process():
 
                         #debug_pid = {'P':pid.P,'I':pid.I,'D':pid.D,'C':ud_command,'T':target_depth,'N':depth,'TS':new_depth_ts}
                         #pub_sock.send_multipart([zmq_topics.topic_depth_hold_pid, pickle.dumps(debug_pid,-1)])
-                        thruster_cmd = mixer.mix(0,0,0,roll_cmd,pitch_cmd,yaw_cmd,0,0)
+                        thruster_cmd = mixer.mix(0,0,0,roll_cmd,pitch_cmd,yaw_cmd,pitch,roll)
                         thrusters_source.send_pyobj(['att',time.time(),thruster_cmd])
                 else:
                     if pid_y is not None:
