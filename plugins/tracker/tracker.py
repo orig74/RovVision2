@@ -351,20 +351,28 @@ if __name__=="__main__":
     sys.path.append('../../')
     import gst
     dd=StereoTrack()
-    fr=gst.gst_file_reader('../../../data/190726-063112/',True)
+    fr=gst.gst_file_reader('../../../data/190726-063112/',False)
+    keep_run=True
     for i,data in enumerate(fr):
         #print(i)
+        if not keep_run:
+            break
         images,cnt=data 
-        print(cnt) 
         if cnt>0:
             ret=dd(*images)
+            print(ret)
             iml,imr=images
             iml=iml.copy()
             imr=imr.copy()
+            print(cnt,iml.shape) 
             draw_track_rects(ret,iml,imr)
             cv2.imshow('left',iml)
             cv2.imshow('rigth',imr)
-
-            k=cv2.waitKey(0)
-            if k%256==ord('q'):
-                break
+            
+            while 1:
+                k=cv2.waitKey(0)
+                if k%256==ord('q'):
+                    keep_run=False
+                    break
+                if k%256==ord(' '):
+                    break
