@@ -6,10 +6,10 @@ import scipy
 import scipy.signal
 import sys
 
-sys.path.append("..")
+sys.path.append("../../utils")
 
-import config
-from utils import ab_filt
+import config_tracker as config
+from filters import ab_filt
 
 track_params = config.track_params
 stereo_corr_params = config.stereo_corr_params
@@ -344,3 +344,27 @@ def draw_track_rects(ret,imgl,imgr):
             cv2.rectangle(imgl,(xl-wx_t//2,yl-wy_t//2),(xl+wx_t//2,yl+wy_t//2),col)
             cv2.rectangle(imgl,(xl-wx_s//2,yl-wy_s//2),(xl+wx_s//2,yl+wy_s//2),col)
             cv2.rectangle(imgr,(xr-wx_s//2,yr-wy_s//2),(xr+wx_s//2,yr+wy_s//2),col)
+
+
+
+if __name__=="__main__":
+    sys.path.append('../../')
+    import gst
+    dd=StereoTrack()
+    fr=gst.gst_file_reader('../../../data/190726-063112/',True)
+    for i,data in enumerate(fr):
+        #print(i)
+        images,cnt=data 
+        print(cnt) 
+        if cnt>0:
+            ret=dd(*images)
+            iml,imr=images
+            iml=iml.copy()
+            imr=imr.copy()
+            draw_track_rects(ret,iml,imr)
+            cv2.imshow('left',iml)
+            cv2.imshow('rigth',imr)
+
+            k=cv2.waitKey(0)
+            if k%256==ord('q'):
+                break
