@@ -15,7 +15,7 @@ import zmq_topics
 import config
 from config import Joy_map as jm
 from gst import init_gst_reader,get_imgs,set_files_fds,get_files_fds,save_main_camera_stream
-from annotations import draw
+from annotations import draw,draw_seperate
 import zmq_wrapper as utils
 import image_enc_dec
 
@@ -31,6 +31,7 @@ subs_socks.append(utils.subscribe([zmq_topics.topic_depth ], zmq_topics.topic_de
 subs_socks.append(utils.subscribe([zmq_topics.topic_depth_hold_pid ], zmq_topics.topic_depth_hold_port) )
 subs_socks.append(utils.subscribe([zmq_topics.topic_sonar ], zmq_topics.topic_sonar_port) )
 subs_socks.append(utils.subscribe([zmq_topics.topic_stereo_camera_ts ], zmq_topics.topic_camera_port) ) #for sync perposes
+subs_socks.append(utils.subscribe([zmq_topics.topic_tracker ], zmq_topics.topic_tracker_port) )
 
 #socket_pub = utils.publisher(config.zmq_local_route)
 socket_pub = utils.publisher(zmq_topics.topic_local_route_port,'0.0.0.0')
@@ -103,6 +104,7 @@ if __name__=='__main__':
         if images[0] is not None and images[1] is not None:
             fmt_cnt_l=image_enc_dec.decode(images[0])
             fmt_cnt_r=image_enc_dec.decode(images[1])
+            draw_seperate(images[0],images[1],message_dict)
             join[:,0:sx,:]=images[0]
             join[:,sx:,:]=images[1]
             images=[None,None]

@@ -44,3 +44,6 @@ topic_viewer_data=b'topic_viewer_data'
 
 topic_depth_hold_pid=b'topic_depth_control'
 topic_depth_hold_port=9996
+
+topic_tracker=b'topic_tracker'
+topic_tracker_port=10101

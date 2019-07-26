@@ -3,12 +3,21 @@ import cv2
 import time
 import config
 import zmq_topics
+import sys
+sys.path.append('../plugins')
+sys.path.append('../plugins/tracker')
+from tracker import tracker
+
 
 fps_time=time.time()
 frame_start_time=None
 frame_start_number=None
 fps_last_num=0
 fps=None
+def draw_seperate(imgl,imgr,message_dict):
+    if zmq_topics.topic_tracker in message_dict:
+        tracker.draw_track_rects(message_dict[zmq_topics.topic_tracker],imgl,imgr)
+
 def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
     global fps_time,fps,fps_last_num,frame_start_time,frame_start_number
     font = cv2.FONT_HERSHEY_SIMPLEX

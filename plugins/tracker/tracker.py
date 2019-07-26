@@ -1,10 +1,11 @@
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 import numpy as np
+import sys
+sys.path.append("tracker")
 import polyfit
 import cv2
 import scipy
 import scipy.signal
-import sys
 
 sys.path.append("../../utils")
 
@@ -351,7 +352,8 @@ if __name__=="__main__":
     sys.path.append('../../')
     import gst
     dd=StereoTrack()
-    fr=gst.gst_file_reader('../../../data/190726-063112/',False)
+    #fr=gst.gst_file_reader('../../../data/190726-063112/',False)
+    fr=gst.gst_file_reader('../../../data/190726-140343/',False)
     keep_run=True
     for i,data in enumerate(fr):
         #print(i)
