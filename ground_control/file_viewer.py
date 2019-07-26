@@ -108,6 +108,8 @@ if __name__=='__main__':
                     msg=ret[1]
                     if msg['frame_cnt'][0]>=fcnt:
                         break
+                else:
+                    messages[ret[0]]=ret[1]
             if fcnt>0:
                 hist_buff_ind=fcnt%len(imbuff)
                 imbuff[hist_buff_ind]=(fcnt,images,copy.deepcopy(messages))
@@ -148,7 +150,7 @@ if __name__=='__main__':
 
             font = cv2.FONT_HERSHEY_SIMPLEX
             cv2.putText(join,'Play {:.1f} tot {:.1f} sec'.format((fcnt-start_frame)/10 ,(end_frame-start_frame)/10)
-                ,(2,12), font, 0.4,(255,0,255),1,cv2.LINE_AA)
+                ,(20,32), font, 0.4,(255,0,255),1,cv2.LINE_AA)
 
             cv2.imshow('3dviewer '+base_name,join)
             #cv2.imshow('left',images[0])
