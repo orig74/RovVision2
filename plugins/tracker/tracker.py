@@ -352,8 +352,8 @@ if __name__=="__main__":
     sys.path.append('../../')
     import gst
     dd=StereoTrack()
-    #fr=gst.gst_file_reader('../../../data/190726-063112/',False)
-    fr=gst.gst_file_reader('../../../data/190726-140343/',False)
+    fr=gst.gst_file_reader('../../../data/190726-063112/',False)
+    #fr=gst.gst_file_reader('../../../data/190726-140343/',False)
     keep_run=True
     for i,data in enumerate(fr):
         #print(i)

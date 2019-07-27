@@ -35,15 +35,18 @@ class Joy_map:
     
     def __right_shift(self):
         return self.buttons[self._shift2_bt]
+    
+    def __no_shift(self):
+        return not self.buttons[self._shift2_bt] and not self.buttons[self._shift1_bt]
 
     def arm_event(self):
         return self.__test_togle(self._arm_disarm)
     
     def att_hold_event(self):
-        return self.__test_togle(self._att_hold_bt)
+        return self.__test_togle(self._att_hold_bt) and self.__no_shift()
 
     def depth_hold_event(self):
-        return self.__test_togle(self._depth_hold_bt)
+        return self.__test_togle(self._depth_hold_bt) and self.__no_shift()
 
     def record_event(self):
         return self.__test_togle(self._record_bt)

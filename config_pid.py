@@ -27,3 +27,5 @@ pitch_pid=roll_pid=yaw_pid
 
 #if set to true always try to mantain 0 roll
 roll_target_0 = True
+
+pos_pids=[depth_pid]*3

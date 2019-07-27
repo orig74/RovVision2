@@ -24,6 +24,7 @@ run 4 plugins att_hold_plugin.py
 run 5 plugins tracker_plugin.py
 tmux new-window
 new_6_win
+run 0  plugins pos_hold_plugin.py
 
 #only hw from here
 if [ ! -v SIM ]

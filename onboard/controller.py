@@ -55,6 +55,12 @@ async def recv_and_process():
                         togle_mode('DEPTH_HOLD')
                     if jm.att_hold_event():
                         togle_mode('ATT_HOLD')
+                    if jm.Rx_hold_event():
+                        togle_mode('RX_HOLD')
+                    if jm.Ry_hold_event():
+                        togle_mode('RY_HOLD')
+                    if jm.Rz_hold_event():
+                        togle_mode('RZ_HOLD')
                     if jm.arm_event():
                         system_state['arm']=not system_state['arm']
 

@@ -53,7 +53,7 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
         draw_depth(img,0,0,message_dict[zmq_topics.topic_depth]['depth'],target_depth)
     if zmq_topics.topic_sonar in message_dict:
         sonar_rng = message_dict[zmq_topics.topic_sonar]
-        line=' {:>.2f},{:>.2f}Rng'.format(*sonar_rng)
+        line=' {:>.2f},{:>.2f} SRng'.format(*sonar_rng)
         cv2.putText(img,line,(350,550), font, 0.5,(0,0,255),1,cv2.LINE_AA)
     if zmq_topics.record_state in message_dict:
         if message_dict[zmq_topics.record_state]:
@@ -69,6 +69,10 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
             modes_str=' '.join(modes)
         cv2.putText(img, modes_str\
                 ,(140,15), font, 0.5,(0,255,0),1,cv2.LINE_AA)
+    if zmq_topics.topic_tracker in message_dict:
+        rng  = message_dict[zmq_topics.topic_tracker].get('range_f',-1.0)
+        line='{:>.2f} TRng'.format(rng)
+        cv2.putText(img,line,(350,570), font, 0.5,(0,0,255),1,cv2.LINE_AA)
 
 from math import cos,sin,pi
 def draw_compass(img,x,y,heading,pitch,roll):
