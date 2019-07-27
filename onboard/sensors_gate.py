@@ -18,13 +18,11 @@ import config
 import gst
 
 subs_socks=[]
-subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_axes,zmq_topics.topic_button],zmq_topics.topic_joy_port))
 subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_stereo_camera],zmq_topics.topic_camera_port))
 keep_running=True
-joy_buttons=[0]*8
 
 async def recv_and_process():
-    global current_command,joy_buttons
+    global current_command
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.005)[0]
         for sock in socks:

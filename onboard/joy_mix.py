@@ -6,12 +6,14 @@ class Joy_map:
     _yaw=0
     _fb=4
     _lr=3
-    _shift1_bt=4
-    _shift2_bt=5
+    _shift1_bt=4 #left shift
+    _shift2_bt=5 #right shift
     _record_bt=10
     _arm_disarm=9
-    _depth_hold_bt=1
-    _att_hold_bt=2
+    _depth_hold_bt=1 #circle / rkeys right
+    _att_hold_bt=2 #triangle / rkeys up
+    _square=3 #square /rkeys left
+    _x = 0 #X /rkeys down
 
     def __init__(self):
         self.buttons=[0]*16
@@ -28,6 +30,12 @@ class Joy_map:
     def __test_togle(self,b):
         return self.buttons[b]==1 and self.prev_buttons[b]==0
 
+    def __left_shift(self):
+        return self.buttons[self._shift1_bt]
+    
+    def __right_shift(self):
+        return self.buttons[self._shift2_bt]
+
     def arm_event(self):
         return self.__test_togle(self._arm_disarm)
     
@@ -39,6 +47,18 @@ class Joy_map:
 
     def record_event(self):
         return self.__test_togle(self._record_bt)
+
+    def Rx_hold_event(self):
+        return self.__test_togle(self._att_hold_bt) and self.__left_shift()
+    
+    def Ry_hold_event(self):
+        return self.__test_togle(self._depth_hold_bt) and self.__left_shift()
+    
+    def Rz_hold_event(self):
+        return self.__test_togle(self._square) and self.__left_shift()
+    
+    def track_lock_event(self):
+        return self.__test_togle(self._x) and self.__left_shift()
 
     def joy_mix(self):
         joy_buttons=self.buttons
