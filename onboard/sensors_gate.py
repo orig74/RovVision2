@@ -16,7 +16,6 @@ import zmq_topics
 import image_enc_dec
 import config
 import gst
-from config import Joy_map as jm
 
 subs_socks=[]
 subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_axes,zmq_topics.topic_button],zmq_topics.topic_joy_port))

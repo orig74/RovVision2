@@ -12,7 +12,7 @@ sys.path.append('../onboard')
 import mixer
 import zmq_wrapper 
 import zmq_topics
-from joy_mix import joy_mix  
+from joy_mix import Joy_map  
 from config_pid import yaw_pid,pitch_pid,roll_pid,roll_target_0
 from pid import PID
 
@@ -27,7 +27,9 @@ async def recv_and_process():
     target_att=np.zeros(3)
     pid_y,pid_p,pid_r=[None]*3
     system_state={'mode':[]}
-    joy,joy_axis,joy_buttons=None,None,None
+
+    jm=Joy_map()
+    joy=None
 
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.005)[0]
@@ -41,8 +43,7 @@ async def recv_and_process():
                 if ans is not None:
                     yawr,pitchr,rollr=mixer.from_ang_rates_to_euler_rates(yaw,pitch,roll,data['rates']) 
                 
-                if joy_buttons and joy_axis:
-                    joy = joy_mix(joy_axis,joy_buttons)
+                joy = jm.joy_mix()
 
                 if 'ATT_HOLD' in system_state['mode'] and ans is not None:
                     if pid_y is None:
@@ -78,11 +79,11 @@ async def recv_and_process():
 
 
             if topic==zmq_topics.topic_axes:
-                joy_axis=data
+                jm.update_axis(data)
 
 
             if topic==zmq_topics.topic_button:
-                joy_buttons=data
+                jm.update_buttons(data)
                 #target_depth+=data[jm.ud] 
 
             

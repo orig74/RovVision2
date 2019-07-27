@@ -3,6 +3,7 @@ import sys,os,time
 from datetime import datetime
 sys.path.append('../')
 sys.path.append('../utils')
+sys.path.append('../onboard')
 import zmq
 import pickle
 import select
@@ -13,7 +14,7 @@ import argparse
 import numpy as np
 import zmq_topics
 import config
-from config import Joy_map as jm
+from joy_mix import Joy_map
 from gst import init_gst_reader,get_imgs,set_files_fds,get_files_fds,save_main_camera_stream
 from annotations import draw,draw_seperate
 import zmq_wrapper as utils
@@ -46,7 +47,8 @@ if __name__=='__main__':
     message_dict={}
     rcv_cnt=0
     record_state=False
-    joy_buttons=[0]*16
+    jm=Joy_map()
+
     while 1:
         images=get_imgs()
         rcv_cnt+=1
@@ -63,14 +65,13 @@ if __name__=='__main__':
                 message_dict[topic]=data
                 
                 if topic==zmq_topics.topic_button:
-                    new_joy_buttons=pickle.loads(ret[1])
-                    if new_joy_buttons[jm.record_bt]==1 and joy_buttons[jm.record_bt]==0:
+                    jm.update_buttons(data)
+                    if jm.record_event(): 
                         #togel recording
                         if not record_state:
                             record_state=datetime.now().strftime('%y%m%d-%H%M%S') 
                         else:
                             record_state=False
-                    joy_buttons=new_joy_buttons
                     pub_record_state.send_multipart([zmq_topics.topic_record_state,pickle.dumps(record_state)])
                     message_dict[zmq_topics.topic_record_state]=record_state
 

@@ -11,7 +11,7 @@ sys.path.append('../onboard')
 import mixer
 import zmq_wrapper 
 import zmq_topics
-from config import Joy_map as jm
+from joy_mix import Joy_map
 from config_pid import depth_pid
 from pid import PID
 from filters import ab_filt
@@ -24,6 +24,7 @@ async def recv_and_process():
     ab=None
     rate=0
     system_state={'mode':[]}
+    jm=Joy_map()
 
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.005)[0]
@@ -57,7 +58,8 @@ async def recv_and_process():
 
 
             if topic==zmq_topics.topic_axes:
-                target_depth+=data[jm.ud]/10.0 
+                jm.update_axis(data)
+                target_depth+=jm.joy_mix()['ud']/10.0 
 
             if topic==zmq_topics.topic_imu:
                 pitch,roll=data['pitch'],data['roll']
