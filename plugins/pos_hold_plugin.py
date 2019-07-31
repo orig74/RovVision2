@@ -43,7 +43,8 @@ async def recv_and_process():
                     #mapping from track image coords to world coords
                     imap = ['dx_f','dy_f','dz_f'][ind]
                     pid_states=['RX_HOLD','RY_HOLD','RZ_HOLD']
-                    if pid_states[ind] not in system_state['mode'] or pids[ind] is None:
+                    if pid_states[ind] not in system_state['mode'] \
+                            or pids[ind] is None:
                         pids[ind] = PID(**pos_pids[ind])
                         if td['valid'] and imap in td:
                             x,_ = td[imap]

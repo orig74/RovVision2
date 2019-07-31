@@ -252,10 +252,12 @@ class StereoTrack():
         imgl1b=imgl[:,:,2].copy()
         imgr1b=imgr[:,:,2].copy()
         valid,pt_l_x,pt_l_y,pt_r_x,pt_r_y = self.__track_and_validate(imgl1r, imgr1r, imgl1b, imgr1b )
+        res={}
         if not valid:
             self.__init_left_corr(imgl1b)
             valid,pt_l_x,pt_l_y,pt_r_x,pt_r_y = self.__track_and_validate(imgl1r, imgr1r, imgl1b, imgr1b )
-        res={'valid':valid}
+
+        res['valid']=valid
         res['pt_l']=(pt_l_x,pt_l_y)
         res['pt_r']=(pt_r_x,pt_r_y)
         res['range']=-100
@@ -305,7 +307,7 @@ class StereoTrack():
         #    print('new range filt')
         #    self.range_filt = ab_filt((res['range'],0))
             self.last_t_pt=t_pt
-
+        res['new_ref']=self.new_ref
         res['ref_cnt']=self.ref_cnt
         return res
 
