@@ -41,15 +41,15 @@ async def recv_and_process():
                 
                 for ind in range(len(pids)):
                     #mapping from track image coords to world coords
-                    imap = ['dx_f','dy_f','dy_f'][ind]
+                    imap = ['dx_f','dy_f','dz_f'][ind]
                     pid_states=['RX_HOLD','RY_HOLD','RZ_HOLD']
                     if pid_states[ind] not in system_state['mode'] or pids[ind] is None:
                         pids[ind] = PID(**pos_pids[ind])
-                        if td['valid']:
+                        if td['valid'] and imap in td:
                             x,_ = td[imap]
                             target_pos[ind]=x
                     else:
-                        if td['valid']:
+                        if td['valid'] and imap in td:
                             x,v = td[imap]
                             cmds[ind] = -pids[ind](x,target_pos[ind],v)
                             print('pid=',ind,x,v,str(pids[ind]))
