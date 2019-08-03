@@ -1,8 +1,14 @@
+#torun 
+# conda activate 2.3
+# VNAV_USB=ttyUSB0 python vnav.py
+
 from vnpy import *
+print('done import')
 import time,sys
 import os,zmq
 sys.path.append('..')
 sys.path.append('../utils')
+import zmq_wrapper as utils
 import zmq_topics
 
 
@@ -49,4 +55,3 @@ if __name__=='__main__':
 #    asyncio.run(main())
     loop = asyncio.get_event_loop()
     result = loop.run_until_complete(main())
-
