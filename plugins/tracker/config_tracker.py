@@ -10,4 +10,3 @@ baseline = 0.122 # (240-100)*.1scale in cm from unreal engine
 focal_length=pixelwidthx/( np.tan(np.deg2rad(fov/2)) *2 )
 camera_pitch=0
 
-rope_track=True

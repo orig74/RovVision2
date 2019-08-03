@@ -7,3 +7,7 @@ fps=10
 #gstreamer 
 gst_ports=[6760,6761]
 
+
+#tracker type
+#tracker = 'local'
+tracker = 'rope'

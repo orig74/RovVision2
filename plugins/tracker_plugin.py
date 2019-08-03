@@ -11,9 +11,14 @@ sys.path.append('../utils')
 sys.path.append('../onboard')
 import zmq_wrapper 
 import zmq_topics
+import config
+
 from joy_mix import Joy_map  
 
-from tracker import tracker
+if config.tracker=='rope':
+    from tracker import rope_tracker as tracker
+elif config.tracker=='local':
+    from tracker import tracker
 
 async def recv_and_process():
     keep_running=True
