@@ -38,6 +38,7 @@ class StereoTrack():
         self.corr_scale_map = None
         self.new_ref=True
         self.t_pt=None
+        self.dx_filt=None
 
     def __corr_scale(self,corr): #prioritizing center
         if corr.shape[0] != corr.shape[1]: #skip incase of not semetric (to complicated :)
@@ -129,6 +130,8 @@ class StereoTrack():
             return cx+self.ofx,cy
         self.new_ref=False
         return rx+cx,ry+cy
+
+
 
 
     def __track_stereo(self,imgl,imgr):
@@ -260,40 +263,42 @@ class StereoTrack():
         res['valid']=valid
         res['pt_l']=(pt_l_x,pt_l_y)
         res['pt_r']=(pt_r_x,pt_r_y)
-        res['range']=-100
+        res['range']=-1
+        res['range_f']=-1
         if not valid:
             self.__init_left_corr(imgl1b)
-            self.t_pt=None
+            #self.t_pt=None
             self.last_t_pt=None
         else:
 
             t_pt = triangulate(self.proj_cams[0],self.proj_cams[1],pt_l_x,pt_l_y,pt_r_x,pt_r_y)
 
             res['range']=t_pt[0] # range in the x direction
-            res['range_z']=t_pt[2] # range in the z direction
+            #res['range_z']=t_pt[2] # range in the z direction
 
 
         #if valid:#abs(range_f-res['range']) < 0.20:  #range jumps less then 2m per sec (0.2/0.1)
             #if self.new_ref:
-            if self.new_ref or self.t_pt is None:
+            #if self.new_ref or self.t_pt is None:
+            if self.new_ref or self.dx_filt is None:
                 self.t_pt = t_pt #save reference point
                 self.last_t_pt = None
                 #self.dx_filt = ab_filt((0,0))
-                self.range_filt = ab_filt((res['range'],0))
-                self.range_filt_z = ab_filt((res['range_z'],0))
-                self.dx_filt = ab_filt((0,0))
-                self.dy_filt = ab_filt((0,0))
-                self.dz_filt = ab_filt((0,0))
+                #self.range_filt = ab_filt((res['range'],0))
+                #self.range_filt_z = ab_filt((res['range_z'],0))
+                self.dx_filt = ab_filt((t_pt[0],0))
+                self.dy_filt = ab_filt((t_pt[1],0))
+                self.dz_filt = ab_filt((t_pt[2],0))
 
 
-            range_f , d_range_f = self.range_filt(res['range'])
-            range_z_f , d_range_z_f = self.range_filt_z(res['range_z'])
-            res['range_f'], res['d_range_f'] = range_f , d_range_f
-            res['range_z_f'], res['d_range_z_f'] = range_z_f , d_range_z_f
-            dx = (t_pt[0]-self.t_pt[0])
-            dy = (t_pt[1]-self.t_pt[1])
+            #range_f , d_range_f = self.range_filt(res['range'])
+            #range_z_f , d_range_z_f = self.range_filt_z(res['range_z'])
+            #res['range_f'], res['d_range_f'] = range_f , d_range_f
+            #res['range_z_f'], res['d_range_z_f'] = range_z_f , d_range_z_f
+            dx = t_pt[0]
+            dy = t_pt[1]
             #print('----',dy)
-            dz = (t_pt[2]-self.t_pt[2])
+            dz = t_pt[2]
             if not self.new_ref:
                 res['dx']=dx
                 res['dy']=dy
@@ -301,6 +306,7 @@ class StereoTrack():
                 res['dx_f']=self.dx_filt(dx)
                 res['dy_f']=self.dy_filt(dy)
                 res['dz_f']=self.dz_filt(dz)
+                res['range_f']=res['dx_f'][0]
             else:
                 print('new ref flag 1')
         #else:
