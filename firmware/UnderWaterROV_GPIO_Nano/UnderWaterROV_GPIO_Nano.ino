@@ -3,9 +3,10 @@
 #include "MS5837.h"
 
 #define LIGHTS_PWM_PIN 9
+#define INDICATOR_LED 5
 #define TRIGER_PIN 6
-#define VOLTAGE_ADC_PIN 7
-#define CURRENT_ADC_PIN 6
+#define VOLTAGE_ADC_PIN 1
+#define CURRENT_ADC_PIN 0
 
 //Camera trigger stuff
 #define TRIG_FPS 15
@@ -30,19 +31,20 @@ void setup() {
   delay(2000);
   Serial.begin(SERIAL_BAUD_RATE);
   Wire.begin();
+  pinMode(INDICATOR_LED, OUTPUT);
+  digitalWrite(INDICATOR_LED, HIGH);
   pinMode(VOLTAGE_ADC_PIN, INPUT);
   pinMode(CURRENT_ADC_PIN, INPUT);
-  TCCR1B = TCCR1B & 0b11111000 | 0x04;
   pinMode(TRIGER_PIN, OUTPUT);
-  Lights.attach(LIGHTS_PWM_PIN);
-  Lights.write(0);
+  Lights.attach(LIGHTS_PWM_PIN, 1100, 1900);
+  Lights.writeMicroseconds(1100);
   
   while (!DepthSensor.init()) {
     Serial.println("Init failed!");
     Serial.println("Are SDA/SCL connected correctly?");
     Serial.println("Blue Robotics Bar30: White=SDA, Green=SCL");
     Serial.println("\n\n\n");
-    delay(3000);
+    delay(2000);
   }
   DepthSensor.setModel(MS5837::MS5837_30BA);
   DepthSensor.setFluidDensity(1029); // kg/m^3 (997 for freshwater, 1029 for seawater)
@@ -51,11 +53,11 @@ void setup() {
 
 void loop() {
   static boolean rec, start_trig, trigger_state;
-  static int light_power;
+  static float light_power;
   static unsigned long prev_trigger_micros;
   static unsigned long prev_serial_tx_micros;
   
-  int bt;
+  byte bt;
   byte batt_voltage, batt_current;
   float adc_volt, adc_amps;
   unsigned long time_us = micros();
@@ -104,8 +106,9 @@ void loop() {
     adc_amps = (float) analogRead(CURRENT_ADC_PIN);
     batt_voltage = (byte) min(round(10 * adc_volt * ADC_VOLTAGE_MUL * BATT_VOLT_MULT), 254);
     batt_current = (byte) min(round(10 * adc_amps * ADC_VOLTAGE_MUL * BATT_AMP_PERVOLT + BATT_AMP_OFFSET), 254);
+    Serial.println(batt_voltage);
     byte messege[4] = {255, depth_byte, batt_voltage, batt_current};
-    Serial.println(depth_byte);
+    //Serial.println(depth_byte);
     //Serial.write(messege, 4);
   }
   
@@ -125,6 +128,6 @@ void loop() {
       }
   }
   
-  Lights.write((int) round(255*light_power));
+  Lights.writeMicroseconds(1100 + (int) round(800*light_power));
 
 }
