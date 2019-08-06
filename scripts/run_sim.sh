@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #GAME_PATH=/DroneLab/baked_games/Ocean1_packed/LinuxNoEditor/
-GAME_PATH=/project_files/Ocean1_packed/LinuxNoEditor/
+GAME_PATH=/project_files/Ocean2_packed/LinuxNoEditor/
 PROJECT_PATH=/home/host/projects/RovVision2/
 DRONESIMLAB_PATH=../../DroneSimLab/
 SIM=
