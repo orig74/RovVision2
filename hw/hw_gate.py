@@ -8,7 +8,8 @@ import pickle
 import struct
 
 sys.path.append('..')
-import utils
+sys.path.append('../utils')
+import zmq_wrapper as utils
 import zmq_topics
 
 current_command=[0 for _ in range(8)] # 8 thrusters
@@ -18,7 +19,7 @@ subs_socks=[]
 subs_socks.append(utils.subscribe([zmq_topics.topic_thrusters_comand],zmq_topics.topic_thrusters_comand_port))
 
 
-async def motor_cmnd_to_DShot(cmnds):
+def motor_cmnd_to_DShot(cmnds):
     dshot_msgs = [0]*len(cmnds)
     for idx, cmd in enumerate(cmnds):
         zero_val = 1048
@@ -31,7 +32,7 @@ async def motor_cmnd_to_DShot(cmnds):
     return dshot_msgs
 
 
-async def dshotmsg_to_serialbuffer(dshot_msg_l):
+def dshotmsg_to_serialbuffer(dshot_msg_l):
     serial_buff = [0]*17
     serial_buff[0] = 145    #start and code nibbles
     binary_message_list = [[0]*16 for i in range(len(dshot_msg_l))]
@@ -80,5 +81,7 @@ async def main():
             )
 
 if __name__=='__main__':
-    asyncio.run(main())
+    loop = asyncio.get_event_loop()
+    result = loop.run_until_complete(main())
+    #asyncio.run(main())
 
