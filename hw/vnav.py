@@ -15,7 +15,6 @@ import asyncio,pickle
 
 pub_imu = utils.publisher(zmq_topics.topic_imu_port)
 
-
 print('connecting to vnav')
 s=EzAsyncData.connect('/dev/'+os.environ['VNAV_USB'],115200)
 print('done')
