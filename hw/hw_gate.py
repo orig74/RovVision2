@@ -54,7 +54,12 @@ async def send_serial_command_50hz():
         await asyncio.sleep(1/50.0)
 
         # Need to convert comands to list of -1 -> 1?
-        dshot_frames = motor_cmnd_to_DShot(current_command)
+        m = [0]*8
+        c=current_command
+        m[0]=c[0], m[1]=c[1], m[2]=c[2], m[3]=c[3]
+        m[4]=c[4], m[5]=c[5], m[6]=c[6], m[7]=c[7]
+
+        dshot_frames = motor_cmnd_to_DShot(m)
         s_buff_64 = dshotmsg_to_serialbuffer(dshot_frames)
         serial.write(s_buff_64)
         #serial.write([struct.pack('>B', byte) for byte in s_buff_64])

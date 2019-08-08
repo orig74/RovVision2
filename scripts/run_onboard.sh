@@ -1,15 +1,14 @@
 #!/bin/bash
 source run_common.sh
-PROJECT_PATH=/home/host/projects/RovVision2/
-PYTHON=/miniconda/bin/python 
 
 if [ ! -v SIM ]
 then
 tmux kill-session -t dronelab
 tmux new-session -d -s dronelab
-PYTHON=/bin/python3
 PROJECT_PATH=../
 else
+PROJECT_PATH=/home/host/projects/RovVision2/
+PYTHON=/miniconda/bin/python 
 tmux new-window
 fi 
 
@@ -31,8 +30,11 @@ if [ ! -v SIM ]
 then 
 tmux new-window
 new_6_win
+run 0 utils detect_usb.py
+sleep 3 
 run 0 hw hw_gate.py
 run 1 hw flircam_proxy.py
-
+run 2 hw periph_gate.py
+run 3 hw vnav.py
 tmux att
 fi

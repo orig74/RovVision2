@@ -33,6 +33,7 @@ subs_socks.append(utils.subscribe([zmq_topics.topic_depth_hold_pid ], zmq_topics
 subs_socks.append(utils.subscribe([zmq_topics.topic_sonar ], zmq_topics.topic_sonar_port) )
 subs_socks.append(utils.subscribe([zmq_topics.topic_stereo_camera_ts ], zmq_topics.topic_camera_port) ) #for sync perposes
 subs_socks.append(utils.subscribe([zmq_topics.topic_tracker ], zmq_topics.topic_tracker_port) )
+subs_socks.append(utils.subscribe([zmq_topics.topic_volt ], zmq_topics.topic_volt_port) )
 
 #socket_pub = utils.publisher(config.zmq_local_route)
 socket_pub = utils.publisher(zmq_topics.topic_local_route_port,'0.0.0.0')
