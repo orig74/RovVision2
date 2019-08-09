@@ -1,19 +1,38 @@
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 #Joystick configuration
 #mode 2
+#jtype = 'sony'
+jtype='xbox'
 class Joy_map:
-    _ud=1
-    _yaw=0
-    _fb=4
-    _lr=3
-    _shift1_bt=4 #left shift
-    _shift2_bt=5 #right shift
-    _record_bt=10
-    _arm_disarm=9
-    _depth_hold_bt=1 #circle / rkeys right
-    _att_hold_bt=2 #triangle / rkeys up
-    _square=3 #square /rkeys left
-    _x = 0 #X /rkeys down
+    if jtype=='sony':
+        _ud=1
+        _yaw=0
+        _fb=4
+        _lr=3
+        _shift1_bt=4 #left shift
+        _shift2_bt=5 #right shift
+        _record_bt=10
+        _arm_disarm=9
+        _depth_hold_bt=1 #circle / rkeys right
+        _att_hold_bt=2 #triangle / rkeys up
+        _square=3 #square /rkeys left
+        _x = 0 #X /rkeys down
+
+    if jtype=='xbox':
+        _ud=1
+        _yaw=0
+        _fb=4
+        _lr=3
+        _shift1_bt=4 #left shift
+        _shift2_bt=5 #right shift
+        _record_bt=8
+        _arm_disarm=7
+        _depth_hold_bt=1 #circle / rkeys right
+        _att_hold_bt=3 #triangle / rkeys up
+        _square=2 #square /rkeys left
+        _x = 0 #X /rkeys down
+
+
 
     def __init__(self):
         self.buttons=[0]*16
