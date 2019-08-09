@@ -2,6 +2,7 @@ import serial
 import time
 import numpy as np
 import sys
+import pickle
 sys.path.append('../utils')
 sys.path.append('../')
 import detect_usb
@@ -11,6 +12,7 @@ pub_depth = zmq_wrapper.publisher(zmq_topics.topic_depth_port)
 pub_volt = zmq_wrapper.publisher(zmq_topics.topic_volt_port)
 ser = serial.Serial(detect_usb.devmap['PERI_USB'], 115200)
 
+print('connected to ', detect_usb.devmap['PERI_USB'])
 # cmnd = 2
 # while cmnd < 7:
 #    cmnd = int(input("\nEnter value between 0-1 (cam trig ON/OFF), 2-7 (light level): "))
@@ -31,6 +33,7 @@ ser = serial.Serial(detect_usb.devmap['PERI_USB'], 115200)
 
 #start triggering
 ser.write(0x01)
+ser.flush()
 print('trigger sent')
 
 while True:

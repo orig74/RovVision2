@@ -109,7 +109,7 @@ void loop() {
   }
   
   // Task to trigger cameras
-  if ((time_us - prev_trigger_micros) > TRIGGER_RATE_MICROS_HALF) {
+  if ((micros() - prev_trigger_micros) > TRIGGER_RATE_MICROS_HALF) {
       prev_trigger_micros += TRIGGER_RATE_MICROS_HALF;
 
       if (!trigger_state && start_trig) {

@@ -32,6 +32,7 @@ class TriggerType:
     HARDWARE = 2
 
 CHOSEN_TRIGGER = TriggerType.HARDWARE
+#CHOSEN_TRIGGER = TriggerType.SOFTWARE
 
 SLEEP_DURATION = 200  # amount of time for main thread to sleep for (in milliseconds) until _NUM_IMAGES have been saved
 
@@ -103,7 +104,7 @@ class ImageEventHandler(PySpin.ImageEvent):
                 print('Image event occurred...')
 
             # Check if image is incomplete
-            if image.IsIncomplete():
+            if 1 and image.IsIncomplete():
                 print('Image incomplete with image status %i...' % image.GetImageStatus())
 
             else:
@@ -112,17 +113,20 @@ class ImageEventHandler(PySpin.ImageEvent):
                     print('Grabbed image %i, width = %i, height = %i' % (self._image_count,
                                                                      image.GetWidth(),
                                                                      image.GetHeight()))
+                #print('---',self.name) 
                 width = image.GetWidth()
                 height = image.GetHeight()
                 # Convert to mono8
                 #image_converted = image.Convert(PySpin.PixelFormat_Mono8, PySpin.HQ_LINEAR)
-                image_converted = image.Convert(PySpin.PixelFormat_RGB8, PySpin.HQ_LINEAR)
+                #image_converted = image.Convert(PySpin.PixelFormat_RGB8, PySpin.HQ_LINEAR)
                     #import ipdb;ipdb.set_trace()
                 #### old code
                 #self.theimage=(self._image_count,image_converted.GetData().reshape((height,width,3)))
 
                 #newcode
-                self.theimage = (time.time(), self._image_count, bayer.shrink_bayer_to_rgb(image.GetData()))
+                im_data=image.GetData().copy().reshape((height,width))
+                self.theimage = (time.time(), self._image_count, bayer.shrink_bayer_to_rgb(im_data))
+                #self.theimage = (time.time(), self._image_count, im_data)
 
                 if record_state and self._image_count%5==0: #save every 0.5 sec
                     raw_data=image.GetData().reshape((height,width))
@@ -136,7 +140,7 @@ class ImageEventHandler(PySpin.ImageEvent):
                     print('saving took',time.time()-tic)
 
                 if not args.cvshow:
-                    self.q.put((ts,self.theimage))
+                    self.q.put(self.theimage)
                 self._image_count += 1
 
 
