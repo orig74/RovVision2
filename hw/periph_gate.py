@@ -32,7 +32,7 @@ print('connected to ', detect_usb.devmap['PERI_USB'])
 #             time.sleep(1)
 
 #start triggering
-ser.write(0x01)
+ser.write(b'\x01')
 ser.flush()
 print('trigger sent')
 
