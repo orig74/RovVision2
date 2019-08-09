@@ -2,14 +2,17 @@ import serial
 import time
 import numpy as np
 import sys
+import pickle
 sys.path.append('../utils')
+sys.path.append('../')
 import detect_usb
-
+import zmq_wrapper
 import zmq_topics
-pub_depth = utils.publisher(zmq_topics.topic_depth_port) 
-pub_volt = utils.publisher(zmq_topics.topic_volt_port)
+pub_depth = zmq_wrapper.publisher(zmq_topics.topic_depth_port) 
+pub_volt = zmq_wrapper.publisher(zmq_topics.topic_volt_port)
 ser = serial.Serial(detect_usb.devmap['PERI_USB'], 115200)
 
+print('connected to ', detect_usb.devmap['PERI_USB'])
 # cmnd = 2
 # while cmnd < 7:
 #    cmnd = int(input("\nEnter value between 0-1 (cam trig ON/OFF), 2-7 (light level): "))
@@ -29,8 +32,9 @@ ser = serial.Serial(detect_usb.devmap['PERI_USB'], 115200)
 #             time.sleep(1)
 
 #start triggering
-ser.write(0x01)
-
+ser.write(b'\x01')
+ser.flush()
+print('trigger sent')
 
 while True:
     if ser.in_waiting >= 4:
@@ -42,7 +46,7 @@ while True:
 
             batt_V = float(periph_msg[1])/10
             batt_I = float(periph_msg[2])/10
-            pub_volt.send_multipart([zmq_topics.topic_volt,pickle.dumps({'ts':tic,'V':batt_V,'I':batt_I})
+            pub_volt.send_multipart([zmq_topics.topic_volt,pickle.dumps({'ts':tic,'V':batt_V,'I':batt_I})])
             print("Batt V: {}".format(batt_V))
             print("Batt I: {}".format(batt_I))
         else:

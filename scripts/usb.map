@@ -1,0 +1,4 @@
+PERI_USB=/dev/ttyACM0
+ESC_USB=/dev/ttyUSB2
+SONAR_USB=/dev/ttyUSB0
+VNAV_USB=/dev/ttyUSB1

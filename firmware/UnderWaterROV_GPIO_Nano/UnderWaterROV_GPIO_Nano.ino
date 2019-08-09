@@ -2,14 +2,14 @@
 #include <Wire.h>
 #include "MS5837.h"
 
-#define LIGHTS_PWM_PIN 9
+#define LIGHTS_PWM_PIN 11
 #define INDICATOR_LED 5
 #define TRIGER_PIN 6
-#define VOLTAGE_ADC_PIN 1
-#define CURRENT_ADC_PIN 0
+#define CURRENT_ADC_PIN A0
+#define VOLTAGE_ADC_PIN A1
 
 //Camera trigger stuff
-#define TRIG_FPS 15
+#define TRIG_FPS 10
 #define TRIGGER_RATE_MICROS (1000000/TRIG_FPS)
 #define TRIGGER_RATE_MICROS_HALF (TRIGGER_RATE_MICROS/2)
 
@@ -33,8 +33,6 @@ void setup() {
   Wire.begin();
   pinMode(INDICATOR_LED, OUTPUT);
   digitalWrite(INDICATOR_LED, HIGH);
-  pinMode(VOLTAGE_ADC_PIN, INPUT);
-  pinMode(CURRENT_ADC_PIN, INPUT);
   pinMode(TRIGER_PIN, OUTPUT);
   Lights.attach(LIGHTS_PWM_PIN, 1100, 1900);
   Lights.writeMicroseconds(1100);
@@ -58,8 +56,8 @@ void loop() {
   static unsigned long prev_serial_tx_micros;
   
   byte bt;
-  byte batt_voltage, batt_current;
   float adc_volt, adc_amps;
+  byte batt_voltage, batt_current;
   unsigned long time_us = micros();
   
   // SERIAL RX
@@ -105,15 +103,13 @@ void loop() {
     adc_volt = (float) analogRead(VOLTAGE_ADC_PIN);
     adc_amps = (float) analogRead(CURRENT_ADC_PIN);
     batt_voltage = (byte) min(round(10 * adc_volt * ADC_VOLTAGE_MUL * BATT_VOLT_MULT), 254);
-    batt_current = (byte) min(round(10 * adc_amps * ADC_VOLTAGE_MUL * BATT_AMP_PERVOLT + BATT_AMP_OFFSET), 254);
-    Serial.println(batt_voltage);
+    batt_current = (byte) min(round(10 * (adc_amps * ADC_VOLTAGE_MUL - BATT_AMP_OFFSET) * BATT_AMP_PERVOLT), 254);
     byte messege[4] = {255, depth_byte, batt_voltage, batt_current};
-    //Serial.println(depth_byte);
-    //Serial.write(messege, 4);
+    Serial.write(messege, 4);
   }
   
   // Task to trigger cameras
-  if ((time_us - prev_trigger_micros) > TRIGGER_RATE_MICROS_HALF) {
+  if ((micros() - prev_trigger_micros) > TRIGGER_RATE_MICROS_HALF) {
       prev_trigger_micros += TRIGGER_RATE_MICROS_HALF;
 
       if (!trigger_state && start_trig) {

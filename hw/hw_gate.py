@@ -11,6 +11,7 @@ sys.path.append('..')
 sys.path.append('../utils')
 import zmq_wrapper as utils
 import zmq_topics
+import detect_usb
 
 current_command=[0 for _ in range(8)] # 8 thrusters
 keep_running=True
@@ -18,6 +19,7 @@ keep_running=True
 subs_socks=[]
 subs_socks.append(utils.subscribe([zmq_topics.topic_thrusters_comand],zmq_topics.topic_thrusters_comand_port))
 
+ser = serial.Serial(detect_usb.devmap['ESC_USB'], 115200)
 
 def motor_cmnd_to_DShot(cmnds):
     dshot_msgs = [0]*len(cmnds)
@@ -25,7 +27,7 @@ def motor_cmnd_to_DShot(cmnds):
         zero_val = 1048
         if np.sign(cmd) == -1:
             zero_val = 48
-        cmd_dshot = (zero_val + min(max(abs(round(cmd*999)), 0), 999)) << 1
+        cmd_dshot = int(zero_val + min(max(round(cmd*999), 0), 999)) << 1
         csum = (cmd_dshot ^ (cmd_dshot >> 4) ^ (cmd_dshot >> 8)) & 0xf
         dshot_msgs[idx] = cmd_dshot << 4 | csum
 
@@ -56,12 +58,18 @@ async def send_serial_command_50hz():
         # Need to convert comands to list of -1 -> 1?
         m = [0]*8
         c=current_command
-        m[0]=c[0], m[1]=c[1], m[2]=c[2], m[3]=c[3]
-        m[4]=c[4], m[5]=c[5], m[6]=c[6], m[7]=c[7]
+        m[0]=c[0] 
+        m[1]=c[1]
+        m[2]=c[2]
+        m[3]=c[3]
+        m[4]=c[4]
+        m[5]=c[5]
+        m[6]=c[6]
+        m[7]=c[7]
 
         dshot_frames = motor_cmnd_to_DShot(m)
         s_buff_64 = dshotmsg_to_serialbuffer(dshot_frames)
-        serial.write(s_buff_64)
+        ser.write(s_buff_64)
         #serial.write([struct.pack('>B', byte) for byte in s_buff_64])
         
 
