@@ -74,6 +74,13 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
         line='{:>.2f} TRng'.format(rng)
         cv2.putText(img,line,(350,570), font, 0.5,(0,0,255),1,cv2.LINE_AA)
 
+    if zmq_topics.topic_volt in message_dict:
+        v=message_dict[zmq_topics.topic_volt]['V']
+        i=message_dict[zmq_topics.topic_volt]['I']
+        line='{:>.2f}V {:>.2f}I'.format(v,i)
+        cv2.putText(img,line,(50,570), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+
+
 from math import cos,sin,pi
 def draw_compass(img,x,y,heading,pitch,roll):
     font = cv2.FONT_HERSHEY_SIMPLEX

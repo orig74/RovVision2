@@ -1,5 +1,6 @@
 #torun 
-# conda activate 3.6 
+# conda activate 2.3
+# VNAV_USB=ttyUSB0 python vnav.py
 
 from vnpy import *
 print('done import')
@@ -11,12 +12,12 @@ import zmq_wrapper as utils
 print('done import 2')
 import zmq_topics
 import asyncio,pickle
-import detect_usb
 
 pub_imu = utils.publisher(zmq_topics.topic_imu_port)
 
+
 print('connecting to vnav')
-s=EzAsyncData.connect(detect_usb.devmap['VNAV_USB'],115200)
+s=EzAsyncData.connect('/dev/'+os.environ['VNAV_USB'],115200)
 print('done')
 s.sensor.write_async_data_output_frequency(40) #hz
 def get_data():

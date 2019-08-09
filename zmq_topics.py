@@ -48,3 +48,5 @@ topic_depth_hold_port=9996
 topic_tracker=b'topic_tracker'
 topic_tracker_port=10101
 
+topic_volt=b'topic_volt'
+topic_volt_port=10102

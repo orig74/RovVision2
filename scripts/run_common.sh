@@ -24,6 +24,8 @@ tmux split-window -v
 }
 
 
+if [ -v SIM ]
+then 
 
 function run { #pane number, path, script
 tmux select-pane -t $1 
@@ -34,6 +36,17 @@ tmux send-keys "$PYTHON $3" ENTER
 
 }
 
+else
+
+function run { #pane number, path, script
+tmux select-pane -t $1 
+tmux send-keys "bash" ENTER
+tmux send-keys "conda activate 3.6" ENTER
+tmux send-keys "cd $PROJECT_PATH/$2" ENTER
+tmux send-keys "python $3" ENTER
+}
+
+fi
 #tmux send-keys "python drone_main.py" ENTER
 
 
