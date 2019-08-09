@@ -43,6 +43,8 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
             line+=' {:>05.2f}delay'.format(\
                 (fmt_cnt_l-frame_start_number)-\
                 config.fps*(time.time()-frame_start_time))
+            if fmt_cnt_l%10==0:
+                print('fpsline',line)
         cv2.putText(img,line,(10,550), font, 0.5,(0,0,255),1,cv2.LINE_AA)
     if zmq_topics.topic_imu in message_dict:
         m=message_dict[zmq_topics.topic_imu]

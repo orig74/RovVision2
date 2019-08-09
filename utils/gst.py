@@ -13,7 +13,7 @@ gst_pipes=None
 send_cnt=[0,0]
 def init_gst(sx,sy,npipes):
     global gst_pipes
-    cmd="gst-launch-1.0 {{}}! x264enc threads=1 tune=zerolatency  bitrate={} key-int-max=50 ! tcpserversink port={{}}".format(config.gst_bitrate)
+    cmd="gst-launch-1.0 {{}}! x264enc threads=1 speed-preset=4 tune=zerolatency  bitrate={} key-int-max=50 ! tcpserversink port={{}}".format(config.gst_bitrate)
     gstsrc = 'fdsrc ! videoparse width={} height={} format=15 ! videoconvert ! video/x-raw, format=I420'.format(sx,sy) #! autovideosink'
 
     gst_pipes=[]

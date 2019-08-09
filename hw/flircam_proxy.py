@@ -50,7 +50,7 @@ class ImageEventHandler(PySpin.ImageEvent):
     destructor, properties, body of OnImageEvent(), and other functions -
     is particular to the example.
     """
-    _NUM_IMAGES = 10
+    _NUM_IMAGES = 100
 
     def __init__(self, cam):
         """
@@ -104,7 +104,7 @@ class ImageEventHandler(PySpin.ImageEvent):
                 print('Image event occurred...')
 
             # Check if image is incomplete
-            if 1 and image.IsIncomplete():
+            if image.IsIncomplete():
                 print('Image incomplete with image status %i...' % image.GetImageStatus())
 
             else:
@@ -113,7 +113,7 @@ class ImageEventHandler(PySpin.ImageEvent):
                     print('Grabbed image %i, width = %i, height = %i' % (self._image_count,
                                                                      image.GetWidth(),
                                                                      image.GetHeight()))
-                #print('---',self.name) 
+                    print('---',self.name,ts) 
                 width = image.GetWidth()
                 height = image.GetHeight()
                 # Convert to mono8
@@ -462,7 +462,7 @@ def run_single_camera(cams):
                                 break
                             for sock in socks:
                                 ret  = sock.recv_multipart()
-                                if ret[0]==zmq_topics.topic_controller_messages:
+                                if 0 and ret[0]==zmq_topics.topic_controller_messages:
                                     controller_data=pickle.loads(ret[1])
                                     if not record_state and controller_data['record_state']:
                                         #switch to recording

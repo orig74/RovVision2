@@ -52,5 +52,7 @@ while True:
         else:
             print("Start byte not correct!")
             time.sleep(.1)
+    else:
+        time.sleep(0.01)
 
 
