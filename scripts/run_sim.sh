@@ -22,7 +22,7 @@ run 0 sim ue4_bridge.py
 run 1 sim run_dynamic_sim.py
 tmux select-pane -t 2
 init_docker_image
-tmux send-keys "cd $GAME_PATH;PATH=/miniconda/bin/:$PATH ./run.sh" ENTER
+tmux send-keys "unset DISPLAY;cd $GAME_PATH;PATH=/miniconda/bin/:$PATH ./run.sh" ENTER
 
 sleep 1
 
