@@ -8,6 +8,7 @@ topic_system_state=b'system_state'
 
 topic_controller_port=topic_thrusters_comand_port=7788
 thrusters_sink_port = 7787
+topic_lights=b'topic_lights'
 
 
 #topic_camera_left=b'topic_camera_left'

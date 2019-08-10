@@ -25,7 +25,7 @@ async def recv_and_process():
     thruster_cmd=np.zeros(8)
     timer10hz=time.time()+1/10.0
     timer20hz=time.time()+1/20.0
-    system_state={'arm':False,'mode':[]}
+    system_state={'arm':False,'mode':[], 'lights':0} #lights 0-5
     thrusters_dict={}
 
     jm=Joy_map()
@@ -63,6 +63,18 @@ async def recv_and_process():
                         togle_mode('RZ_HOLD')
                     if jm.arm_event():
                         system_state['arm']=not system_state['arm']
+                if topic==zmq_topics.topic_axes:
+                    jm.update_axis(data)
+                    if jm.inc_lights_event():
+                        system_state['lights']=min(5,system_state['lights']+1)
+                        pub_sock.send_multipart([zmq_topics.topic_lights,pickle.dumps(system_state['lights'])])
+                        print('lights set to',system_state['lights'])
+                    if jm.dec_lights_event():
+                        system_state['lights']=max(0,system_state['lights']-1)
+                        pub_sock.send_multipart([zmq_topics.topic_lights,pickle.dumps(system_state['lights'])])
+                        print('lights set to',system_state['lights'])
+
+
 
         tic=time.time()
         if tic-timer10hz>0:

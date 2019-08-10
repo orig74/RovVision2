@@ -13,6 +13,8 @@ pub_volt = zmq_wrapper.publisher(zmq_topics.topic_volt_port)
 ser = serial.Serial(detect_usb.devmap['PERI_USB'], 115200)
 
 print('connected to ', detect_usb.devmap['PERI_USB'])
+subs_socks=[]
+subs_socks.append(utils.subscribe([zmq_topics.topic_lights],zmq_topics.topic_controller_port))
 # cmnd = 2
 # while cmnd < 7:
 #    cmnd = int(input("\nEnter value between 0-1 (cam trig ON/OFF), 2-7 (light level): "))
@@ -37,6 +39,15 @@ ser.flush()
 print('trigger sent')
 
 while True:
+    socks=zmq.select(subs_socks,[],[],0.005)[0]
+    for sock in socks:
+        ret=sock.recv_multipart()
+        topic,data=ret[0],pickle.loads(ret[1])
+        if topic=zmq_topics.topic_lights:
+            print('got lights command',data)
+            #ser.write(b'%c'%(data+2))  
+            #ser.flush()
+
     if ser.in_waiting >= 4:
         if ser.read(1)[0] == 255:
             periph_msg = ser.read(3)
@@ -52,7 +63,5 @@ while True:
         else:
             print("Start byte not correct!")
             time.sleep(.1)
-    else:
-        time.sleep(0.01)
 
 

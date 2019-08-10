@@ -31,13 +31,12 @@ class Joy_map:
         _att_hold_bt=3 #triangle / rkeys up
         _square=2 #square /rkeys left
         _x = 0 #X /rkeys down
-
-
+        
 
     def __init__(self):
         self.buttons=[0]*16
         self.prev_buttons=[0]*16
-        self.axis=[0]*6
+        self.axis=[0]*8
 
     def update_buttons(self,buttons):
         self.prev_buttons=self.buttons
@@ -81,6 +80,21 @@ class Joy_map:
     
     def track_lock_event(self):
         return self.__test_togle(self._x) and self.__left_shift()
+
+    def inc_lights_event(self):
+        if jtype=='xbox':
+            axis=self.axis
+            if axis[7]<-0.9:
+                return True
+        return False
+
+    def dec_lights_event(self):
+        if jtype=='xbox':
+            axis=self.axis
+            if axis[7]>0.9:
+                return True
+        return False
+
 
     def joy_mix(self):
         joy_buttons=self.buttons
