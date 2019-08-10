@@ -8,9 +8,10 @@ if not os.path.isdir(libpath):
     os.mkdir(libpath)
 
 libfile=libpath+'/bayer_conv.so'
+#print('---',os.path.abspath(__file__))
 
 if not os.path.isfile(libfile):
-    os.system('gcc -o {0}/../bin/bayer_conv.so -shared -O3 {0}/bayer_conv.c'.format(os.path.dirname(__file__)))
+    os.system('gcc -o {0}/../bin/bayer_conv.so -shared -O3 {0}/bayer_conv.c'.format(os.path.dirname(os.path.abspath(__file__))))
 libc=ctypes.CDLL(libfile,mode=ctypes.RTLD_GLOBAL)
 
 libc.convertRGBtoBayer.argtypes=[c_int,c_int,c_void_p,c_void_p]
