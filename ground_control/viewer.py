@@ -25,6 +25,8 @@ parser.add_argument("--data_path", help="path for data" , default='../../data')
 args = parser.parse_args()
 
 resize_viewer = 'RESIZE_VIEWER' in os.environ
+if resize_viewer:
+    resize_width=int(os.environ['RESIZE_VIEWER'])
 
 subs_socks=[]
 subs_socks.append(utils.subscribe([zmq_topics.topic_thrusters_comand,zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
@@ -114,7 +116,7 @@ if __name__=='__main__':
             images=[None,None]
             draw(join,message_dict,fmt_cnt_l,fmt_cnt_r)
             if resize_viewer:
-                scale=1200/config.cam_resx 
+                scale=resize_width/config.cam_resx 
                 sp0,sp1,_ = join.shape
                 sp0=int(sp0*scale)
                 sp1=int(sp1*scale)
