@@ -128,7 +128,7 @@ class ImageEventHandler(PySpin.ImageEvent):
 
                 if record_state and self._image_count%5==0: #save every 0.5 sec
                     raw_data=image.GetData().reshape((height,width))
-                    imgname='../data/'+record_state+'/{}{:08d}.{}'\
+                    imgname='../../data/'+record_state+'/{}{:08d}.{}'\
                     .format(self.name[0],self._image_count,'pgm')
                     #to convert to RGB:
                     #im=cv2.imread('file.pgm')[:,:,0]
@@ -464,7 +464,7 @@ def run_single_camera(cams):
                                     new_record_state_str=pickle.loads(ret[1])
                                     if not record_state and new_record_state_str:
                                         #switch to recording
-                                        os.mkdir('../data/'+new_record_state_str)
+                                        os.mkdir('../../data/'+new_record_state_str)
 
                                     record_state=new_record_state_str
                         sleep(0.001)
