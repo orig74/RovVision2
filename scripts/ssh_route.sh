@@ -14,7 +14,16 @@ done
 
 PANDA_ADDR=stereo@192.168.2.2
 
+if [[ $# -eq 0 ]] ; then
+    CMD="ssh -t -N $LOCALS $REMOTES $PANDA_ADDR"
+fi
+if [[ $# -eq 2 ]] ; then
+    CMD="ssh -t $LOCALS $REMOTES $1 ssh -t -N $LOCALS $REMOTES $2"
+fi
+#if [[ $# -eq 2 ]] ; then
+#    CMD="ssh -t $LOCALS $REMOTES $1 ssh -t $LOCALS $REMOTES $2 ssh -t -N $LOCALS $REMOTES $PANDA_ADDR"
+#fi
+
 #echo $LOCALS
-CMD="ssh -t -N $LOCALS $REMOTES $PANDA_ADDR"
 echo $CMD
 $CMD

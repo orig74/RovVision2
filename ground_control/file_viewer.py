@@ -19,7 +19,7 @@ import argparse
 import numpy as np
 import config
 from gst import gst_file_reader
-from annotations import draw
+from annotations import draw,draw_seperate
 import zmq_wrapper as utils
 import explore
 import zmq_topics as topics
@@ -99,14 +99,16 @@ if __name__=='__main__':
             while fcnt>-1:
                 try:
                     ret=pickle.load(fd)
+                    print('got',ret[0])
                 except EOFError:
                     print('No more data')
                     break
                 if args.pub_data:
                     socket_pub.send_multipart([ret[0],pickle.dumps(ret[1])])
                 if ret[0]==topics.topic_viewer_data:
+                    print('got',ret)
                     msg=ret[1]
-                    if msg['frame_cnt'][0]>=fcnt:
+                    if msg['frame_cnt'][1]>=fcnt:
                         break
                 else:
                     messages[ret[0]]=ret[1]
@@ -139,6 +141,7 @@ if __name__=='__main__':
                 if imgs_raw[i] is None:
                     imgs_raw[i]=images[i].copy()#[:,:,::-1].copy()
                 imgs_raw[i]=imgs_raw[i][:,:,::-1]
+            draw_seperate(images[0],images[1],messages)
             join[:,0:sx,:]=images[0]
             join[:,sx:,:]=images[1]
             draw(join,messages,fcnt,fcnt)
