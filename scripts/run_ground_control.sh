@@ -3,6 +3,8 @@ source run_common.sh
 PROJECT_PATH=/home/host/projects/RovVision2/
 PYTHON=/miniconda/bin/python 
 
+[ $USER == 'uav' ] && export RESIZE_VIEWER=1500
+
 if [ ! -v SIM ]
 then
 tmux kill-session -t dronelab

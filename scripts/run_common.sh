@@ -40,8 +40,8 @@ else
 
 function run { #pane number, path, script
 tmux select-pane -t $1 
-tmux send-keys "bash" ENTER
-tmux send-keys "conda activate 3.6" ENTER
+[ ! -z "$RESIZE_VIEWER" ] && tmux send-keys "export RESIZE_VIEWER=$RESIZE_VIEWER" ENTER
+tmux send-keys "conda activate 3.6" ENTER
 tmux send-keys "cd $PROJECT_PATH/$2" ENTER
 tmux send-keys "python $3" ENTER
 }
