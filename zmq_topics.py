@@ -6,7 +6,6 @@ topic_thrusters_comand=b'thruster_cmd'
 #opration modes
 topic_system_state=b'system_state'
 
-record_state=b'record_state'
 topic_controller_port=topic_thrusters_comand_port=7788
 thrusters_sink_port = 7787
 

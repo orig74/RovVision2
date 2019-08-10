@@ -37,8 +37,6 @@ CHOSEN_TRIGGER = TriggerType.HARDWARE
 SLEEP_DURATION = 200  # amount of time for main thread to sleep for (in milliseconds) until _NUM_IMAGES have been saved
 
 record_state = False
-record_date_str = None
-
 
 class ImageEventHandler(PySpin.ImageEvent):
     """
@@ -130,7 +128,7 @@ class ImageEventHandler(PySpin.ImageEvent):
 
                 if record_state and self._image_count%5==0: #save every 0.5 sec
                     raw_data=image.GetData().reshape((height,width))
-                    imgname='../data/'+record_date_str+'/{}{:08d}.{}'\
+                    imgname='../data/'+record_state+'/{}{:08d}.{}'\
                     .format(self.name[0],self._image_count,'pgm')
                     #to convert to RGB:
                     #im=cv2.imread('file.pgm')[:,:,0]
@@ -355,7 +353,7 @@ def run_single_camera(cams):
     :return: True if successful, False otherwise.
     :rtype: bool
     """
-    global record_state,record_date_str
+    global record_state
 
     cams=list(cams)#[:1]
     try:
@@ -462,15 +460,13 @@ def run_single_camera(cams):
                                 break
                             for sock in socks:
                                 ret  = sock.recv_multipart()
-                                if 0 and ret[0]==zmq_topics.topic_controller_messages:
-                                    controller_data=pickle.loads(ret[1])
-                                    if not record_state and controller_data['record_state']:
+                                if ret[0]==zmq_topics.topic_record_state:
+                                    new_record_state_str=pickle.loads(ret[1])
+                                    if not record_state and new_record_state_str:
                                         #switch to recording
-                                        os.mkdir('../data/'+record_date_str)
+                                        os.mkdir('../data/'+new_record_state_str)
 
-                                    record_state=controller_data['record_state']
-                                    if record_state:
-                                        record_date_str=controller_data['record_state']
+                                    record_state=new_record_state_str
                         sleep(0.001)
         for cam in cams:
             cam.EndAcquisition()
