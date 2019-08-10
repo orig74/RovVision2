@@ -25,6 +25,7 @@ cnt=0
 
 start_time=time.time()
 joy_log=open('joy.log','wb')
+hat=[0,0]
 
 def pub(topic,data):
     pub_sock.send_multipart([topic,data])
@@ -62,6 +63,9 @@ while not done:
                 if abs(axis)<0.1:
                     axis=0.0
             axes_vals.append(axis)
+        if axes==6: #add hat to axes to maintain compatibility
+            axes_vals+=[float(hat[0]),float(hat[1])]
+
         if cnt%10==0:
             print('axes_vals=',','.join(['{:4.3f}'.format(i) for i in axes_vals]))
         #mixng axes
