@@ -2,6 +2,8 @@
 #Joystick configuration
 #mode 2
 #jtype = 'sony'
+import time
+
 jtype='xbox'
 class Joy_map:
     if jtype=='sony':
@@ -37,6 +39,7 @@ class Joy_map:
         self.buttons=[0]*16
         self.prev_buttons=[0]*16
         self.axis=[0]*8
+        self.last_light=time.time()
 
     def update_buttons(self,buttons):
         self.prev_buttons=self.buttons
@@ -84,14 +87,16 @@ class Joy_map:
     def inc_lights_event(self):
         if jtype=='xbox':
             axis=self.axis
-            if axis[7]<-0.9:
+            if axis[7]<-0.9 and time.time()-self.last_light>0.3:
+                self.last_light=time.time()
                 return True
         return False
 
     def dec_lights_event(self):
         if jtype=='xbox':
             axis=self.axis
-            if axis[7]>0.9:
+            if axis[7]>0.9 and time.time()-self.last_light>0.3:
+                self.last_light=time.time()
                 return True
         return False
 
