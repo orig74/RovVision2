@@ -5,6 +5,7 @@ import sys
 import asyncio
 import time
 import pickle
+import traceback
 
 sys.path.append('..')
 sys.path.append('../utils')
@@ -34,10 +35,15 @@ async def recv_and_process():
                 frame_cnt,shape=data
                 imgl=np.frombuffer(ret[2],'uint8').reshape(shape).copy()
                 imgr=np.frombuffer(ret[3],'uint8').reshape(shape).copy()
-                ret=st(imgl,imgr)
-                ret['ts']=time.time()
-                ret['fnum']=frame_cnt
-                sock_pub.send_multipart([zmq_topics.topic_tracker,pickle.dumps(ret)])
+                try:
+                    ret=st(imgl,imgr)
+                    ret['ts']=time.time()
+                    ret['fnum']=frame_cnt
+                    sock_pub.send_multipart([zmq_topics.topic_tracker,pickle.dumps(ret)])
+                except:
+                    print("Exception in tracker reseting tracker:")
+                    traceback.print_exc(file=sys.stdout)
+                    st.reset()
             if topic==zmq_topics.topic_button:
                 jm.update_buttons(data)
                 if jm.track_lock_event():
