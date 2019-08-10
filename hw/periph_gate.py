@@ -46,7 +46,7 @@ while True:
         topic,data=ret[0],pickle.loads(ret[1])
         if topic==zmq_topics.topic_lights:
             print('got lights command',data)
-            #ser.write(b'%c'%(data+2))  
+            ser.write(b'%c'%(data+2))  
             #ser.flush()
 
     if ser.in_waiting >= 4:
