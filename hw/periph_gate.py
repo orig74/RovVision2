@@ -3,6 +3,7 @@ import time
 import numpy as np
 import sys
 import pickle
+import zmq
 sys.path.append('../utils')
 sys.path.append('../')
 import detect_usb
@@ -14,7 +15,7 @@ ser = serial.Serial(detect_usb.devmap['PERI_USB'], 115200)
 
 print('connected to ', detect_usb.devmap['PERI_USB'])
 subs_socks=[]
-subs_socks.append(utils.subscribe([zmq_topics.topic_lights],zmq_topics.topic_controller_port))
+subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_lights],zmq_topics.topic_controller_port))
 # cmnd = 2
 # while cmnd < 7:
 #    cmnd = int(input("\nEnter value between 0-1 (cam trig ON/OFF), 2-7 (light level): "))
@@ -43,7 +44,7 @@ while True:
     for sock in socks:
         ret=sock.recv_multipart()
         topic,data=ret[0],pickle.loads(ret[1])
-        if topic=zmq_topics.topic_lights:
+        if topic==zmq_topics.topic_lights:
             print('got lights command',data)
             #ser.write(b'%c'%(data+2))  
             #ser.flush()
