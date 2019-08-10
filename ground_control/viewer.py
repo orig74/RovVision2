@@ -24,6 +24,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--data_path", help="path for data" , default='../../data')
 args = parser.parse_args()
 
+resize_viewer = 'RESIZE_VIEWER' in os.environ
+
 subs_socks=[]
 subs_socks.append(utils.subscribe([zmq_topics.topic_thrusters_comand,zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_button, zmq_topics.topic_hat ], zmq_topics.topic_joy_port))
@@ -111,7 +113,14 @@ if __name__=='__main__':
             join[:,sx:,:]=images[1]
             images=[None,None]
             draw(join,message_dict,fmt_cnt_l,fmt_cnt_r)
-            cv2.imshow('3dviewer',join)
+            if resize_viewer:
+                scale=1200/config.cam_resx 
+                sp0,sp1,_ = join.shape
+                sp0=int(sp0*scale)
+                sp1=int(sp1*scale)
+                cv2.imshow('3dviewer',cv2.resize(join,(sp1,sp0)))
+            else:
+                cv2.imshow('3dviewer',join)
             if data_file_fd is not None:
                 pickle.dump([zmq_topics.topic_viewer_data,{'frame_cnt':(rcv_cnt,fmt_cnt_l,fmt_cnt_r),'ts':time.time()}],data_file_fd,-1)
             #cv2.imshow('left',images[0])
