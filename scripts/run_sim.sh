@@ -1,5 +1,7 @@
 #!/bin/bash
-
+echo 1
+echo $HEADLESS
+echo 2
 #GAME_PATH=/DroneLab/baked_games/Ocean1_packed/LinuxNoEditor/
 GAME_PATH=/project_files/Ocean2_packed/LinuxNoEditor/
 PROJECT_PATH=/home/host/projects/RovVision2/
@@ -29,8 +31,9 @@ source run_onboard.sh
 sleep 2
 
 ################## ground control part
-source run_ground_control.sh
-
+if [ ! -v HEADLESS ]; then
+    source run_ground_control.sh
+fi
 
 tmux select-window -t 0
 #tmux set -g mouse on
