@@ -58,14 +58,14 @@ async def send_serial_command_50hz():
         # Need to convert comands to list of -1 -> 1?
         m = [0]*8
         c=current_command
-        m[0]=c[0] 
-        m[1]=c[1]
-        m[2]=c[2]
-        m[3]=c[3]
-        m[4]=c[4]
-        m[5]=c[5]
-        m[6]=c[6]
-        m[7]=c[7]
+        m[0]=c[5] 
+        m[1]=c[4]
+        m[2]=c[6]
+        m[3]=c[7]
+        m[4]=c[1]
+        m[5]=c[0]
+        m[6]=c[2]
+        m[7]=c[3]
 
         dshot_frames = motor_cmnd_to_DShot(m)
         s_buff_64 = dshotmsg_to_serialbuffer(dshot_frames)
