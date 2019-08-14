@@ -7,32 +7,32 @@ import time
 jtype='xbox'
 class Joy_map:
     if jtype=='sony':
-        _ud=1
-        _yaw=0
-        _fb=4
-        _lr=3
-        _shift1_bt=4 #left shift
-        _shift2_bt=5 #right shift
-        _record_bt=10
-        _arm_disarm=9
-        _depth_hold_bt=1 #circle / rkeys right
-        _att_hold_bt=2 #triangle / rkeys up
-        _square=3 #square /rkeys left
-        _x = 0 #X /rkeys down
+        _left_stick_fwd_bak=1
+        _left_stick_right_left=0
+        _right_stick_fwd_bak=4
+        _right_stick_left_right=3
+        _left_shift=4 #left shift
+        _right_shift=5 #right shift
+        _home=10
+        _start=9
+        _red=1 #circle / rkeys right
+        _yelow=2 #triangle / rkeys up
+        _blue=3 #square /rkeys left
+        _green = 0 #X /rkeys down
 
     if jtype=='xbox':
-        _ud=1
-        _yaw=0
-        _fb=4
-        _lr=3
-        _shift1_bt=4 #left shift
-        _shift2_bt=5 #right shift
-        _record_bt=8
-        _arm_disarm=7
-        _depth_hold_bt=1 #circle / rkeys right
-        _att_hold_bt=3 #triangle / rkeys up
-        _square=2 #square /rkeys left
-        _x = 0 #X /rkeys down
+        _left_stick_fwd_bak=1
+        _left_stick_right_left=0
+        _right_stick_fwd_bak=4
+        _right_stick_left_right=3
+        _left_shift=4 #left shift
+        _right_shift=5 #right shift
+        _home=8
+        _start=7
+        _red=1 #circle / rkeys right
+        _yelow=3 #triangle / rkeys up
+        _blue=2 #square /rkeys left
+        _green = 0 #X /rkeys down
         
 
     def __init__(self):
@@ -52,37 +52,37 @@ class Joy_map:
         return self.buttons[b]==1 and self.prev_buttons[b]==0
 
     def __left_shift(self):
-        return self.buttons[self._shift1_bt]
+        return self.buttons[self._left_shift]
     
     def __right_shift(self):
-        return self.buttons[self._shift2_bt]
+        return self.buttons[self._right_shift]
     
     def __no_shift(self):
-        return not self.buttons[self._shift2_bt] and not self.buttons[self._shift1_bt]
+        return not self.buttons[self._right_shift] and not self.buttons[self._left_shift]
 
     def arm_event(self):
-        return self.__test_togle(self._arm_disarm)
+        return self.__test_togle(self._start)
     
     def att_hold_event(self):
-        return self.__test_togle(self._att_hold_bt) and self.__no_shift()
+        return self.__test_togle(self._yelow) and self.__no_shift()
 
     def depth_hold_event(self):
-        return self.__test_togle(self._depth_hold_bt) and self.__no_shift()
+        return self.__test_togle(self._red) and self.__no_shift()
 
     def record_event(self):
-        return self.__test_togle(self._record_bt)
+        return self.__test_togle(self._home)
 
     def Rx_hold_event(self):
-        return self.__test_togle(self._att_hold_bt) and self.__left_shift()
+        return self.__test_togle(self._yelow) and self.__left_shift()
     
     def Ry_hold_event(self):
-        return self.__test_togle(self._depth_hold_bt) and self.__left_shift()
+        return self.__test_togle(self._red) and self.__left_shift()
     
     def Rz_hold_event(self):
-        return self.__test_togle(self._square) and self.__left_shift()
+        return self.__test_togle(self._blue) and self.__left_shift()
     
     def track_lock_event(self):
-        return self.__test_togle(self._x) and self.__left_shift()
+        return self.__test_togle(self._green) and self.__left_shift()
 
     def inc_lights_event(self):
         if jtype=='xbox':
@@ -105,15 +105,15 @@ class Joy_map:
         joy_buttons=self.buttons
         axis=self.axis
         jm=Joy_map
-        inertial = joy_buttons[jm._shift2_bt]==1
+        inertial = joy_buttons[jm._right_shift]==1
         
-        fb,lr = (0,0) if joy_buttons[jm._shift1_bt] else (-axis[jm._fb],axis[jm._lr])
-        pitch,roll = (axis[jm._fb],axis[jm._lr]) if joy_buttons[jm._shift1_bt] else (0,0)
+        fb,lr = (0,0) if joy_buttons[jm._left_shift] else (-axis[jm._right_stick_fwd_bak],axis[jm._right_stick_left_right])
+        pitch,roll = (axis[jm._right_stick_fwd_bak],axis[jm._right_stick_left_right]) if joy_buttons[jm._left_shift] else (0,0)
         ret = {'inertial':inertial, 
-                'ud':axis[jm._ud],
+                'ud':axis[jm._left_stick_fwd_bak],
                 'lr':lr,
                 'fb':fb,
-                'yaw':axis[jm._yaw],
+                'yaw':axis[jm._left_stick_right_left],
                 'pitch':pitch,
                 'roll':roll}
         return ret
