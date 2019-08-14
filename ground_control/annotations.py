@@ -7,7 +7,7 @@ import sys
 sys.path.append('../plugins')
 sys.path.append('../plugins/tracker')
 from tracker import tracker
-
+import hw_stats_tools
 
 fps_time=time.time()
 frame_start_time=None
@@ -82,6 +82,9 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
         line='{:>.2f}V {:>.2f}I'.format(v,i)
         cv2.putText(img,line,(50,570), font, 0.5,(0,0,255),1,cv2.LINE_AA)
 
+    if zmq_topics.topic_hw_stats in message_dict:
+        line=hw_stats_tools.get_hw_str(message_dict[zmq_topics.topic_hw_stats][1])
+        cv2.putText(img,line,(670+400,570), font, 0.5,(0,0,255),1,cv2.LINE_AA)
 
 from math import cos,sin,pi
 def draw_compass(img,x,y,heading,pitch,roll):

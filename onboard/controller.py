@@ -41,7 +41,7 @@ async def recv_and_process():
         return new_joy_buttons[b]==1 and joy_buttons[b]==0
 
     while keep_running:
-        socks=zmq.select(subs_socks,[],[],0.005)[0]
+        socks=zmq.select(subs_socks,[],[],0.002)[0]
         for sock in socks:
             if sock==thruster_sink:
                 source,_,thruster_src_cmd=sock.recv_pyobj() 
