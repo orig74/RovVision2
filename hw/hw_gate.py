@@ -24,9 +24,9 @@ ser = serial.Serial(detect_usb.devmap['ESC_USB'], 115200)
 def motor_cmnd_to_DShot(cmnds):
     dshot_msgs = [0]*len(cmnds)
     for idx, cmd in enumerate(cmnds):
-        zero_val = 1048
-        if np.sign(cmd) == -1:
-            zero_val = 48
+        zero_val = 48
+        if np.sign(cmd) >= 0:
+            zero_val = 1048
         cmd_dshot = int(zero_val + min(max(round(cmd*999), 0), 999)) << 1
         csum = (cmd_dshot ^ (cmd_dshot >> 4) ^ (cmd_dshot >> 8)) & 0xf
         dshot_msgs[idx] = cmd_dshot << 4 | csum

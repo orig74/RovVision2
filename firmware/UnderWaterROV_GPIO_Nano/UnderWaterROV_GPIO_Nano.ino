@@ -21,9 +21,29 @@
 #define ADC_VOLTAGE_MUL 0.0048828
 #define BATT_VOLT_MULT 11
 
+#define BOOTED_I_THRESH 0.3
+
 
 Servo Lights;
 MS5837 DepthSensor;
+
+
+bool ReadADC(byte* voltage_B=NULL, byte* current_B=NULL) {
+    static float current_avg;
+
+    float adc_volt = (float) analogRead(VOLTAGE_ADC_PIN);
+    float adc_amps = (float) analogRead(CURRENT_ADC_PIN);
+    float voltage = adc_volt * ADC_VOLTAGE_MUL * BATT_VOLT_MULT;
+    float current = (adc_amps * ADC_VOLTAGE_MUL - BATT_AMP_OFFSET) * BATT_AMP_PERVOLT;
+    current_avg += current/2;
+    current_avg /= 1.5;
+    if (voltage_B != NULL) {
+        *voltage_B = (byte) min(round(10 * voltage), 254);
+        *current_B = (byte) min(round(10 * current_avg), 254);
+    }
+
+    return (current_avg > BOOTED_I_THRESH);
+}
 
 
 void setup() {
@@ -32,7 +52,6 @@ void setup() {
   Serial.begin(SERIAL_BAUD_RATE);
   Wire.begin();
   pinMode(INDICATOR_LED, OUTPUT);
-  digitalWrite(INDICATOR_LED, HIGH);
   pinMode(TRIGER_PIN, OUTPUT);
   Lights.attach(LIGHTS_PWM_PIN, 1100, 1900);
   Lights.writeMicroseconds(1100);
@@ -46,6 +65,14 @@ void setup() {
   }
   DepthSensor.setModel(MS5837::MS5837_30BA);
   DepthSensor.setFluidDensity(1029); // kg/m^3 (997 for freshwater, 1029 for seawater)
+
+  //Wait for current rise to signal panda start.
+  while (!ReadADC()) {
+    digitalWrite(INDICATOR_LED, LOW);
+    delay(500);
+    digitalWrite(INDICATOR_LED, HIGH);
+    delay(500);
+}
 }
 
 
@@ -100,10 +127,7 @@ void loop() {
     DepthSensor.read();
     float depth_m = DepthSensor.depth();
     byte depth_byte = (byte) min(max(round(depth_m*10), 0), 255);
-    adc_volt = (float) analogRead(VOLTAGE_ADC_PIN);
-    adc_amps = (float) analogRead(CURRENT_ADC_PIN);
-    batt_voltage = (byte) min(round(10 * adc_volt * ADC_VOLTAGE_MUL * BATT_VOLT_MULT), 254);
-    batt_current = (byte) min(round(10 * (adc_amps * ADC_VOLTAGE_MUL - BATT_AMP_OFFSET) * BATT_AMP_PERVOLT), 254);
+    ReadADC(&batt_voltage, &batt_current);
     byte messege[4] = {255, depth_byte, batt_voltage, batt_current};
     Serial.write(messege, 4);
   }
