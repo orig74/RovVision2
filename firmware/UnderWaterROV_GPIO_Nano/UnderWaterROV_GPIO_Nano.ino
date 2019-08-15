@@ -21,7 +21,7 @@
 #define ADC_VOLTAGE_MUL 0.0048828
 #define BATT_VOLT_MULT 11
 
-#define BOOTED_I_THRESH 0.3
+#define BOOTED_I_THRESH 0.5
 
 
 Servo Lights;
