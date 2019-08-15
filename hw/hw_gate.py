@@ -25,9 +25,9 @@ def motor_cmnd_to_DShot(cmnds):
     dshot_msgs = [0]*len(cmnds)
     for idx, cmd in enumerate(cmnds):
         zero_val = 48
-        if np.sign(cmd) >= 0:
+        if np.sign(cmd) >= 0.001:
             zero_val = 1048
-        cmd_dshot = int(zero_val + min(max(round(cmd*999), 0), 999)) << 1
+        cmd_dshot = int(zero_val + min(max(round(abs(cmd)*999), 0), 999)) << 1
         csum = (cmd_dshot ^ (cmd_dshot >> 4) ^ (cmd_dshot >> 8)) & 0xf
         dshot_msgs[idx] = cmd_dshot << 4 | csum
 
@@ -60,12 +60,12 @@ async def send_serial_command_50hz():
         c=current_command
         m[0]=c[5] 
         m[1]=c[4]
-        m[2]=c[6]
-        m[3]=c[7]
-        m[4]=c[1]
-        m[5]=c[0]
-        m[6]=c[2]
-        m[7]=c[3]
+        m[2]=-c[6]
+        m[3]=-c[7]
+        m[4]=-c[1]
+        m[5]=-c[0]
+        m[6]=-c[2]
+        m[7]=-c[3]
 
         dshot_frames = motor_cmnd_to_DShot(m)
         s_buff_64 = dshotmsg_to_serialbuffer(dshot_frames)
