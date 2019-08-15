@@ -69,9 +69,9 @@ void setup() {
   //Wait for current rise to signal panda start.
   while (!ReadADC()) {
     digitalWrite(INDICATOR_LED, LOW);
-    delay(500);
+    delay(1000);
     digitalWrite(INDICATOR_LED, HIGH);
-    delay(500);
+    delay(200);
 }
 }
 
@@ -127,9 +127,10 @@ void loop() {
     DepthSensor.read();
     float depth_m = DepthSensor.depth();
     byte depth_byte = (byte) min(max(round(depth_m*10), 0), 255);
-    ReadADC(&batt_voltage, &batt_current);
+    bool booted = ReadADC(&batt_voltage, &batt_current);
     byte messege[4] = {255, depth_byte, batt_voltage, batt_current};
     Serial.write(messege, 4);
+    if (!booted) digitalWrite(INDICATOR_LED, LOW);
   }
   
   // Task to trigger cameras
