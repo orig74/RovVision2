@@ -20,7 +20,7 @@ zmq_sub=utils.subscribe([topic_stereo,topic_depth],ue4_zmq_topics.zmq_pub_unreal
 zmq_pub=utils.publisher(zmq_topics.topic_camera_port)
 
 pub_sonar = utils.publisher(zmq_topics.topic_sonar_port)
-cvshow=1
+cvshow=0
 #cvshow=False
 test=1
 
