@@ -6,7 +6,7 @@ fps=10
 #gstreamer 
 gst_ports=[6760,6761]
 gst_bitrate=1024*3
-gst_speed_preset=3
+gst_speed_preset=1
 
 #tracker type
 #tracker = 'local'
