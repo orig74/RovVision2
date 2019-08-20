@@ -61,7 +61,6 @@ def update_graph(axes):
                 ret = sock.recv_multipart()
                 topic , data = ret
                 data=pickle.loads(ret[1])
-                print(data)
                 if topic not in msgs:
                     msgs[topic] = CycArr(500)
                 msgs[topic].add(data)
@@ -93,9 +92,9 @@ def plot_pid(pid_label):
     plt.grid('on')
 
     ax2=plt.subplot2grid((2,2), (1,0))
-    plt.title(pid_label + ' cmd')
-    hdls2=[ax2.plot([1],'-b'),ax.plot([1],'-g')]
-    plt.legend(list('ct'),loc='upper left')
+    plt.title(pid_label + ' target')
+    hdls2=[ax2.plot([1],'-b'),ax2.plot([1],'-g')]
+    plt.legend(list('TN'),loc='upper left')
     plt.grid('on')
     return ((ax,*hdls),(ax2,*hdls2))
 
@@ -105,18 +104,23 @@ def update_pid(ax_hdls,topic):
     data = msgs[topic].get_data(['TS','P','I','D','C'])
     xs = np.arange(data.shape[0])
     ax,hdls = ax_hdls[0][0],ax_hdls[0][1:]
-    for i in [0,1,2]:
-        hdls[i][0].set_ydata(data[:,i+1])
+    for i in [0,1,2,3]:
+        hdls[i][0].set_ydata(data[:,i+1]) #skip timestemp
         hdls[i][0].set_xdata(xs)
     ax.set_xlim(data.shape[0]-400,data.shape[0])
     ax.set_ylim(-1,1)
 
-    #ax2,hdls2 = ax_hdls[1][0],ax_hdls[1][1:]
+    ax2,hdls2 = ax_hdls[1][0],ax_hdls[1][1:]
+    data = msgs[topic].get_data(['T','N'])
+    xs = np.arange(data.shape[0])
     #cmd_data=gdata.md_hist.get_data(label+'_cmd')
-    #hdls2[0][0].set_xdata(xs)
-    #hdls2[0][0].set_ydata(cmd_data[:,1])
-    #ax2.set_xlim(len(gdata.md_hist)-400,len(gdata.md_hist))
-    #ax2.set_ylim(-300,300)
+    for i in [0,1]:
+        hdls2[i][0].set_ydata(data[:,i])
+        hdls2[i][0].set_xdata(xs)
+    ax2.set_xlim(data.shape[0]-400,data.shape[0])
+    min_y = data.min()
+    max_y = data.max()
+    ax2.set_ylim(min_y,max_y)
 
 from matplotlib.widgets import Button
 
