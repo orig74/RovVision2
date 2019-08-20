@@ -63,6 +63,9 @@ async def recv_and_process():
                         togle_mode('RZ_HOLD')
                     if jm.arm_event():
                         system_state['arm']=not system_state['arm']
+                        if not system_state['arm']:
+                            system_state['mode']=[]
+                           
                 if topic==zmq_topics.topic_axes:
                     jm.update_axis(data)
                     if jm.inc_lights_event():
