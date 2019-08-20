@@ -68,11 +68,11 @@ async def recv_and_process():
                         #print('RR{:06.3f} R{:06.3f} RT{:06.3f} C{:06.3f}'.format(rollr,roll,target_att[2],roll_cmd))
                         ts=time.time()
                         debug_pid = {'P':pid_r.p,'I':pid_r.i,'D':pid_r.d,'C':roll_cmd,'T':0,'N':roll,'TS':ts}
-                        pub_sock.send_multipart([zmq_topics.topic_att_roll_control, pickle.dumps(debug_pid,-1)])
+                        pub_sock.send_multipart([zmq_topics.topic_att_hold_roll_pid, pickle.dumps(debug_pid,-1)])
                         debug_pid = {'P':pid_p.p,'I':pid_p.i,'D':pid_p.d,'C':pitch_cmd,'T':target_att[1],'N':pitch,'TS':ts}
-                        pub_sock.send_multipart([zmq_topics.topic_att_pitch_control, pickle.dumps(debug_pid,-1)])
+                        pub_sock.send_multipart([zmq_topics.topic_att_hold_pitch_pid, pickle.dumps(debug_pid,-1)])
                         debug_pid = {'P':pid_y.p,'I':pid_y.i,'D':pid_y.d,'C':yaw_cmd,'T':target_att[0],'N':yaw,'TS':ts}
-                        pub_sock.send_multipart([zmq_topics.topic_att_yaw_control, pickle.dumps(debug_pid,-1)])
+                        pub_sock.send_multipart([zmq_topics.topic_att_hold_yaw_pid, pickle.dumps(debug_pid,-1)])
                         
                         thruster_cmd = mixer.mix(0,0,0,roll_cmd,pitch_cmd,yaw_cmd,pitch,roll)
                         thrusters_source.send_pyobj(['att',time.time(),thruster_cmd])
