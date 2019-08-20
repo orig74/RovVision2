@@ -11,3 +11,5 @@ gst_speed_preset=1
 #tracker type
 #tracker = 'local'
 tracker = 'rope'
+
+joy_deadband=0.3

@@ -3,6 +3,9 @@
 #mode 2
 #jtype = 'sony'
 import time
+import sys
+sys.path.append('..')
+import config
 
 jtype='xbox'
 class Joy_map:
@@ -46,7 +49,12 @@ class Joy_map:
         self.buttons=buttons
 
     def update_axis(self,axis):
-        self.axis=axis
+        if config.joy_deadband>0:
+            naxis = [x  if abs(x)>config.joy_deadband else 0 for x in axis]
+            self.axis=naxis
+        else:
+            self.axis=axis
+
 
     def __test_togle(self,b):
         return self.buttons[b]==1 and self.prev_buttons[b]==0

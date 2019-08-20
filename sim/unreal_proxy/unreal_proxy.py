@@ -18,6 +18,7 @@ context = zmq.Context()
 
 show_cv=False
 pub_cv=True
+fps = 10
 
 drone_subs=[]
 
@@ -103,7 +104,13 @@ def main_loop(gworld):
     print('initial_pos is ',initial_pos)
     drone_start_positions=[np.array(ph.GetActorLocation(drone_actor) if initial_pos is None else initial_pos) for drone_actor in drone_actors]
     positions=[None for _ in range(config.n_drones)]
+    tic = time.time()
     while 1:
+        while time.time()-tic < 1.0/fps:
+            time.sleep(0.001)
+            yield
+        tic=time.time()
+
         for drone_index in range(config.n_drones):
             socket_sub=drone_subs[drone_index]
             drone_actor=drone_actors[drone_index]
@@ -119,7 +126,7 @@ def main_loop(gworld):
                 ph.SetActorLocation(drone_actor,new_pos)
                 ph.SetActorRotation(drone_actor,(position['roll'],position['pitch'],position['yaw']))
                 positions[drone_index]=None
-        yield
+        #yield
         topics=[]
         imgs=[]
 
