@@ -67,8 +67,9 @@ async def recv_and_process():
                         roll_cmd = pid_r(roll,0 if roll_target_0 else target_att[2],rollr,0)
                         #print('RR{:06.3f} R{:06.3f} RT{:06.3f} C{:06.3f}'.format(rollr,roll,target_att[2],roll_cmd))
 
-                        #debug_pid = {'P':pid.P,'I':pid.I,'D':pid.D,'C':ud_command,'T':target_depth,'N':depth,'TS':new_depth_ts}
-                        #pub_sock.send_multipart([zmq_topics.topic_depth_hold_pid, pickle.dumps(debug_pid,-1)])
+                        debug_pid = {'P':pid.p,'I':pid.i,'D':pid.d,'C':roll_cmd,'T':0,'N':roll,'TS':new_depth_ts}
+                        pub_sock.send_multipart([zmq_topics.topic_att_roll_control, pickle.dumps(debug_pid,-1)])
+                        
                         thruster_cmd = mixer.mix(0,0,0,roll_cmd,pitch_cmd,yaw_cmd,pitch,roll)
                         thrusters_source.send_pyobj(['att',time.time(),thruster_cmd])
                 else:
@@ -107,7 +108,7 @@ if __name__=='__main__':
 
     ### plugin outputs
     thrusters_source = zmq_wrapper.push_source(zmq_topics.thrusters_sink_port) 
-    #pub_sock = zmq_wrapper.publisher(zmq_topics.topic_depth_hold_port)
+    pub_sock = zmq_wrapper.publisher(zmq_topics.topic_att_hold_port)
 
 
     loop = asyncio.get_event_loop()
