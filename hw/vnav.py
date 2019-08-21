@@ -29,33 +29,36 @@ def get_data():
     ret['rates']=(rates.x,rates.y,rates.z)
     return ret
 
-async def recv_and_process():
+def recv_and_process():
     cnt=0
-    while 1:
-        tic=time.time()
-        imu={'ts':tic}
+    prev_ypr = None
+    while prev_ypr is None: #wait for data
+        time.sleep(0.010)
         cd=s.current_data
-        ret={}
+        prev_tt = cd.time_startup
+        prev_ypr = cd.yaw_pitch_roll
+
+    while 1:
+        cd=s.current_data
+        if cd.yaw_pitch_roll is None or cd.time_startup==prev_tt:
+            time.sleep(0.01)
+            continue
+        #new packet
+        dt = (cd.time_startup - prev_tt)/1e9
+        prev_tt = cd.time_startup
+        tic=time.time()
+        imu={'ts':tic, 'imuts': cd.time_startup}
         ypr=cd.yaw_pitch_roll
-        if ypr is not None:
-            rates=cd.angular_rate
-            imu['yaw'],imu['pitch'],imu['roll']=(ypr.x,ypr.y,ypr.z)
+        imu['yaw'],imu['pitch'],imu['roll']=(ypr.x,ypr.y,ypr.z)
+        imu['yawr'],imu['pitchr'],imu['rollr']=((ypr.x-prev_ypr.x)/dt, (ypr.y-prev_ypr.y)/dt, (ypr.z-prev_ypr.z)/dt)
+        prev_ypr=ypr
+        imu['rates']=(rates.x,rates.y,rates.z)
 
-            imu['rates']=(rates.x,rates.y,rates.z)
-
-            if cnt%5==0:
-                print('dsim Y{:4.2f} P{:4.2f} R{:4.2f}'.format(imu['yaw'],imu['pitch'],imu['roll'])
+        if cnt%5==0:
+            print('dsim Y{:4.2f} P{:4.2f} R{:4.2f}'.format(imu['yaw'],imu['pitch'],imu['roll'])
                         +' X{:4.2f} Y{:4.2f} Z{:4.2f}'.format(*imu['rates']))
-            pub_imu.send_multipart([zmq_topics.topic_imu,pickle.dumps(imu)])
-        await asyncio.sleep(0.020)
+        pub_imu.send_multipart([zmq_topics.topic_imu,pickle.dumps(imu)])
         cnt+=1
 
-async def main():
-    await asyncio.gather(
-            recv_and_process(),
-            )
-
 if __name__=='__main__':
-#    asyncio.run(main())
-    loop = asyncio.get_event_loop()
-    result = loop.run_until_complete(main())
+    recv_and_process()

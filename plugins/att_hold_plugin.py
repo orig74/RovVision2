@@ -39,9 +39,12 @@ async def recv_and_process():
 
             if topic==zmq_topics.topic_imu:
                 yaw,pitch,roll=data['yaw'],data['pitch'],data['roll']
-                ans=mixer.from_ang_rates_to_euler_rates(yaw,pitch,roll,data['rates'])
-                if ans is not None:
-                    yawr,pitchr,rollr=mixer.from_ang_rates_to_euler_rates(yaw,pitch,roll,data['rates'])
+                if 'yawr' in data:
+                    yawr,pitchr,rollr=data['yawr'],data['pitchr'],data['rollr']
+                else:
+                    ans=mixer.from_ang_rates_to_euler_rates(yaw,pitch,roll,data['rates'])
+                    if ans is not None:
+                        yawr,pitchr,rollr=mixer.from_ang_rates_to_euler_rates(yaw,pitch,roll,data['rates'])
 
                 joy = jm.joy_mix()
 
