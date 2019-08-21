@@ -40,7 +40,8 @@ async def recv_and_process():
             if topic==zmq_topics.topic_imu:
                 yaw,pitch,roll=data['yaw'],data['pitch'],data['roll']
                 if 'yawr' in data:
-                    yawr,pitchr,rollr=data['yawr'],data['pitchr'],data['rollr']
+                    ans = (data['yawr'],data['pitchr'],data['rollr'])
+                    yawr,pitchr,rollr=ans
                 else:
                     ans=mixer.from_ang_rates_to_euler_rates(yaw,pitch,roll,data['rates'])
                     if ans is not None:
