@@ -14,4 +14,4 @@ tracker = 'rope'
 
 joy_deadband=0.05
 
-thruster_limit=0.4
+thruster_limit=0.5

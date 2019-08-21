@@ -57,13 +57,14 @@ bool ReadADC(byte* voltage_B=NULL, byte* current_B=NULL) {
 void LED_control(byte state) {
   int time_since_l_event = (int) ((float) TCNT3) * 1e3 / 64;
 
+  /*
   if (state == 0) {
       if (digitalRead(INDICATOR_LED) == HIGH && (time_since_l_event > LED_HIGH_T_MS))
         digitalWrite(INDICATOR_LED, LOW);
       else if (digitalRead(INDICATOR_LED) == LOW && (time_since_l_event > LED_LOW_T_MS))
         digitalWrite(INDICATOR_LED, HIGH);
   } else digitalWrite(INDICATOR_LED, HIGH);
-
+  */
   TCNT3 = 0;
 }
 
@@ -144,8 +145,8 @@ void loop() {
   if ((time_us - prev_serial_tx_micros) > SERIAL_TX_DELAY) {
     prev_serial_tx_micros = time_us;
 
-    DepthSensor.read();
-    float depth_m = DepthSensor.depth();
+    //DepthSensor.read();
+    float depth_m = 0;//DepthSensor.depth();
     byte depth_byte = (byte) min(max(round(depth_m*10), 0), 255);
     cur_state = (byte) ReadADC(&batt_voltage, &batt_current);
     byte messege[4] = {255, depth_byte, batt_voltage, batt_current};
@@ -156,14 +157,16 @@ void loop() {
   if ((micros() - prev_trigger_micros) > TRIGGER_RATE_MICROS_HALF) {
       prev_trigger_micros += TRIGGER_RATE_MICROS_HALF;
 
-      if (!trigger_state && start_trig) {
+      if (!trigger_state && true) { //start_trig
           // trigger low and currently triggering
           digitalWrite(TRIGER_PIN, HIGH);
+          digitalWrite(INDICATOR_LED, HIGH);
           trigger_state = true;
       }
       else {
           // trigger high (always bring lines low even if trigger has been turned off)
           digitalWrite(TRIGER_PIN, LOW);
+          digitalWrite(INDICATOR_LED, LOW);
           trigger_state = false;
       }
   }

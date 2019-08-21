@@ -88,16 +88,16 @@ def center(evt):
 
 
 def plot_pid(pid_label):
-    ax=plt.subplot2grid((2,1), (0,0))
+    ax=plt.subplot(2,1,1)
     plt.title(pid_label)
     hdls=[ax.plot([1],'-b'),ax.plot([1],'-g'),ax.plot([1],'-r'), ax.plot([1],'-k')]
     plt.legend(list('pidc'),loc='upper left')
     plt.grid('on')
 
-    ax2=plt.subplot2grid((2,2), (1,0))
+    ax2=plt.subplot(2,1,2,sharex=ax)
     plt.title(pid_label + ' target')
-    hdls2=[ax2.plot([1],'-b'),ax2.plot([1],'-g')]
-    plt.legend(list('TN'),loc='upper left')
+    hdls2=[ax2.plot([1],'-b'),ax2.plot([1],'-g'), ax2.plot([1],'-r')]
+    plt.legend(list('TNR'),loc='upper left')
     plt.grid('on')
     return ((ax,*hdls),(ax2,*hdls2))
 
@@ -114,10 +114,10 @@ def update_pid(ax_hdls,topic):
     ax.set_ylim(-1,1)
 
     ax2,hdls2 = ax_hdls[1][0],ax_hdls[1][1:]
-    data = msgs[topic].get_data(['T','N'])
+    data = msgs[topic].get_data(['T','N','R'])
     xs = np.arange(data.shape[0])
     #cmd_data=gdata.md_hist.get_data(label+'_cmd')
-    for i in [0,1]:
+    for i in [0,1,2]:
         hdls2[i][0].set_ydata(data[:,i])
         hdls2[i][0].set_xdata(xs)
     ax2.set_xlim(data.shape[0]-400,data.shape[0])
