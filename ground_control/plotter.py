@@ -17,7 +17,7 @@ import zmq_wrapper
 parser = argparse.ArgumentParser()
 parser.add_argument("--topic",help="which topic")
 parser.add_argument("--port",help="which port",type=int)
-parser.add_argument("--type",help="plot type: pid or vals",default='pid')
+parser.add_argument("--type",help="plot type: pid or vector",default='pid')
 args = parser.parse_args()
 
 subs_socks=[]
@@ -39,6 +39,9 @@ class CycArr():
             for j,l in enumerate(labels):
                 data[i][j]=d[l]
         return data
+
+    def get_vec(self):
+        return np.array([d for _,d in self.buf])
 
     def __len__(self):
         return len(self.buf)
@@ -70,8 +73,13 @@ def update_graph(axes):
                 new_data=True
 
     if not pause_satus and new_data:
-        update_pid(axis_hdls,args.topic.encode())
-        axes.figure.canvas.draw()
+        if args.type=='pid':
+            update_pid(axis_hdls,args.topic.encode())
+            axes.figure.canvas.draw()
+        if args.type=='vector':
+            update_vector(axis_hdls,args.topic.encode())
+            axes.figure.canvas.draw()
+
 
 def clear(evt):
     gdata.reset()
@@ -86,6 +94,24 @@ def pause(evt):
 def center(evt):
     gdata.map_center = gdata.curr_pos.copy()
 
+def plot_vec(pid_label):
+    ax=plt.subplot(1,1,1)
+    plt.title(pid_label)
+    hdls=[ax.plot([1]) for _ in range(8)]
+    plt.legend(list('12345678'),loc='upper left')
+    plt.grid('on')
+    return (ax,*hdls)
+
+def update_vector(ax_hdls,topic):
+    if topic not in msgs:
+        return
+    data = msgs[topic].get_vec()
+    xs = np.arange(data.shape[0])
+    ax,hdls = ax_hdls
+    hdls[0].set_ydata(data) #skip timestemp
+    hdls[0].set_xdata(xs)
+    ax.set_xlim(data.shape[0]-400,data.shape[0])
+    ax.set_ylim(-1,1)
 
 def plot_pid(pid_label):
     ax=plt.subplot(2,1,1)
@@ -144,6 +170,9 @@ bnclear.on_clicked(clear)
 bncenter = Button(axcenter, 'Center')
 bncenter.on_clicked(center)
 
-axis_hdls=plot_pid(args.topic)
+if args.type=='pid':
+    axis_hdls=plot_pid(args.topic)
+if args.type=='vector':
+    axis_hdls=plot_vec(args.topic)
 
 plt.show()
