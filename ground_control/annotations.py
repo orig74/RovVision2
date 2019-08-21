@@ -124,7 +124,7 @@ def draw_compass(img,x,y,heading,pitch,roll):
     pt=pitch/180.0*pi
     xx=x
     yy=y-sin(pt)*hfov
-    rl=-roll/180.0*pi
+    rl=roll/180.0*pi
     cs=cos(rl)
     si=sin(rl)
     cv2.line(img,
@@ -160,5 +160,3 @@ def draw_depth(img,x,y,depth,tdepth):
     font = cv2.FONT_HERSHEY_SIMPLEX
     cv2.putText(img,'%.2f'%depth \
             ,(x,l+y+20), font, 0.5,(255,0,255),1,cv2.LINE_AA)
-
-

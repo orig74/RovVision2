@@ -1,7 +1,7 @@
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 # coding=utf-8
-#to run 
-#LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../bin/ flir_cam_proxy.py 
+#to run
+#LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../bin/ flir_cam_proxy.py
 
 
 import argparse,sys,os,time
@@ -102,16 +102,16 @@ class ImageEventHandler(PySpin.ImageEvent):
                 print('Image event occurred...')
 
             # Check if image is incomplete
-            if image.IsIncomplete():
+            if 0 and image.IsIncomplete():
                 print('Image incomplete with image status %i...' % image.GetImageStatus())
 
             else:
                 # Print image info
-                if self._image_count < self._NUM_IMAGES:
+                if self._image_count < self._NUM_IMAGES or self._image_count%20==0:
                     print('Grabbed image %i, width = %i, height = %i' % (self._image_count,
                                                                      image.GetWidth(),
                                                                      image.GetHeight()))
-                    print('---',self.name,ts) 
+                    print('---',self.name,ts)
                 width = image.GetWidth()
                 height = image.GetHeight()
                 # Convert to mono8
@@ -122,7 +122,10 @@ class ImageEventHandler(PySpin.ImageEvent):
                 #self.theimage=(self._image_count,image_converted.GetData().reshape((height,width,3)))
 
                 #newcode
-                im_data=image.GetData().copy().reshape((height,width))
+                if image.IsIncomplete():
+                    im_data=np.zeros((height,width),'uint8')
+                else:
+                    im_data=image.GetData().copy().reshape((height,width))
                 self.theimage = (time.time(), self._image_count, bayer.shrink_bayer_to_rgb(im_data))
                 #self.theimage = (time.time(), self._image_count, im_data)
 
@@ -441,7 +444,7 @@ def run_single_camera(cams):
                         #    if frame_cnt%10==0:
                         #        print('sending --- ',frame_cnt)
                         #    socket_pub.send_multipart([topic,struct.pack('llll',*img.shape,frame_cnt),img.tostring()])
-                        
+
                         ######## new code
                         ts_l,frame_cntl,imgl=ql.get()
                         ts_r,frame_cntr,imgr=qr.get()
@@ -449,7 +452,7 @@ def run_single_camera(cams):
                         if frame_cntl!=frame_cntr:
                             print('Error somthing wrong frame_cntl!=frame_cntr',frame_cntl,frame_cntr)
                         socket_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps((frame_cntl,imgl.shape)),imgl.tobytes(),imgr.tobytes()])
-                        time.sleep(0.001) 
+                        time.sleep(0.001)
                         socket_pub.send_multipart([zmq_topics.topic_stereo_camera_ts,pickle.dumps((frame_cntl,ts))])
                         cnt=frame_cntl
                     else:

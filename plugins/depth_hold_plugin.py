@@ -9,7 +9,7 @@ sys.path.append('..')
 sys.path.append('../utils')
 sys.path.append('../onboard')
 import mixer
-import zmq_wrapper 
+import zmq_wrapper
 import zmq_topics
 from joy_mix import Joy_map
 from config_pid import depth_pid
@@ -34,7 +34,6 @@ async def recv_and_process():
 
             if topic==zmq_topics.topic_depth:
                 new_depth_ts, depth=data['ts'],data['depth']
-                
                 if ab is None:
                     ab=ab_filt([depth,0])
                 else:
@@ -59,16 +58,16 @@ async def recv_and_process():
 
             if topic==zmq_topics.topic_axes:
                 jm.update_axis(data)
-                target_depth+=jm.joy_mix()['ud']/10.0 
+                target_depth+=jm.joy_mix()['ud']/10.0
 
             if topic==zmq_topics.topic_imu:
                 pitch,roll=data['pitch'],data['roll']
-            
+
             if topic==zmq_topics.topic_system_state:
                 _,system_state=data
 
         await asyncio.sleep(0.001)
- 
+
 async def main():
     await asyncio.gather(
             recv_and_process(),
@@ -83,12 +82,10 @@ if __name__=='__main__':
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
 
     ### plugin outputs
-    thrusters_source = zmq_wrapper.push_source(zmq_topics.thrusters_sink_port) 
+    thrusters_source = zmq_wrapper.push_source(zmq_topics.thrusters_sink_port)
     pub_sock = zmq_wrapper.publisher(zmq_topics.topic_depth_hold_port)
 
 
     loop = asyncio.get_event_loop()
     result = loop.run_until_complete(main())
     #asyncio.run(main())
-
-

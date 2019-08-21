@@ -1,4 +1,4 @@
-#include <Servo.h> 
+#include <Servo.h>
 #include <Wire.h>
 #include "MS5837.h"
 
@@ -14,7 +14,7 @@
 #define TRIGGER_RATE_MICROS_HALF (TRIGGER_RATE_MICROS/2)
 
 #define SERIAL_BAUD_RATE 115200
-#define SERIAL_TX_DELAY 500000
+#define SERIAL_TX_DELAY 100000
 
 #define BATT_AMP_OFFSET 0.330
 #define BATT_AMP_PERVOLT 37.8788
@@ -49,7 +49,7 @@ bool ReadADC(byte* voltage_B=NULL, byte* current_B=NULL) {
 
     current_avg += current/2;
     current_avg /= 1.5;
-    
+
     return (current_avg > BOOTED_I_THRESH);
 }
 
@@ -81,7 +81,7 @@ void setup() {
   TCCR3B = 0;
   TCCR3A = 0;
   TCCR3B |= (1 << CS32 | CS30); //1024 prescale
-  
+
   while (!DepthSensor.init()) {
     Serial.println("Init failed!");
     Serial.println("Are SDA/SCL connected correctly?");
@@ -100,33 +100,33 @@ void loop() {
   static unsigned long prev_trigger_micros;
   static unsigned long prev_serial_tx_micros;
   static byte cur_state;
-  
+
   byte bt;
   byte batt_voltage, batt_current;
   unsigned long time_us = micros();
-  
+
   LED_control(cur_state);
-    
+
   // SERIAL RX
   while (Serial.available() > 0) {
       bt = Serial.read();
       switch(bt) {
-          case 7: 
+          case 7:
               light_power = 1;
               break;
-          case 6: 
+          case 6:
               light_power = 0.8;
               break;
-          case 5: 
+          case 5:
               light_power = 0.6;
               break;
-          case 4: 
+          case 4:
               light_power = 0.4;
               break;
-          case 3: 
+          case 3:
               light_power = 0.2;
               break;
-          case 2: 
+          case 2:
               light_power = 0;
               break;
           case 1:
@@ -139,11 +139,11 @@ void loop() {
               break;
       }
   }
-  
+
   //SERIAL TX
   if ((time_us - prev_serial_tx_micros) > SERIAL_TX_DELAY) {
     prev_serial_tx_micros = time_us;
-    
+
     DepthSensor.read();
     float depth_m = DepthSensor.depth();
     byte depth_byte = (byte) min(max(round(depth_m*10), 0), 255);
@@ -151,7 +151,7 @@ void loop() {
     byte messege[4] = {255, depth_byte, batt_voltage, batt_current};
     Serial.write(messege, 4);
   }
-  
+
   // Task to trigger cameras
   if ((micros() - prev_trigger_micros) > TRIGGER_RATE_MICROS_HALF) {
       prev_trigger_micros += TRIGGER_RATE_MICROS_HALF;
@@ -167,7 +167,7 @@ void loop() {
           trigger_state = false;
       }
   }
-  
+
   Lights.writeMicroseconds(1100 + (int) round(800*light_power));
 
 }

@@ -12,6 +12,7 @@ sys.path.append('../utils')
 import zmq_wrapper as utils
 import zmq_topics
 import detect_usb
+import config
 
 current_command=[0 for _ in range(8)] # 8 thrusters
 keep_running=True
@@ -58,7 +59,7 @@ async def send_serial_command_50hz():
         # Need to convert comands to list of -1 -> 1?
         m = [0]*8
         c=current_command
-        m[0]=c[5] 
+        m[0]=c[5]
         m[1]=c[4]
         m[2]=-c[6]
         m[3]=-c[7]
@@ -67,11 +68,12 @@ async def send_serial_command_50hz():
         m[6]=-c[2]
         m[7]=-c[3]
 
+        m=np.clip(m,-config.thruster_limit,config.thruster_limit)
         dshot_frames = motor_cmnd_to_DShot(m)
         s_buff_64 = dshotmsg_to_serialbuffer(dshot_frames)
         ser.write(s_buff_64)
         #serial.write([struct.pack('>B', byte) for byte in s_buff_64])
-        
+
 
 ### todo: add process to publish vector nav data???
 
@@ -85,7 +87,7 @@ async def recv_and_process():
             if ret[0]==zmq_topics.topic_thrusters_comand:
                 _,current_command=pickle.loads(ret[1])
         await asyncio.sleep(0.001)
-        #print('-1-',time.time()) 
+        #print('-1-',time.time())
 
 async def main():
     await asyncio.gather(
@@ -97,4 +99,3 @@ if __name__=='__main__':
     loop = asyncio.get_event_loop()
     result = loop.run_until_complete(main())
     #asyncio.run(main())
-
