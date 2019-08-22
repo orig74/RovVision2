@@ -54,6 +54,10 @@ async def recv_and_process():
                             x,v = td[imap]
                             cmds[ind] = -pids[ind](x,target_pos[ind],v)
                             print('pid=',ind,x,v,str(pids[ind]))
+                            ts=time.time()
+                            debug_pid = {'P':pids[ind].p,'I':pids[ind].i,'D':pids[ind].d,'C':cmds[ind],'T':target_pos[ind],'N':roll, 'R':v, 'TS':ts}
+                            pub_sock.send_multipart([zmq_topics.topic_pos_hold_pid_fmt%ind, pickle.dumps(debug_pid,-1)])
+                
                 thruster_cmd = mixer.mix(cmds[2],cmds[1],cmds[0],0,0,0,0,0)
                 thrusters_source.send_pyobj(['att',time.time(),thruster_cmd])
 
@@ -85,7 +89,8 @@ if __name__=='__main__':
 
     ### plugin outputs
     thrusters_source = zmq_wrapper.push_source(zmq_topics.thrusters_sink_port) 
-    #pub_sock = zmq_wrapper.publisher(zmq_topics.topic_depth_hold_port)
+    
+    pub_sock = zmq_wrapper.publisher(zmq_topics.topic_pos_hold_port)
 
 
     loop = asyncio.get_event_loop()

@@ -85,7 +85,6 @@ class StereoTrack():
 
 
         rx,ry =  nx+cx_off,ny+cy_off
-        print('jjj',self.debug)
         if self.debug:
             import matplotlib
             matplotlib.use('TKAgg')
@@ -221,7 +220,7 @@ if __name__=="__main__":
         if cnt>0:
             ret=dd(*images)
             print(ret)
-            imr,iml=images
+            iml,imr=images
             imls=iml.copy()
             imrs=imr.copy()
             print(cnt,iml.shape) 

@@ -16,6 +16,7 @@ import queue
 import zmq_topics
 import zmq_wrapper as utils
 import bayer
+import config
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--cvshow",help="show opencv mode", action='store_true')
@@ -412,6 +413,8 @@ def run_single_camera(cams):
         #arrange order by serial num
         if hdl_l._device_serial_number > hdl_r._device_serial_number:
             hdl_l,hdl_r=hdl_r,hdl_l
+        if config.reverse_camera_order:
+            hdl_l,hdl_r=hdl_r,hdl_l
 
         ql,qr = hdl_l.q,hdl_r.q
         hdl_l.set_name('left')
@@ -502,8 +505,11 @@ def main():
     # Retrieve list of cameras from the system
     cam_list = system.GetCameras()
 
+
     num_cams = cam_list.GetSize()
 
+
+    cam_list = list(cam_list)
     print('Number of cameras detected: %i' % num_cams)
 
     # Finish if there are no cameras

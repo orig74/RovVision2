@@ -49,6 +49,10 @@ topic_att_hold_pitch_pid=b'topic_att_pitch_control'
 topic_att_hold_roll_pid=b'topic_att_roll_control'
 topic_att_hold_port=10052
 
+topic_pos_hold_pid_fmt=b'topic_pos_hold_pid_%d'
+topic_pos_hold_port=10053
+
+
 topic_tracker=b'topic_tracker'
 topic_tracker_port=10101
 

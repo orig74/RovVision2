@@ -54,7 +54,7 @@ pitch_pid={\
 #if set to true always try to mantain 0 roll
 roll_target_0 = True
 
-sc=4
+sc=0.3
 pos_pid={\
         'P':2.5 * sc ,
         'I':0.001 * sc ,

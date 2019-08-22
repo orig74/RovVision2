@@ -1,6 +1,7 @@
 #cameras info
 cam_resx,cam_resy=1920,1200
 cam_res_rgbx,cam_res_rgby=cam_resx//2,cam_resy//2
+reverse_camera_order=True
 fps=10
 
 #gstreamer
