@@ -43,13 +43,14 @@ async def recv_and_process():
                     ans = (data['yawr'],data['pitchr'],data['rollr'])
                     yawr,pitchr,rollr=ans
                 else:
-                    ans=mixer.from_ang_rates_to_euler_rates(yaw,pitch,roll,data['rates'])
-                    if ans is not None:
-                        yawr,pitchr,rollr=mixer.from_ang_rates_to_euler_rates(yaw,pitch,roll,data['rates'])
+                    #ans=#mixer.from_ang_rates_to_euler_rates(yaw,pitch,roll,data['rates'])
+                    #if ans is not None:
+                    #    yawr,pitchr,rollr=mixer.from_ang_rates_to_euler_rates(yaw,pitch,roll,data['rates'])
+                    rates = [x/np.pi*180 for x in data['rates']]
 
                 joy = jm.joy_mix()
 
-                if 'ATT_HOLD' in system_state['mode'] and ans is not None:
+                if 'ATT_HOLD' in system_state['mode']:# and ans is not None:
                     if pid_y is None:
                         pid_y=PID(**yaw_pid)
                         pid_p=PID(**pitch_pid)
@@ -57,30 +58,30 @@ async def recv_and_process():
                     else:
                         #if joy and joy['inertial'] and abs(joy['yaw'])<0.05:
                         if joy and abs(joy['yaw'])<0.1:
-                            yaw_cmd = pid_y(yaw,target_att[0],yawr,0)
+                            yaw_cmd = pid_y(yaw,target_att[0],0,0)
                         else:
                             target_att[0]=yaw
                             yaw_cmd=0
                         #print('R{:06.3f} Y{:06.3f} YT{:06.3f} C{:06.3f}'.format(yawr,yaw,target_att[0],yaw_cmd))
 
                         if joy and abs(joy['pitch'])<0.1:
-                            pitch_cmd = pid_p(pitch,target_att[1],pitchr,0)
+                            pitch_cmd = pid_p(pitch,target_att[1],0,0)
                         else:
                             target_att[1]=pitch
                             pitch_cmd=0
                         #print('R{:06.3f} P{:06.3f} PT{:06.3f} C{:06.3f}'.format(pitchr,pitch,target_att[1],pitch_cmd))
-                        roll_cmd = pid_r(roll,0 if roll_target_0 else target_att[2],rollr,0)
+                        roll_cmd = pid_r(roll,0 if roll_target_0 else target_att[2],0,0)
                         #print('RR{:06.3f} R{:06.3f} RT{:06.3f} C{:06.3f}'.format(rollr,roll,target_att[2],roll_cmd))
                         ts=time.time()
-                        debug_pid = {'P':pid_r.p,'I':pid_r.i,'D':pid_r.d,'C':roll_cmd,'T':0,'N':roll, 'R':rollr, 'TS':ts}
+                        debug_pid = {'P':pid_r.p,'I':pid_r.i,'D':pid_r.d,'C':roll_cmd,'T':0,'N':roll, 'R':rates[0], 'TS':ts}
                         pub_sock.send_multipart([zmq_topics.topic_att_hold_roll_pid, pickle.dumps(debug_pid,-1)])
-                        debug_pid = {'P':pid_p.p,'I':pid_p.i,'D':pid_p.d,'C':pitch_cmd,'T':target_att[1],'N':pitch, 'R':pitchr,'TS':ts}
+                        debug_pid = {'P':pid_p.p,'I':pid_p.i,'D':pid_p.d,'C':pitch_cmd,'T':target_att[1],'N':pitch, 'R':rates[1],'TS':ts}
                         pub_sock.send_multipart([zmq_topics.topic_att_hold_pitch_pid, pickle.dumps(debug_pid,-1)])
-                        debug_pid = {'P':pid_y.p,'I':pid_y.i,'D':pid_y.d,'C':yaw_cmd,'T':target_att[0],'N':yaw, 'R':yawr, 'TS':ts}
+                        debug_pid = {'P':pid_y.p,'I':pid_y.i,'D':pid_y.d,'C':yaw_cmd,'T':target_att[0],'N':yaw, 'R':rates[2], 'TS':ts}
                         pub_sock.send_multipart([zmq_topics.topic_att_hold_yaw_pid, pickle.dumps(debug_pid,-1)])
 
-                        thruster_cmd = mixer.mix(0,0,0,roll_cmd,pitch_cmd,yaw_cmd,pitch,roll)
-                        #thruster_cmd = mixer.mix(0,0,0,roll_cmd,pitch_cmd,yaw_cmd,0,0)
+                        thruster_cmd = np.array(mixer.mix(0,0,0,roll_cmd,pitch_cmd,yaw_cmd,pitch,roll))
+                        thruster_cmd += mixer.mix(0,0,0,-rates[0]*pid_r.D,-rates[1]*pid_p.D,-rates[2]*pid_y.D,0,0)
                         thrusters_source.send_pyobj(['att',time.time(),thruster_cmd])
                 else:
                     if pid_y is not None:

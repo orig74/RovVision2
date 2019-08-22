@@ -85,8 +85,10 @@ class StereoTrack():
 
 
         rx,ry =  nx+cx_off,ny+cy_off
+        print('jjj',self.debug)
         if self.debug:
             import matplotlib
+            matplotlib.use('TKAgg')
             import matplotlib.pyplot as plt
             plt.figure('search {}'.format(self.debug))
             #plt.subplot(2,2,1)
@@ -141,6 +143,7 @@ class StereoTrack():
         imgr1r=imgr[:,:,0].copy()
         imgl1b=imgl[:,:,2].copy()
         imgr1b=imgr[:,:,2].copy()
+        
         valid,pt_l_x,pt_l_y,pt_r_x,pt_r_y = self.__track_and_validate(imgl1r, imgr1r, imgl1b, imgr1b )
         res={}
 
@@ -207,7 +210,8 @@ if __name__=="__main__":
     import gst
     dd=StereoTrack()
     #fr=gst.gst_file_reader('../../../data/190726-063112/',False)
-    fr=gst.gst_file_reader('../../../data/190803-141658/',False)
+    #fr=gst.gst_file_reader('../../../data/190803-141658/',False)
+    fr=gst.gst_file_reader('../../../data/190822-140723/',False)
     keep_run=True
     for i,data in enumerate(fr):
         #print(i)
@@ -217,7 +221,7 @@ if __name__=="__main__":
         if cnt>0:
             ret=dd(*images)
             print(ret)
-            iml,imr=images
+            imr,iml=images
             imls=iml.copy()
             imrs=imr.copy()
             print(cnt,iml.shape) 
@@ -234,3 +238,8 @@ if __name__=="__main__":
                     break
                 if k%256==ord('s'):
                     cv2.imwrite('iml.png',iml)
+
+                if k%256==ord('d'):
+                    dd.debug=True
+                if k%256==ord('r'):
+                    dd.reset()

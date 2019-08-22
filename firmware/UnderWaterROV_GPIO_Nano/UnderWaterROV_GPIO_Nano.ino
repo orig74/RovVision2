@@ -14,7 +14,7 @@
 #define TRIGGER_RATE_MICROS_HALF (TRIGGER_RATE_MICROS/2)
 
 #define SERIAL_BAUD_RATE 115200
-#define SERIAL_TX_DELAY 100000
+#define SERIAL_TX_DELAY 500000
 
 #define BATT_AMP_OFFSET 0.330
 #define BATT_AMP_PERVOLT 37.8788
@@ -35,11 +35,12 @@ bool ReadADC(byte* voltage_B=NULL, byte* current_B=NULL) {
     float adc_volt = 0;
     float adc_amps = 0;
 
-    for (int n=0; n<4; n++) {
-        adc_volt += 0.25 * ((float) analogRead(VOLTAGE_ADC_PIN));
-        adc_amps += 0.25 * ((float) analogRead(CURRENT_ADC_PIN));
-        delay(10);
-    }
+    //for (int n=0; n<4; n++) {
+    adc_volt = ((float) analogRead(VOLTAGE_ADC_PIN));
+    adc_amps = ((float) analogRead(CURRENT_ADC_PIN));
+    
+    //    delay(10);
+    //}
     float voltage = adc_volt * ADC_VOLTAGE_MUL * BATT_VOLT_MULT;
     float current = (adc_amps * ADC_VOLTAGE_MUL - BATT_AMP_OFFSET) * BATT_AMP_PERVOLT;
     if (voltage_B != NULL) {
@@ -94,6 +95,9 @@ void setup() {
   DepthSensor.setFluidDensity(1029); // kg/m^3 (997 for freshwater, 1029 for seawater)
 }
 
+unsigned int cnt1=0;
+unsigned int cnt2=0;
+byte batt_voltage, batt_current;
 
 void loop() {
   static boolean rec, start_trig, trigger_state;
@@ -103,10 +107,8 @@ void loop() {
   static byte cur_state;
 
   byte bt;
-  byte batt_voltage, batt_current;
   unsigned long time_us = micros();
 
-  LED_control(cur_state);
 
   // SERIAL RX
   while (Serial.available() > 0) {
@@ -142,35 +144,53 @@ void loop() {
   }
 
   //SERIAL TX
+  /*
   if ((time_us - prev_serial_tx_micros) > SERIAL_TX_DELAY) {
     prev_serial_tx_micros = time_us;
 
     //DepthSensor.read();
-    float depth_m = 0;//DepthSensor.depth();
+    //float depth_m = DepthSensor.depth();
     byte depth_byte = (byte) min(max(round(depth_m*10), 0), 255);
     cur_state = (byte) ReadADC(&batt_voltage, &batt_current);
     byte messege[4] = {255, depth_byte, batt_voltage, batt_current};
     Serial.write(messege, 4);
   }
+  */
 
   // Task to trigger cameras
   if ((micros() - prev_trigger_micros) > TRIGGER_RATE_MICROS_HALF) {
       prev_trigger_micros += TRIGGER_RATE_MICROS_HALF;
-
+ 
       if (!trigger_state && true) { //start_trig
           // trigger low and currently triggering
           digitalWrite(TRIGER_PIN, HIGH);
           digitalWrite(INDICATOR_LED, HIGH);
           trigger_state = true;
+
+          if(cnt1%2==0){
+            DepthSensor.read();
+            float depth_m = DepthSensor.depth();
+            byte depth_byte = (byte) min(max(round(depth_m*10), 0), 255);
+            byte messege[4] = {255, depth_byte, batt_voltage, batt_current};
+            Serial.write(messege, 4);
+          }
+          cnt1++;
       }
       else {
           // trigger high (always bring lines low even if trigger has been turned off)
+          if (cnt2%10==0)
+            cur_state = (byte) ReadADC(&batt_voltage, &batt_current);
           digitalWrite(TRIGER_PIN, LOW);
           digitalWrite(INDICATOR_LED, LOW);
+          Lights.writeMicroseconds(1100 + (int) round(800*light_power));
+          LED_control(cur_state);
+
           trigger_state = false;
+          cnt2++;
       }
+
+
   }
 
-  Lights.writeMicroseconds(1100 + (int) round(800*light_power));
 
 }

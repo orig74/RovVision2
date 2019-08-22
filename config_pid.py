@@ -16,7 +16,7 @@ ys=0.06
 yaw_pid={\
         'P':1.5*ys,
         'I':0.000*ys,
-        'D':0.2*ys,
+        'D':0.3*ys,
         'limit':0.5,
         'step_limit':0.05,
         'i_limit':0.01,
@@ -25,9 +25,9 @@ yaw_pid={\
         'initial_i':0,
         'func_in_err':None}
 
-rs=0.000
+rs=0.001
 roll_pid={\
-        'P':3*rs,
+        'P':20*rs,
         'I':0.000*rs,
         'D':2.6*rs,
         'limit':0.2,
@@ -40,9 +40,9 @@ roll_pid={\
 
 ps=0.001
 pitch_pid={\
-        'P':2*ps,
+        'P':20*ps,
         'I':0.000*ps,
-        'D':2.6*ps,
+        'D':2*ps,
         'limit':0.2,
         'step_limit':0.05,
         'i_limit':0.01,
