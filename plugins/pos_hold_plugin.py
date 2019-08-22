@@ -59,7 +59,7 @@ async def recv_and_process():
                             pub_sock.send_multipart([zmq_topics.topic_pos_hold_pid_fmt%ind, pickle.dumps(debug_pid,-1)])
                 
                 thruster_cmd = mixer.mix(cmds[2],cmds[1],cmds[0],0,0,0,0,0)
-                thrusters_source.send_pyobj(['att',time.time(),thruster_cmd])
+                thrusters_source.send_pyobj(['pos',time.time(),thruster_cmd])
 
             if topic==zmq_topics.topic_axes:
                 jm.update_axis(data)
