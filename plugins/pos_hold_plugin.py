@@ -53,9 +53,9 @@ async def recv_and_process():
                         if td['valid'] and imap in td:
                             x,v = td[imap]
                             cmds[ind] = -pids[ind](x,target_pos[ind],v)
-                            print('pid=',ind,x,v,str(pids[ind]))
+                            #print('pid=',ind,x,v,str(pids[ind]))
                             ts=time.time()
-                            debug_pid = {'P':pids[ind].p,'I':pids[ind].i,'D':pids[ind].d,'C':cmds[ind],'T':target_pos[ind],'N':roll, 'R':v, 'TS':ts}
+                            debug_pid = {'P':pids[ind].p,'I':pids[ind].i,'D':pids[ind].d,'C':cmds[ind],'T':target_pos[ind],'N':x, 'R':v, 'TS':ts}
                             pub_sock.send_multipart([zmq_topics.topic_pos_hold_pid_fmt%ind, pickle.dumps(debug_pid,-1)])
                 
                 thruster_cmd = mixer.mix(cmds[2],cmds[1],cmds[0],0,0,0,0,0)
