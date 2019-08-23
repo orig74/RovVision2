@@ -30,6 +30,7 @@ class StereoTrack():
         self.debug=False
         self.proj_cams=generate_stereo_cameras()
         self.dx_filt=None
+        self.rope_debug=None
         self.reset()
 
     def reset(self):
@@ -43,7 +44,7 @@ class StereoTrack():
 
         ret=rope_detect(cx,self.rope_track_state, cy-100,200, imgl)
         if ret is not None:
-           self.rope_track_state, col=ret
+           self.rope_track_state, col,self.rope_debug=ret
            self.ofx = col-shape[1]//2
            return True
         
@@ -182,6 +183,8 @@ class StereoTrack():
     #    self.range_filt = ab_filt((res['range'],0))
         res['new_ref']=False
         res['ref_cnt']=0
+        if self.rope_debug is not None:
+            res['rope_debug']=self.rope_debug
         return res
 
 
@@ -190,6 +193,15 @@ def draw_track_rects(ret,imgl,imgr):
 
     wx_t,wy_t = config.track_params[:2]
     wx_s,wy_s = config.stereo_corr_params['ws']
+    if 'rope_debug' in ret:
+        arr=ret['rope_debug']['ifft']
+        arr=arr.real**2+arr.imag**2
+        arr=20*np.log(arr)
+        arr-=arr.min()
+        arr=np.clip(arr,-200,200).astype(int)
+        for i,a in enumerate(arr):
+            imgl[a+200,i,0]=255
+
     if 'pt_r' in ret:
         xl,yl=map(int,ret['pt_l'])
         xr,yr=map(int,ret['pt_r'])
@@ -210,7 +222,8 @@ if __name__=="__main__":
     dd=StereoTrack()
     #fr=gst.gst_file_reader('../../../data/190726-063112/',False)
     #fr=gst.gst_file_reader('../../../data/190803-141658/',False)
-    fr=gst.gst_file_reader('../../../data/190822-140723/',False)
+    #fr=gst.gst_file_reader('../../../data/190822-140723/',False)
+    fr=gst.gst_file_reader(sys.argv[1],False)
     keep_run=True
     for i,data in enumerate(fr):
         #print(i)
@@ -219,7 +232,7 @@ if __name__=="__main__":
         images,cnt=data 
         if cnt>0:
             ret=dd(*images)
-            print(ret)
+            #print(ret)
             iml,imr=images
             imls=iml.copy()
             imrs=imr.copy()
