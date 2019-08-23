@@ -5,8 +5,8 @@
 #define LIGHTS_PWM_PIN 9
 #define INDICATOR_LED 5
 #define TRIGER_PIN 6
-#define CURRENT_ADC_PIN A0
-#define VOLTAGE_ADC_PIN A1
+#define CURRENT_ADC_PIN A1
+#define VOLTAGE_ADC_PIN A0
 
 //Camera trigger stuff
 #define TRIG_FPS 10
