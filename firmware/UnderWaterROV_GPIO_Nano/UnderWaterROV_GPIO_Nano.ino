@@ -2,7 +2,7 @@
 #include <Wire.h>
 #include "MS5837.h"
 
-#define LIGHTS_PWM_PIN 11
+#define LIGHTS_PWM_PIN 9
 #define INDICATOR_LED 5
 #define TRIGER_PIN 6
 #define CURRENT_ADC_PIN A0
@@ -56,7 +56,6 @@ bool ReadADC(byte* voltage_B=NULL, byte* current_B=NULL) {
 
 
 void LED_control(byte state) {
-  int time_since_l_event = (int) ((float) TCNT3) * 1e3 / 64;
 
   /*
   if (state == 0) {
@@ -66,23 +65,17 @@ void LED_control(byte state) {
         digitalWrite(INDICATOR_LED, HIGH);
   } else digitalWrite(INDICATOR_LED, HIGH);
   */
-  TCNT3 = 0;
 }
 
 
 void setup() {
   // put your setup code here, to run once:
-  delay(2000);
   Serial.begin(SERIAL_BAUD_RATE);
   Wire.begin();
   pinMode(INDICATOR_LED, OUTPUT);
   pinMode(TRIGER_PIN, OUTPUT);
   Lights.attach(LIGHTS_PWM_PIN, 1100, 1900);
   Lights.writeMicroseconds(1100);
-
-  TCCR3B = 0;
-  TCCR3A = 0;
-  TCCR3B |= (1 << CS32 | CS30); //1024 prescale
 
   while (!DepthSensor.init()) {
     Serial.println("Init failed!");
