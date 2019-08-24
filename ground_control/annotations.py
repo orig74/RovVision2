@@ -6,7 +6,10 @@ import zmq_topics
 import sys
 sys.path.append('../plugins')
 sys.path.append('../plugins/tracker')
-from tracker import tracker
+if config.tracker=='rope':
+    from tracker import rope_tracker as tracker
+elif config.tracker=='local':
+    from tracker import tracker
 import hw_stats_tools
 
 fps_time=time.time()
