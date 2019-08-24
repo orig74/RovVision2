@@ -198,9 +198,9 @@ def draw_track_rects(ret,imgl,imgr):
         arr=arr.real**2+arr.imag**2
         arr=20*np.log(arr)
         arr-=arr.min()
-        arr=np.clip(arr,-200,200).astype(int)
+        arr=np.clip(arr,-250,250).astype(int)
         for i,a in enumerate(arr):
-            imgl[a+200,i,0]=255
+            imgl[a+260,i,0]=255
 
     if 'pt_r' in ret:
         xl,yl=map(int,ret['pt_l'])
