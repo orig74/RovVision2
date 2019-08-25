@@ -37,7 +37,10 @@ class CycArr():
         data = np.zeros((len(self.buf),len(labels)))
         for i,d in enumerate(self.buf):
             for j,l in enumerate(labels):
-                data[i][j]=d[l]
+                if l in d:
+                    data[i][j]=d[l]
+                else:
+                    data[i][j]=0
         return data
 
     def get_vec(self):
