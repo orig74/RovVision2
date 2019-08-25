@@ -20,21 +20,21 @@ yaw_pid={\
         'D':0.3*ys,
         'limit':0.5,
         'step_limit':0.05,
-        'i_limit':0.01,
+        'i_limit':0.1,
         'FF':0,
         'angle_deg_type':True,
         'initial_i':0,
         'func_in_err':None}
 
-rs=0.001
+rs=0.03
 #rs=0.000
 roll_pid={\
         'P':10*rs,
-        'I':0.000*rs,
+        'I':0.02*rs,
         'D':2.6*rs,
         'limit':0.2,
         'step_limit':0.05,
-        'i_limit':0.01,
+        'i_limit':0.1,
         'FF':0,
         'angle_deg_type':True,
         'initial_i':0,
