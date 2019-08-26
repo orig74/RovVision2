@@ -16,7 +16,7 @@ done
 PANDA_ADDR=stereo@192.168.2.2
 
 if [[ $# -eq 0 ]] ; then
-    CMD="ssh -t -N $LOCALS $REMOTES $PANDA_ADDR"
+    CMD="ssh -t -N -L 2222:localhost:22 $LOCALS $REMOTES $PANDA_ADDR"
 fi
 if [[ $# -eq 2 ]] ; then
     CMD="ssh -t -L 2222:localhost:2222 $LOCALS $REMOTES $1 ssh -t -N -L 2222:localhost:22 $LOCALS $REMOTES $2"
