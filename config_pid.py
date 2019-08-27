@@ -40,7 +40,7 @@ roll_pid={
         'initial_i':0,
         'func_in_err':None}
 
-ps=0.03
+ps=0.001
 #ps=0.000
 pitch_pid={
         'P':5*ps,
