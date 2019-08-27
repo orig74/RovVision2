@@ -24,11 +24,13 @@ if __name__=='__main__':
             #print(cmd)
             line=os.popen(cmd).readline()
             if '1-7' in line:
-                dmap['PERI_USB']=dev
+                dmap['SONAR_USB']=dev
             if '1-5' in line:
                 dmap['ESC_USB']=dev
             if '1-3' in line:
                 dmap['VNAV_USB']=dev
+            if '1-1' in line:
+                dmap['PERI_USB']=dev
 
         with open('/tmp/devusbmap.pkl','wb') as fp:
             #print(dmap)
