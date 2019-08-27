@@ -72,7 +72,11 @@ class StereoTrack():
         u2,d2=cy_off-wy//2-sy,cy_off+wy//2+sy
         search=imgr[u2:d2,l2:r2]
         corr_search=search.copy()
-        corr = cv2.matchTemplate(corr_search,corr_pat,cv2.TM_CCOEFF_NORMED)
+        try:
+            corr = cv2.matchTemplate(corr_search,corr_pat,cv2.TM_CCOEFF_NORMED)
+        except:
+            print('Error corr exception')
+            return None
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(corr)
         x,y = max_loc
 
@@ -134,7 +138,11 @@ class StereoTrack():
         cx_off=cx+self.ofx
  
         valid = self.__track_left_im(imgl1b) #tracked point on left image
-        pt_r_x,pt_r_y=self.__track_stereo(imgl1r,imgr1r) #tracked point on right image
+        #pt_r_x,pt_r_y=self.__track_stereo(imgl1r,imgr1r) #tracked point on right image
+        ret=self.__track_stereo(imgl1r,imgr1r) #tracked point on right image
+        if ret is None:
+            return False,0,0,0,0
+        pt_r_x,pt_r_y=ret
 
         return valid,cx_off,cy,pt_r_x,pt_r_y
 
@@ -147,7 +155,6 @@ class StereoTrack():
         valid,pt_l_x,pt_l_y,pt_r_x,pt_r_y = self.__track_and_validate(imgl1r, imgr1r, imgl1b, imgr1b )
         res={}
 
-        res['valid']=valid
         res['pt_l']=(pt_l_x,pt_l_y)
         res['pt_r']=(pt_r_x,pt_r_y)
         res['range']=-1
@@ -162,15 +169,20 @@ class StereoTrack():
     #if valid:#abs(range_f-res['range']) < 0.20:  #range jumps less then 2m per sec (0.2/0.1)
         #if self.new_ref:
         #if self.new_ref or self.t_pt is None:
+        dx = t_pt[0]
+        dy = t_pt[1]
+        dz = t_pt[2]
+        valid = valid and dx>0.1 and dx<5.0
+        if self.dx_filt is not None:
+            valid = valid and abs(self.dx_filt.x-dx)<1.0
+
+        res['valid']=valid
         if self.dx_filt is None or not valid:
             self.dx_filt = ab_filt((t_pt[0],0))
             self.dy_filt = ab_filt((t_pt[1],0))
             self.dz_filt = ab_filt((t_pt[2],0))
 
 
-        dx = t_pt[0]
-        dy = t_pt[1]
-        dz = t_pt[2]
         res['dx']=dx
         res['dy']=dy
         res['dz']=dz
@@ -236,7 +248,7 @@ if __name__=="__main__":
             iml,imr=images
             imls=iml.copy()
             imrs=imr.copy()
-            print(cnt,iml.shape) 
+            print(cnt,ret['dx'],ret['dy'],ret['dz']) 
             draw_track_rects(ret,imls,imrs)
             cv2.imshow('left',imls)
             cv2.imshow('rigth',imrs)
