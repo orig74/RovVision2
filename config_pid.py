@@ -69,7 +69,7 @@ pos_pid_x={
         'angle_deg_type':True,
         'initial_i':0,
         'func_in_err':None}
-sc=0.09
+sc=0.25
 pos_pid_y={
         'P':2.5 * sc ,
         'I':0.001 * sc ,

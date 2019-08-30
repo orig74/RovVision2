@@ -58,7 +58,7 @@ async def recv_and_process():
 
             if topic==zmq_topics.topic_axes:
                 jm.update_axis(data)
-                target_depth+=jm.joy_mix()['ud']/30.0
+                target_depth+=jm.joy_mix()['ud']/20.0
 
             if topic==zmq_topics.topic_imu:
                 pitch,roll=data['pitch'],data['roll']

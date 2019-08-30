@@ -7,7 +7,7 @@ def rope_detect(prev_col,extrema,start_row,nrows,im):
     #conv_val=10
     #im2=np.convolve(im1,np.ones(conv_val),'valid')
     yy=np.fft.fft(imt)
-    clear_freqs=5
+    clear_freqs=15
     #yy=np.fft.fftshift(yy) no need for shift high freqs in the middle
     yy[clear_freqs:-clear_freqs]=0
     #yy=np.fft.fftshift(yy)
