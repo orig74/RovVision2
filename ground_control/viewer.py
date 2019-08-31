@@ -114,8 +114,10 @@ if __name__=='__main__':
             fmt_cnt_l=image_enc_dec.decode(images[0])
             fmt_cnt_r=image_enc_dec.decode(images[1])
             draw_seperate(images[0],images[1],message_dict)
-            join[:,0:sx,:]=images[0]
-            join[:,sx:,:]=images[1]
+            #join[:,0:sx,:]=images[0]
+            #join[:,sx:,:]=images[1]
+            join[bmargy//2:-bmargy//2,bmargx:sx+bmargx,:]=images[0]
+            join[bmargy//2:-bmargy//2,sx+bmargx:,:]=images[1]
             images=[None,None]
             draw(join,message_dict,fmt_cnt_l,fmt_cnt_r)
             if resize_viewer:
