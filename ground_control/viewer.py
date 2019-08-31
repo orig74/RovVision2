@@ -47,15 +47,17 @@ pub_record_state = utils.publisher(zmq_topics.topic_record_state_port)
 if __name__=='__main__':
     init_gst_reader(2)
     sx,sy=config.cam_res_rgbx,config.cam_res_rgby
-    join=np.zeros((sy,sx*2,3),'uint8')
     data_file_fd=None
     #main_camera_fd=None
     message_dict={}
     rcv_cnt=0
     record_state=False
     jm=Joy_map()
+    bmargx,bmargy=config.viewer_blacks
 
     while 1:
+        #join=np.zeros((sy,sx*2,3),'uint8')
+        join=np.zeros((sy+bmargy,sx*2+bmargx,3),'uint8')
         images=get_imgs()
         rcv_cnt+=1
         #if all(images):

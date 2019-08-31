@@ -17,3 +17,5 @@ tracker = 'rope'
 joy_deadband=0.05
 
 thruster_limit=0.5
+
+viewer_blacks=(50,100)

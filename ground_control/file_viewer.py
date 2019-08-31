@@ -80,7 +80,7 @@ if __name__=='__main__':
     fd = open(args.path+'/viewer_data.pkl','rb')
     
     sx,sy=config.cam_res_rgbx,config.cam_res_rgby
-    join=np.zeros((sy,sx*2,3),'uint8')
+    bmargx,bmargy=config.viewer_blacks
     messages={}
     messages_hist = []
     fcnt=-1
@@ -88,6 +88,7 @@ if __name__=='__main__':
     save_avi = None
     
     while 1:
+        join=np.zeros((sy+bmargy,sx*2+bmargx,3),'uint8')
         hist_buff_ind=fcnt%len(imbuff)
         if imbuff[hist_buff_ind]!=None and imbuff[hist_buff_ind][0]==fcnt:
             fcnt,images,messages=imbuff[hist_buff_ind]
@@ -142,8 +143,10 @@ if __name__=='__main__':
                     imgs_raw[i]=images[i].copy()#[:,:,::-1].copy()
                 imgs_raw[i]=imgs_raw[i][:,:,::-1]
             draw_seperate(images[0],images[1],messages)
-            join[:,0:sx,:]=images[0]
-            join[:,sx:,:]=images[1]
+            #join[:,0:sx,:]=images[0]
+            #join[:,sx:,:]=images[1]
+            join[bmargy//2:-bmargy//2,bmargx:sx+bmargx,:]=images[0]
+            join[bmargy//2:-bmargy//2,sx+bmargx:,:]=images[1]
             draw(join,messages,fcnt,fcnt)
             if explore.is_data_file(args.path,fcnt):
                 cv2.circle(join,(0,0), 15, (0,0,255), -1)

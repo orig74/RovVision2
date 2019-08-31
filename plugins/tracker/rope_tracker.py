@@ -231,7 +231,11 @@ def draw_track_rects(ret,imgl,imgr):
         #arr=np.clip(arr,-250,250).astype(int)
         arr=arr.astype(int)
         for i,a in enumerate(arr):
-            imgl[a+260,i,2]=255
+            try:
+                imgl[a+260,i,2]=255
+            except:
+                if i==0:
+                    print('error in ploting')
         if 'scorr' in ret['rope_debug']:
             arr=-ret['rope_debug']['scorr']
             #arr=20*np.log(arr)
