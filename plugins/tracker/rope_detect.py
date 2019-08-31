@@ -7,16 +7,22 @@ def rope_detect(prev_col,extrema,start_row,nrows,im):
     #conv_val=10
     #im2=np.convolve(im1,np.ones(conv_val),'valid')
     yy=np.fft.fft(imt)
-    clear_freqs=15
+    clear_freqs=5
     #yy=np.fft.fftshift(yy) no need for shift high freqs in the middle
     yy[clear_freqs:-clear_freqs]=0
     #yy=np.fft.fftshift(yy)
-    im2r=np.fft.ifft(yy)
-    
+    im2r=np.fft.ifft(yy).real
+    im2r-=im2r.min()
+    im2r/=im2r.max()
+    #import pdb;pdb.set_trace()
+
     maxima=argrelextrema(im2r, np.greater)[0]
     minima=argrelextrema(im2r, np.less)[0]
+    
     if extrema is None:
         totest=np.concatenate((maxima,minima))
+        #new_col = np.argmax(np.abs(im2r))
+        #import pdb;pdb.set_trace()
     elif extrema == 'max':
         totest=maxima
     else:
