@@ -1,13 +1,12 @@
 from scipy.signal import argrelextrema
 import numpy as np
 
-def rope_detect(prev_col,extrema,start_row,nrows,im):
+def rope_detect(prev_col,extrema,start_row,nrows,im,clear_freqs=5):
     imt=im[start_row:start_row+nrows,:].sum(axis=0).flatten().astype(float)
     #plt.plot(np.convolve(im1,np.concatenate((np.ones(8),-np.ones(8)))))
     #conv_val=10
     #im2=np.convolve(im1,np.ones(conv_val),'valid')
     yy=np.fft.fft(imt)
-    clear_freqs=5
     #yy=np.fft.fftshift(yy) no need for shift high freqs in the middle
     yy[clear_freqs:-clear_freqs]=0
     #yy=np.fft.fftshift(yy)

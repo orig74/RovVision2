@@ -45,7 +45,7 @@ class StereoTrack():
         cx  = shape[1]//2+self.ofx
         cy  = shape[0]//2
 
-        ret=rope_detect(cx,self.rope_track_state, cy-100,200, imgl)
+        ret=rope_detect(cx,self.rope_track_state, cy-100,200, imgl,clear_freqs=config.clear_freqs)
         if ret is not None:
            self.rope_track_state, col,self.rope_debug=ret
            self.ofx = col-shape[1]//2
@@ -60,8 +60,6 @@ class StereoTrack():
         sxl,sxr = self.stereo_sxl, self.stereo_sxr
         cx_off_l = cx+self.ofx 
         if self.last_res is not None and self.last_res['valid']:
-            #sxl=sxl//3
-            #sxr=sxr//3
             cx_off_r=int(self.last_res['pt_r'][0])
             sxl=self.stereo_sxl2
             sxr=self.stereo_sxr2
@@ -74,21 +72,30 @@ class StereoTrack():
         cy_off=cy
         l1,r1=cx_off_l-wx//2,cx_off_l+wx//2
         u1,d1=cy_off-wy//2,cy_off+wy//2
-        patern=imgl[u1:d1,l1:r1]
-        corr_pat=patern.copy()
 
 
 
         #search up and down incase of inacurate camera model
         sy=6
         u2,d2=cy_off-wy//2-sy,cy_off+wy//2+sy
-        search=imgr[u2:d2,l2:r2]
-        corr_search=search.copy()
-        try:
-            corr = cv2.matchTemplate(corr_search,corr_pat,cv2.TM_CCOEFF_NORMED)
-        except:
-            print('Error corr exception')
-            return None
+
+        corrs=[]
+        for c in [0,1,2]:
+            search=imgr[u2:d2,l2:r2,c]
+            corr_search=search.copy()
+            patern=imgl[u1:d1,l1:r1,c]
+            corr_pat=patern.copy()
+            try:
+                corr = cv2.matchTemplate(corr_search,corr_pat,cv2.TM_CCOEFF_NORMED)
+            except:
+                print('Error corr exception')
+                return None
+            corrs.append(corr)
+        corr=corrs[2]*corrs[1]*corrs[0]
+        corr-=corr.min()
+        corr=corr/corr.max()
+        snr=corr.max()/np.median(corr)
+
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(corr)
         x,y = max_loc
 
@@ -147,29 +154,32 @@ class StereoTrack():
             self.rope_debug['scorr']=corr.max(axis=0)*100
             #self.rope_debug['scorr_xoff']=cx_off-sxl+self.ofx#-wx//2
             self.rope_debug['scorr_xoff']=l2+wx//2#self.ofx#+wx//2
-        return rx,ry
+        return rx,ry,snr
 
 
-    def __track_and_validate(self, imgl1r, imgr1r, imgl1b, imgr1b):
+    def __track_and_validate(self, imgl, imgr):
+        imgl1r=imgl[:,:,0].copy()
+        imgr1r=imgr[:,:,0].copy()
+        imgl1b=imgl[:,:,2].copy()
+        imgr1b=imgr[:,:,2].copy()
         cx,cy = imgl1r.shape[1]//2,imgl1r.shape[0]//2
         cx_off=cx+self.ofx
  
         valid = self.__track_left_im(imgl1b) #tracked point on left image
         #pt_r_x,pt_r_y=self.__track_stereo(imgl1r,imgr1r) #tracked point on right image
-        ret=self.__track_stereo(imgl1r,imgr1r) #tracked point on right image
+        ret=self.__track_stereo(imgl,imgr) #tracked point on right image
         if ret is None:
             return False,0,0,0,0
-        pt_r_x,pt_r_y=ret
+        pt_r_x,pt_r_y,s_snr=ret
+        #print('snr',s_snr)
+        if s_snr<3:
+            valid=False
 
         return valid,cx_off,cy,pt_r_x,pt_r_y
 
     def __call__(self,imgl,imgr):
-        imgl1r=imgl[:,:,0].copy()
-        imgr1r=imgr[:,:,0].copy()
-        imgl1b=imgl[:,:,2].copy()
-        imgr1b=imgr[:,:,2].copy()
         
-        valid,pt_l_x,pt_l_y,pt_r_x,pt_r_y = self.__track_and_validate(imgl1r, imgr1r, imgl1b, imgr1b )
+        valid,pt_l_x,pt_l_y,pt_r_x,pt_r_y = self.__track_and_validate(imgl, imgr)
         res={}
 
         res['pt_l']=(pt_l_x,pt_l_y)
@@ -191,7 +201,7 @@ class StereoTrack():
         dz = t_pt[2]
         valid = valid and dx>0.1 and dx<5.0
         if self.dx_filt is not None:
-            valid = valid and abs(self.dx_filt.x-dx)<0.5
+            valid = valid and abs(self.dx_filt.x-dx)<config.diff_range_valid
 
         res['valid']=valid
         if self.dx_filt is None or not valid:
@@ -232,7 +242,7 @@ def draw_track_rects(ret,imgl,imgr):
         arr=arr.astype(int)
         for i,a in enumerate(arr):
             try:
-                imgl[a+260,i,2]=255
+                imgl[a+260,i,:]=0
             except:
                 if i==0:
                     print('error in ploting')
@@ -243,7 +253,7 @@ def draw_track_rects(ret,imgl,imgr):
             arr=np.clip(arr,-250,250).astype(int)
             for i,a in enumerate(arr):
                 try:
-                    imgr[a+260,i+ret['rope_debug']['scorr_xoff'],2]=255
+                    imgr[a+260,i+ret['rope_debug']['scorr_xoff'],:]=0
                 except:
                     print('Err plot',a+260,i+ret['rope_debug']['scorr_xoff'])
 
@@ -273,6 +283,11 @@ if __name__=="__main__":
     #fr=gst.gst_file_reader('../../../data/190803-141658/',False)
     #fr=gst.gst_file_reader('../../../data/190822-140723/',False)
     fr=gst.gst_file_reader(sys.argv[1],True)
+    if len(sys.argv)>2:
+        skip=int(sys.argv[2])
+    else:
+        skip=0
+    print('skiping ',skip,'fnums')
     keep_run=True
     for i,data in enumerate(fr):
         #print(i)
@@ -291,6 +306,10 @@ if __name__=="__main__":
             cv2.imshow('rigth',imrs)
             
             while 1:
+                if cnt<skip:
+                    k=cv2.waitKey(1)
+                    break
+
                 k=cv2.waitKey(0)
                 if k%256==ord('q'):
                     keep_run=False
