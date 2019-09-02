@@ -29,10 +29,6 @@ def rope_detect(prev_col,extrema,start_row,nrows,im,clear_freqs=5,max_diff_cols=
     if len(totest)==0:
         return None
     new_col=totest[np.argmin(np.abs(totest-prev_col))]
-    if extrema is None:
-        extrema='min'
-        if new_col in maxima:
-            extrema='max'
         #print('cossen extrema', extrema,new_col, maxima,minima)
     #print('extrema is',extrema)
     if extrema is not None:
@@ -42,6 +38,10 @@ def rope_detect(prev_col,extrema,start_row,nrows,im,clear_freqs=5,max_diff_cols=
         if prev_col-new_col>max_diff_cols:
             #print('fix drift.2..',new_col,prev_col,prev_col-max_diff_cols, extrema, totest, minima,maxima)
             new_col=prev_col-max_diff_cols
+    if extrema is None:
+        extrema='min'
+        if new_col in maxima:
+            extrema='max'
     debug={}
     debug['ifft']=im2r
     return extrema,new_col,debug

@@ -44,6 +44,9 @@ class StereoTrack():
         shape=imgl.shape
         cx  = shape[1]//2+self.ofx
         cy  = shape[0]//2
+        
+        if config.ignore_extrema_type:
+            self.rope_track_state = None
 
         ret=rope_detect(cx,self.rope_track_state, cy-100,200, 
                 imgl,clear_freqs=config.clear_freqs, max_diff_cols=config.max_diff_cols)
@@ -174,6 +177,7 @@ class StereoTrack():
         pt_r_x,pt_r_y,s_snr=ret
         #print('snr',s_snr)
         if s_snr<3:
+            print('droped by snr',s_snr)
             valid=False
 
         return valid,cx_off,cy,pt_r_x,pt_r_y
