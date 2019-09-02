@@ -1,7 +1,7 @@
 from scipy.signal import argrelextrema
 import numpy as np
 
-def rope_detect(prev_col,extrema,start_row,nrows,im,clear_freqs=5):
+def rope_detect(prev_col,extrema,start_row,nrows,im,clear_freqs=5,max_diff_cols=100):
     imt=im[start_row:start_row+nrows,:].sum(axis=0).flatten().astype(float)
     #plt.plot(np.convolve(im1,np.concatenate((np.ones(8),-np.ones(8)))))
     #conv_val=10
@@ -29,9 +29,19 @@ def rope_detect(prev_col,extrema,start_row,nrows,im,clear_freqs=5):
     if len(totest)==0:
         return None
     new_col=totest[np.argmin(np.abs(totest-prev_col))]
-    res='min'
+    if extrema is None:
+        extrema='min'
+        if new_col in maxima:
+            extrema='max'
+        #print('cossen extrema', extrema,new_col, maxima,minima)
+    #print('extrema is',extrema)
+    if extrema is not None:
+        if new_col-prev_col>max_diff_cols:
+            #print('fix drift.1..',new_col,prev_col,prev_col+max_diff_cols, extrema, totest, minima,maxima)
+            new_col=prev_col+max_diff_cols
+        if prev_col-new_col>max_diff_cols:
+            #print('fix drift.2..',new_col,prev_col,prev_col-max_diff_cols, extrema, totest, minima,maxima)
+            new_col=prev_col-max_diff_cols
     debug={}
     debug['ifft']=im2r
-    if new_col in maxima:
-        res='max'
-    return res,new_col,debug
+    return extrema,new_col,debug

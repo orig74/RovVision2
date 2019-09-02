@@ -45,7 +45,8 @@ class StereoTrack():
         cx  = shape[1]//2+self.ofx
         cy  = shape[0]//2
 
-        ret=rope_detect(cx,self.rope_track_state, cy-100,200, imgl,clear_freqs=config.clear_freqs)
+        ret=rope_detect(cx,self.rope_track_state, cy-100,200, 
+                imgl,clear_freqs=config.clear_freqs, max_diff_cols=config.max_diff_cols)
         if ret is not None:
            self.rope_track_state, col,self.rope_debug=ret
            self.ofx = col-shape[1]//2

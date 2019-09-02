@@ -6,6 +6,7 @@ stereo_corr_params = {'ws':(128,128),'sxl':250+50+200,'sxr':0,'ofx':80 ,'sxl2':4
 fov=60.97
 diff_range_valid=1.0
 clear_freqs=15
+max_diff_cols=10
 pixelwidthx = 960
 pixelwidthy = 600  
 baseline = 0.122 # (240-100)*.1scale in cm from unreal engine
