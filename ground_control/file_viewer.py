@@ -179,8 +179,7 @@ if __name__=='__main__':
             cv2.imwrite('out{:08d}.png'.format(fcnt),join)
         if k%256==ord('s'):
             #import pdb;pdb.set_trace()
-            save_sy,save_sx=images[0].shape[:2]
-            save_sx*=2
+            save_sy,save_sx=join.shape[:2]
             fourcc = cv2.VideoWriter_fourcc(*'XVID')
             #fourcc = cv2.VideoWriter_fourcc(
             save_avi = cv2.VideoWriter('./output.avi', fourcc , 20.0, (save_sx,save_sy))
