@@ -13,10 +13,18 @@ pub_depth = zmq_wrapper.publisher(zmq_topics.topic_depth_port)
 pub_volt = zmq_wrapper.publisher(zmq_topics.topic_volt_port)
 ser = serial.Serial(detect_usb.devmap['PERI_USB'], 115200)
 
+
+BATT_AMP_OFFSET = 0.330
+BATT_AMP_PERVOLT = 37.8788
+ADC_VOLTAGE_MUL = 0.0046
+BATT_VOLTAGE_MULT = 11
+
+
 print('connected to ', detect_usb.devmap['PERI_USB'])
 subs_socks=[]
 subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_lights],zmq_topics.topic_controller_port))
 # cmnd = 2
+
 # while cmnd < 7:
 #    cmnd = int(input("\nEnter value between 0-1 (cam trig ON/OFF), 2-7 (light level): "))
 #   ser.write([np.uint8(cmnd)])
@@ -49,15 +57,17 @@ while True:
             ser.write(b'%c'%(data+2))  
             #ser.flush()
 
-    if ser.in_waiting >= 4:
+    if ser.in_waiting >= 6:
         if ser.read(1)[0] == 255:
-            periph_msg = ser.read(3)
+            periph_msg = ser.read(5)
             tic=time.time()
             bar_D = float(periph_msg[0])/10
             pub_depth.send_multipart([zmq_topics.topic_depth,pickle.dumps({'ts':tic,'depth':bar_D})])
 
-            batt_V = float(periph_msg[1])/10
-            batt_I = float(periph_msg[2])/10
+            adc_V = round(float(periph_msg[1] | periph_msg[2] << 8), 2)
+            batt_V = adc_V * ADC_VOLTAGE_MUL * BATT_VOLTAGE_MULT
+            adc_I = round(float(periph_msg[3] | periph_msg[4] << 8), 2)
+       	    batt_I = (adc_I * ADC_VOLTAGE_MUL - BATT_AMP_OFFSET) * BATT_AMP_PERVOLT
             pub_volt.send_multipart([zmq_topics.topic_volt,pickle.dumps({'ts':tic,'V':batt_V,'I':batt_I})])
             print("Batt V: {}".format(batt_V))
             print("Batt I: {}".format(batt_I))
