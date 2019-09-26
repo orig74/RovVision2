@@ -45,7 +45,7 @@ if args.cc is not None:
         return  (img.reshape((-1,3)) @ c_mat.T).clip(0,255).reshape(img.shape).astype('uint8')
 
 if args.pub_data:
-    socket_pub = utils.publisher(config.zmq_local_route,'0.0.0.0')
+    socket_pub = utils.publisher(topics.topic_local_route_port,'0.0.0.0')
 
 
 base_name = os.path.basename(args.path)
@@ -106,8 +106,9 @@ if __name__=='__main__':
                     break
                 if args.pub_data:
                     socket_pub.send_multipart([ret[0],pickle.dumps(ret[1])])
+                if ret[0]==topics.topic_button:
+                    print('got',ret[0],ret[1])
                 if ret[0]==topics.topic_viewer_data:
-                    print('got',ret)
                     msg=ret[1]
                     if msg['frame_cnt'][1]>=fcnt:
                         break
