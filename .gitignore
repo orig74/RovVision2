@@ -4,3 +4,5 @@ __pycache__/
 bin
 notebooks/.ipynb_checkpoints/
 *.swp
+scripts/pingviewer-x86_64.AppImage
+*.pyc
