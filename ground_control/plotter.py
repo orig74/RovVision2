@@ -69,6 +69,7 @@ def update_graph(axes):
             for sock in socks:
                 ret = sock.recv_multipart()
                 topic , data = ret
+                print(r'---',topic)
                 data=pickle.loads(ret[1])
                 if topic not in msgs:
                     msgs[topic] = CycArr(500)
@@ -110,9 +111,11 @@ def update_vector(ax_hdls,topic):
         return
     data = msgs[topic].get_vec()
     xs = np.arange(data.shape[0])
-    ax,hdls = ax_hdls
-    hdls[0].set_ydata(data) #skip timestemp
-    hdls[0].set_xdata(xs)
+    ax,*hdls = ax_hdls
+    #print(data[0,:])
+    for i in range(len(hdls)):
+        hdls[i][0].set_ydata(data[:,i]) #skip timestemp
+        hdls[i][0].set_xdata(xs)
     ax.set_xlim(data.shape[0]-400,data.shape[0])
     ax.set_ylim(-1,1)
 
