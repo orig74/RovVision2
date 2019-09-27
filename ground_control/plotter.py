@@ -16,7 +16,7 @@ import zmq_wrapper
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--topic",help="which topic")
-parser.add_argument("--port",help="which port",type=int)
+parser.add_argument("--port",help="which port",type=int,default=9995)
 parser.add_argument("--type",help="plot type: pid or vector",default='pid')
 args = parser.parse_args()
 

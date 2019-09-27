@@ -22,6 +22,7 @@ import image_enc_dec
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--data_path", help="path for data" , default='../../data')
+parser.add_argument("--pub_data", help="publish data", action='store_true')
 args = parser.parse_args()
 
 resize_viewer = 'RESIZE_VIEWER' in os.environ
@@ -41,7 +42,8 @@ subs_socks.append(utils.subscribe([zmq_topics.topic_volt ], zmq_topics.topic_vol
 subs_socks.append(utils.subscribe([zmq_topics.topic_hw_stats ], zmq_topics.topic_hw_stats_port) )
 
 #socket_pub = utils.publisher(config.zmq_local_route)
-socket_pub = utils.publisher(zmq_topics.topic_local_route_port,'0.0.0.0')
+if args.pub_data:
+    socket_pub = utils.publisher(zmq_topics.topic_local_route_port,'0.0.0.0')
 pub_record_state = utils.publisher(zmq_topics.topic_record_state_port)
 
 if __name__=='__main__':
@@ -82,6 +84,9 @@ if __name__=='__main__':
                             record_state=False
                     pub_record_state.send_multipart([zmq_topics.topic_record_state,pickle.dumps(record_state)])
                     message_dict[zmq_topics.topic_record_state]=record_state
+                
+                if args.pub_data:
+                    socket_pub.send_multipart([ret[0],ret[1]])
 
                 if record_state:
                     if get_files_fds()[0] is None:
