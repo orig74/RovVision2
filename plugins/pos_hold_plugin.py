@@ -48,7 +48,8 @@ async def recv_and_process():
                         pids[ind] = PID(**pos_pids[ind])
                         if td['valid'] and imap in td:
                             x,_ = td[imap]
-                            target_pos[ind]=x
+                            #we want it to return to 0 for the y lock
+                            target_pos[ind]=0 if ind==1 else x
                     else:
                         if td['valid'] and imap in td:
                             x,v = td[imap]
