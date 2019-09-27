@@ -31,16 +31,21 @@ if resize_viewer:
 
 subs_socks=[]
 subs_socks.append(utils.subscribe([zmq_topics.topic_thrusters_comand,zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
-subs_socks.append(utils.subscribe([zmq_topics.topic_button, zmq_topics.topic_hat ], zmq_topics.topic_joy_port))
-subs_socks.append(utils.subscribe([zmq_topics.topic_imu ], zmq_topics.topic_imu_port) )
-subs_socks.append(utils.subscribe([zmq_topics.topic_depth ], zmq_topics.topic_depth_port) )
-subs_socks.append(utils.subscribe([zmq_topics.topic_depth_hold_pid ], zmq_topics.topic_depth_hold_port) )
-subs_socks.append(utils.subscribe([zmq_topics.topic_sonar ], zmq_topics.topic_sonar_port) )
-subs_socks.append(utils.subscribe([zmq_topics.topic_stereo_camera_ts ], zmq_topics.topic_camera_port) ) #for sync perposes
-subs_socks.append(utils.subscribe([zmq_topics.topic_tracker ], zmq_topics.topic_tracker_port) )
-subs_socks.append(utils.subscribe([zmq_topics.topic_volt ], zmq_topics.topic_volt_port) )
-subs_socks.append(utils.subscribe([zmq_topics.topic_hw_stats ], zmq_topics.topic_hw_stats_port) )
+subs_socks.append(utils.subscribe([zmq_topics.topic_button, zmq_topics.topic_hat], zmq_topics.topic_joy_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_imu], zmq_topics.topic_imu_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_depth], zmq_topics.topic_depth_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_depth_hold_pid], zmq_topics.topic_depth_hold_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_sonar], zmq_topics.topic_sonar_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_stereo_camera_ts], zmq_topics.topic_camera_port)) #for sync perposes
+subs_socks.append(utils.subscribe([zmq_topics.topic_tracker], zmq_topics.topic_tracker_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_volt], zmq_topics.topic_volt_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_hw_stats], zmq_topics.topic_hw_stats_port))
 
+subs_socks.append(utils.subscribe([zmq_topics.topic_pos_hold_pid_fmt%i for i in range(3)], zmq_topics.topic_pos_hold_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_att_hold_yaw_pid,
+                                   zmq_topics.topic_att_hold_pitch_pid,
+                                   zmq_topics.topic_att_hold_roll_pid], zmq_topics.topic_att_hold_port))
+    
 #socket_pub = utils.publisher(config.zmq_local_route)
 if args.pub_data:
     socket_pub = utils.publisher(zmq_topics.topic_local_route_port,'0.0.0.0')
