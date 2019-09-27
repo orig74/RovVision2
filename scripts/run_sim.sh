@@ -13,7 +13,7 @@ source run_common.sh
 
 tmux kill-session -t dronelab
 tmux new-session -d -s dronelab
-
+tmux set -g pane-border-status top
 #tmux send-keys "cd ../../dockers/unreal_engine_4 && ./attach.sh" ENTER
 
 ################## sim part
@@ -36,6 +36,7 @@ if [ ! -v HEADLESS ]; then
 fi
 
 tmux select-window -t 0
+run 3 sim depth_image_view.py
 #tmux set -g mouse on
 tmux att
 
