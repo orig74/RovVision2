@@ -55,7 +55,9 @@ class CycArr():
 
 msgs = {}
 
+it=10
 def update_graph(axes):
+    global it
     tic=time.time()
     new_data=False
     while 1:
@@ -69,7 +71,9 @@ def update_graph(axes):
             for sock in socks:
                 ret = sock.recv_multipart()
                 topic , data = ret
-                print(r'---',topic)
+                if it>0:
+                    print(r'---',topic)
+                    it-=1
                 data=pickle.loads(ret[1])
                 if topic not in msgs:
                     msgs[topic] = CycArr(500)
