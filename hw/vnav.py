@@ -23,12 +23,43 @@ vn_setoutput=b'$VNWRG,06,14*XX'
 ##### 
 vn_setfreq20hz=b'$VNWRG,07,20*XX'
 
-print('connecting to vnav')
-#s=EzAsyncData.connect(detect_usb.devmap['VNAV_USB'],115200)
+### clibration
+vn_reset_hsi=b'$VNWRG,44,2,3,5*XX'
+vn_hsi_on=b'$VNWRG,44,1,3,5*XX'
+vn_hsi_off=b'$VNWRG,44,0,3,5*XX'
+vn_read_hsi=b'$VNRRG,47*XX'
+vn_read_saved_mag=b'$VNRRG,23*XX'
+
+
+
 def write(ser,cmd):
     ser.write(cmd+b'\n')
     time.sleep(0.05)
-    print('>',ser.readline())
+    while ser.inWaiting():
+        ln=ser.readline()
+    ser.flush()
+    print('>',ln)
+    return ln
+
+def calibrate_mag(ser):
+    print('start mag calibration')
+    write(ser,vn_pause)
+    write(ser,vn_hsi_off)
+    write(ser,vn_reset_hsi)
+    input('hit enter to start calibration')
+    write(ser,vn_hsi_on)
+    input('rotate rov and hit enter when done')
+    write(ser,vn_hsi_off)
+    print('read hsi:')
+    line=write(ser,vn_read_hsi)
+    #save result to register 23
+    part = b'$VNWRG,23,'+line.strip().split(b',',2)[2].split(b'*')[0]+b'*XX'
+    print('writing',part)
+    write(ser,part)
+    input('hit enter to resume output')
+    write(ser,vn_resume)
+
+    
 
 def init_serial(dev=None):
     if dev is None:
@@ -40,9 +71,8 @@ def init_serial(dev=None):
     write(ser,vn_pause)
     write(ser,vn_setoutput)
     write(ser,vn_setfreq20hz)
+    write(ser,vn_hsi_off)
     #set frequency
-
-
     write(ser,vn_resume)
     return ser
 
@@ -59,19 +89,6 @@ def parse_line(line):
         ret['acc'] = (ax,ay,az)
         return ret
 
-
-print('done')
-#hz=40
-#s.sensor.write_async_data_output_frequency(hz) #hz
-def get_data():
-    cd=s.current_data
-    ret={}
-    ypr=cd.yaw_pitch_roll
-    rates=cd.angular_rate
-    #acc=cd.acceleration
-    ret['ypr']=(ypr.x,ypr.y,ypr.z)
-    ret['rates']=(rates.x,rates.y,rates.z)
-    return ret
 
 def recv_and_process2(ser):
     cnt=0
@@ -92,46 +109,16 @@ def recv_and_process2(ser):
             pub_imu.send_multipart([zmq_topics.topic_imu,pickle.dumps(imu)])
             cnt+=1
 
-def recv_and_process():
-    cnt=0
-    prev_ypr = None
-    while prev_ypr is None: #wait for data
-        time.sleep(0.010)
-        print('waiting...')
-        cd=s.current_data
-        prev_tt = id(cd)
-        prev_ypr = cd.yaw_pitch_roll
-
-    while 1:
-        cd=s.current_data
-        #import pdb;pdb.set_trace()
-        if cd.yaw_pitch_roll is None:# or id(cd)==prev_tt:
-            time.sleep(0.01)
-            print('skip')
-            continue
-        #print('got pack',cnt)
-        #new packet
-        #dt = (cd.time_startup - prev_tt)/1e9
-        dt=1.0/hz
-        #prev_tt = id(cd)
-        tic=time.time()
-        imu={'ts':tic}
-        ypr=cd.yaw_pitch_roll
-        imu['yaw'],imu['pitch'],imu['roll']=(ypr.x,ypr.y,ypr.z)
-        #imu['yawr'],imu['pitchr'],imu['rollr']=((ypr.x-prev_ypr.x)/dt, (ypr.y-prev_ypr.y)/dt, (ypr.z-prev_ypr.z)/dt)
-        prev_ypr=ypr
-        rates=cd.angular_rate
-        imu['rates']=(rates.x,rates.y,rates.z)
-
-        if cnt%5==0:
-            print('dsim Y{:4.2f} P{:4.2f} R{:4.2f}'.format(imu['yaw'],imu['pitch'],imu['roll'])
-                        +' X{:4.2f} Y{:4.2f} Z{:4.2f}'.format(*imu['rates']))
-        pub_imu.send_multipart([zmq_topics.topic_imu,pickle.dumps(imu)])
-        cnt+=1
-        time.sleep(1.0/hz)
-
 if __name__=='__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--calib_mag", help="run mag calibration", action='store_true')
+    args = parser.parse_args()
+
     ser = init_serial('/dev/ttyUSB0')
-    recv_and_process2(ser)
+    if args.calib_mag:
+        calibrate_mag(ser)
+    else:
+        recv_and_process2(ser)
     #testline=b'$VNRRG,27,+006.380,+000.023,-001.953,+1.0640,-0.2531,+3.0614,+00.005,+00.344,-09.758,-0.001222,-0.000450,-0.001218*4F'
     #print(parse_line(testline))
