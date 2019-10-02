@@ -1,7 +1,6 @@
 #torun 
 # conda activate 3.6 
-
-from vnpy import *
+#from vnpy import *
 print('done import')
 import time,sys
 import os,zmq
@@ -11,15 +10,39 @@ import zmq_wrapper as utils
 print('done import 2')
 import zmq_topics
 import asyncio,pickle
-import detect_usb
-
+import serial
 pub_imu = utils.publisher(zmq_topics.topic_imu_port)
+##### vnav commands (setup)
+#doc in https://www.vectornav.com/docs/default-source/documentation/vn-100-documentation/vn-100-user-manual-(um001).pdf?sfvrsn=b49fe6b9_32
+vn_pause = b'$VNASY,0*XX'
+vn_resume = b'$VNASY,1*XX'
+vn_setoutput_quaternion =b'$VNWRG,06,2*XX'
+#Yaw, Pitch, Roll, Magnetic, Acceleration, and Angular Rate Measurements
+#header VNYMR
+vn_setoutput=b'$VNWRG,06,14*XX' 
+##### 
 
 print('connecting to vnav')
-s=EzAsyncData.connect(detect_usb.devmap['VNAV_USB'],115200)
+#s=EzAsyncData.connect(detect_usb.devmap['VNAV_USB'],115200)
+def init_serial():
+    import detect_usb
+    ser = serial.Serial(detect_usb.devmap['VNAV_USB'],115200)
+    return ser
+
+def parse_line(line):
+    parts=line.strip().split(b'*')[0].split(b',')
+    if parts[0]==b'$VNRRG':
+        y,p,r,mx,my,mz,ax,ay,az,gx,gy,gz = map(float,parts[2:])
+    ret={}
+    ret['ypr'] = (y,p,r)
+    ret['rates'] = (gx,gy,gz)
+    ret['mag'] = (mx,my,mz)
+    ret['acc'] = (ax,ay,az)
+
+
 print('done')
-hz=40
-s.sensor.write_async_data_output_frequency(hz) #hz
+#hz=40
+#s.sensor.write_async_data_output_frequency(hz) #hz
 def get_data():
     cd=s.current_data
     ret={}
@@ -69,4 +92,7 @@ def recv_and_process():
         time.sleep(1.0/hz)
 
 if __name__=='__main__':
-    recv_and_process()
+    #ser = init_serial()
+    #recv_and_process()
+    testline=b'$VNRRG,27,+006.380,+000.023,-001.953,+1.0640,-0.2531,+3.0614,+00.005,+00.344,-09.758,-0.001222,-0.000450,-0.001218*4F'
+    print(parse_line(testline))
