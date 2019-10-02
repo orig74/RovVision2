@@ -39,6 +39,7 @@ class StereoTrack():
         self.ofx=self.disparity_offset
         self.rope_track_state = None #'max','min',None
         self.last_res=None
+        self.ref_point=None #first valid pt after reset
 
     def __track_left_im(self,imgl):
         shape=imgl.shape
@@ -205,14 +206,21 @@ class StereoTrack():
         dy = t_pt[1]
         dz = t_pt[2]
         valid = valid and dx>0.1 and dx<5.0
+
         if self.dx_filt is not None:
             valid = valid and abs(self.dx_filt.x-dx)<config.diff_range_valid
+        if valid and self.ref_point is None:
+            self.ref_point=(dx,dy,dz)
+        
+        if self.ref_point is not None:
+            dy-=self.ref_point[1]
+            dz-=self.ref_point[2]
 
         res['valid']=valid
         if self.dx_filt is None or not valid:
-            self.dx_filt = ab_filt((t_pt[0],0))
-            self.dy_filt = ab_filt((t_pt[1],0))
-            self.dz_filt = ab_filt((t_pt[2],0))
+            self.dx_filt = ab_filt((dx,0))
+            self.dy_filt = ab_filt((dy,0))
+            self.dz_filt = ab_filt((dz,0))
 
 
         res['dx']=dx

@@ -39,7 +39,7 @@ async def recv_and_process():
 
             if topic==zmq_topics.topic_imu:
                 yaw,pitch,roll=data['yaw'],data['pitch'],data['roll']
-                if 'yawr' in data:
+                if 0 and 'yawr' in data:
                     ans = (data['yawr'],data['pitchr'],data['rollr'])
                     yawr,pitchr,rollr=ans
                 else:

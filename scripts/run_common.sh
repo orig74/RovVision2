@@ -31,6 +31,7 @@ function run { #pane number, path, script
 tmux select-pane -t $1 
 init_docker_image
 tmux send-keys "bash" ENTER
+tmux send-keys "printf '\033]2;%s\033\\' '$3'" ENTER
 tmux send-keys "cd $PROJECT_PATH/$2" ENTER
 tmux send-keys "$PYTHON $3" ENTER
 
@@ -41,6 +42,7 @@ else
 function run { #pane number, path, script
 tmux select-pane -t $1 
 [ ! -z "$RESIZE_VIEWER" ] && tmux send-keys "export RESIZE_VIEWER=$RESIZE_VIEWER" ENTER
+tmux send-keys "printf '\033]2;%s\033\\' '$3'" ENTER
 tmux send-keys "conda activate 3.6" ENTER
 tmux send-keys "cd $PROJECT_PATH/$2" ENTER
 tmux send-keys "python $3" ENTER

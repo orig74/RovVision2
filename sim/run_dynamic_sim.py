@@ -64,14 +64,14 @@ async def pubposition():
         imu['yaw'],imu['pitch'],imu['roll']=np.rad2deg(curr_q[3:])
 
         #rates from dsym notebook
-        #print(R.ang_vel_in(N).express(N))
-        #(-u4*sin(q3) + u5*cos(q3)*cos(q4))*N.x + (u4*cos(q3) + u5*sin(q3)*cos(q4))*N.y + (u3 - u5*sin(q4))*N.z
+        #R.ang_vel_in(R).express(R).to_matrix(R)
+        #good video in https://www.youtube.com/watch?v=WZEFoWP0Tzs
         q3,q4,q5=curr_q[3:]
         u3,u4,u5=curr_u[3:]
-        imu['rates']=(\
-                -u4*sin(q3) + u5*cos(q3)*cos(q4),\
-                u4*cos(q3) + u5*sin(q3)*cos(q4),\
-                u3 - u5*sin(q4))
+        imu['rates']=(
+                -u3*sin(q4) + u5,
+                u3*sin(q5)*cos(q4) + u4*cos(q5),
+                u3*cos(q4)*cos(q5) - u4*sin(q5))
 
         print('dsim Y{:4.2f} P{:4.2f} R{:4.2f}'.format(imu['yaw'],imu['pitch'],imu['roll'])
                 +' X{:4.2f} Y{:4.2f} Z{:4.2f}'.format(*curr_q[:3]))
