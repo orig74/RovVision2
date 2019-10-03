@@ -29,8 +29,19 @@ vn_hsi_on=b'$VNWRG,44,1,3,5*XX'
 vn_hsi_off=b'$VNWRG,44,0,3,5*XX'
 vn_read_hsi=b'$VNRRG,47*XX'
 vn_read_saved_mag=b'$VNRRG,23*XX'
-
+vn_clear_mag=b'$VNWRG,23,1,0,0,0,1,0,0,0,1,0,0,0*76'
 vn_reset_unit=b'$VNRST*4D'
+
+def save_reg23_to_disk(ser):
+    print('saving reg 23 to disk')
+    regline=write(ser,vn_read_saved_mag)
+    open('mag_calib.txt','wb').write(regline)
+
+def load_reg23_from_file(ser):
+    print('reading reg 23 from file')
+    line=open('mag_calib.txt','rb').read()
+    part = b'$VNWRG,23,'+line.strip().split(b',',2)[2].split(b'*')[0]+b'*XX'
+    write(ser,part)
 
 def write(ser,cmd):
     ser.write(cmd+b'\n')
@@ -56,6 +67,7 @@ def calibrate_mag(ser):
     part = b'$VNWRG,23,'+line.strip().split(b',',2)[2].split(b'*')[0]+b'*XX'
     print('writing',part)
     write(ser,part)
+    save_reg23_to_disk(ser)
     input('hit enter to resume output')
     write(ser,vn_resume)
 
@@ -67,6 +79,9 @@ def init_serial(dev=None):
         dev=detect_usb.devmap['VNAV_USB']
 
     ser = serial.Serial(dev,115200)
+    
+    if os.path.isfile('mag_calib.txt'):
+        load_reg23_from_file(ser)
     #set freq and output
     write(ser,vn_pause)
     write(ser,vn_setoutput)
@@ -114,6 +129,7 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--calib_mag", help="run mag calibration", action='store_true')
     parser.add_argument("--reset", help="run reset", action='store_true')
+    parser.add_argument("--read_reg23", help="read reg 23mag calibration", action='store_true')
     args = parser.parse_args()
 
     ser = init_serial('/dev/ttyUSB0')
@@ -121,6 +137,11 @@ if __name__=='__main__':
         calibrate_mag(ser)
     elif args.reset:
         write(ser,vn_reset_unit)
+    elif args.read_reg23:
+        print('reg 23 mag calibration is:')
+        write(ser,vn_pause)
+        write(ser,vn_read_saved_mag)
+        write(ser,vn_resume)
     else:
         recv_and_process2(ser)
     #testline=b'$VNRRG,27,+006.380,+000.023,-001.953,+1.0640,-0.2531,+3.0614,+00.005,+00.344,-09.758,-0.001222,-0.000450,-0.001218*4F'
