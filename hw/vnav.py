@@ -30,7 +30,7 @@ vn_hsi_off=b'$VNWRG,44,0,3,5*XX'
 vn_read_hsi=b'$VNRRG,47*XX'
 vn_read_saved_mag=b'$VNRRG,23*XX'
 
-
+vn_reset_unit=b'$VNRST*4D'
 
 def write(ser,cmd):
     ser.write(cmd+b'\n')
@@ -113,11 +113,14 @@ if __name__=='__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--calib_mag", help="run mag calibration", action='store_true')
+    parser.add_argument("--reset", help="run reset", action='store_true')
     args = parser.parse_args()
 
     ser = init_serial('/dev/ttyUSB0')
     if args.calib_mag:
         calibrate_mag(ser)
+    elif args.reset:
+        write(ser,vn_reset_unit)
     else:
         recv_and_process2(ser)
     #testline=b'$VNRRG,27,+006.380,+000.023,-001.953,+1.0640,-0.2531,+3.0614,+00.005,+00.344,-09.758,-0.001222,-0.000450,-0.001218*4F'
