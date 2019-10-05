@@ -49,6 +49,16 @@ async def recv_and_process():
                 if jm.track_lock_event():
                     print('got lock event from joy')
                     st.reset()
+            if topic==zmq_topics.topic_axes:
+                jm.update_axis(data)
+                if config.tracker=='rope':
+                    if jm.inc_freqs_track_rope():
+                        st.inc_clear_freqs()
+                        print('inc clear freqs')
+                    if jm.dec_freqs_track_rope():
+                        st.dec_clear_freqs()
+                        print('dec clear freqs')
+
 
         await asyncio.sleep(0.001)
  
@@ -61,7 +71,8 @@ if __name__=='__main__':
     ### plugin inputs
     subs_socks=[]
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_stereo_camera],zmq_topics.topic_camera_port))
-    subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_axes,zmq_topics.topic_button],zmq_topics.topic_joy_port))
+    subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_axes,zmq_topics.topic_button,zmq_topics.topic_hat],
+        zmq_topics.topic_joy_port))
 
     ### plugin outputs
     sock_pub=zmq_wrapper.publisher(zmq_topics.topic_tracker_port)

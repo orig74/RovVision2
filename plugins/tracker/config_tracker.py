@@ -5,7 +5,7 @@ track_params = (80,80,80,80,track_offx,0)
 stereo_corr_params = {'ws':(128,128),'sxl':250+50+200,'sxr':0,'ofx':80 ,'sxl2':80, 'sxr2':80}
 fov=60.97
 diff_range_valid=1.0
-clear_freqs=15
+clear_freqs=5
 max_diff_cols=40
 ignore_extrema_type=False
 

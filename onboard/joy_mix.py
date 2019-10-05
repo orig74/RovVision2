@@ -42,7 +42,7 @@ class Joy_map:
         self.buttons=[0]*16
         self.prev_buttons=[0]*16
         self.axis=[0]*8
-        self.last_light=time.time()
+        self.last_hat=time.time()
 
     def update_buttons(self,buttons):
         self.prev_buttons=self.buttons
@@ -95,18 +95,36 @@ class Joy_map:
     def inc_lights_event(self):
         if jtype=='xbox':
             axis=self.axis
-            if axis[7]<-0.9 and time.time()-self.last_light>0.3:
-                self.last_light=time.time()
+            if axis[7]<-0.9 and time.time()-self.last_hat>0.3:
+                self.last_hat=time.time()
                 return True
         return False
 
     def dec_lights_event(self):
         if jtype=='xbox':
             axis=self.axis
-            if axis[7]>0.9 and time.time()-self.last_light>0.3:
-                self.last_light=time.time()
+            if axis[7]>0.9 and time.time()-self.last_hat>0.3:
+                self.last_hat=time.time()
                 return True
         return False
+
+    def inc_freqs_track_rope(self):
+        if jtype=='xbox':
+            axis=self.axis
+            #print('axis[6]',axis,time.time()-self.last_hat)
+            if axis[6]<-0.9 and time.time()-self.last_hat>0.3:
+                self.last_hat=time.time()
+                return True
+        return False
+    
+    def dec_freqs_track_rope(self):
+        if jtype=='xbox':
+            axis=self.axis
+            if axis[6]>0.9 and time.time()-self.last_hat>0.3:
+                self.last_hat=time.time()
+                return True
+        return False
+
 
 
     def joy_mix(self):

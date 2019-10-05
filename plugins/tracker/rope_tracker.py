@@ -33,6 +33,7 @@ class StereoTrack():
         self.proj_cams=generate_stereo_cameras()
         self.dx_filt=None
         self.rope_debug=None
+        self.clear_freqs=config.clear_freqs
         self.reset()
 
     def reset(self):
@@ -50,7 +51,7 @@ class StereoTrack():
             self.rope_track_state = None
 
         ret=rope_detect(cx,self.rope_track_state, cy-100,200, 
-                imgl,clear_freqs=config.clear_freqs, max_diff_cols=config.max_diff_cols)
+                imgl,clear_freqs=self.clear_freqs, max_diff_cols=config.max_diff_cols)
         if ret is not None:
            self.rope_track_state, col,self.rope_debug=ret
            self.ofx = col-shape[1]//2
@@ -58,6 +59,11 @@ class StereoTrack():
         
         return False
 
+    def inc_clear_freqs(self): # dec mins incressing the zerofreqs
+        self.clear_freqs = max(self.clear_freqs-1,2)
+
+    def dec_clear_freqs(self):
+        self.clear_freqs = min(self.clear_freqs+1,20)
 
     def __track_stereo(self,imgl,imgr):
         cx,cy = imgl.shape[1]//2,imgl.shape[0]//2
@@ -235,6 +241,7 @@ class StereoTrack():
     #    self.range_filt = ab_filt((res['range'],0))
         res['new_ref']=False
         res['ref_cnt']=0
+        res['clr_frq']=self.clear_freqs
         if self.rope_debug is not None:
             res['rope_debug']=self.rope_debug
         self.last_res=res
@@ -281,6 +288,10 @@ def draw_track_rects(ret,imgl,imgr):
         cv2.rectangle(imgl,(xl-wx_t//2,yl-wy_t//2),(xl+wx_t//2,yl+wy_t//2),col)
         cv2.rectangle(imgl,(xl-wx_s//2,yl-wy_s//2),(xl+wx_s//2,yl+wy_s//2),col)
         cv2.rectangle(imgr,(xr-wx_s//2,yr-wy_s//2),(xr+wx_s//2,yr+wy_s//2),col)
+
+    if 'clr_frq' in ret:
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        cv2.putText(imgr,'cf %d'%ret['clr_frq'],(10,50), font, 0.5,(0,0,255),1,cv2.LINE_AA)
 
     shape=imgl.shape
     cx  = shape[1]//2+config.track_offx
