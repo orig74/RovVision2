@@ -130,9 +130,10 @@ if __name__=='__main__':
     parser.add_argument("--calib_mag", help="run mag calibration", action='store_true')
     parser.add_argument("--reset", help="run reset", action='store_true')
     parser.add_argument("--read_reg23", help="read reg 23mag calibration", action='store_true')
+    parser.add_argument("--dev", help="device", default=None)
     args = parser.parse_args()
 
-    ser = init_serial('/dev/ttyUSB0')
+    ser = init_serial(args.dev)
     if args.calib_mag:
         calibrate_mag(ser)
     elif args.reset:
