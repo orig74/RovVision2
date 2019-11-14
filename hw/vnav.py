@@ -17,6 +17,12 @@ pub_imu = utils.publisher(zmq_topics.topic_imu_port)
 vn_pause = b'$VNASY,0*XX'
 vn_resume = b'$VNASY,1*XX'
 vn_setoutput_quaternion =b'$VNWRG,06,2*XX'
+
+vn_mag_disturbance_1 = b'$VNKMD,1,1*XX'
+vn_mag_disturbance_0 = b'$VNKMD,0,0*XX'
+vn_acc_disturbance_1 = b'$VNKAD,1,1*XX'
+vn_acc_disturbance_0 = b'$VNKAD,0,0*XX'
+
 #Yaw, Pitch, Roll, Magnetic, Acceleration, and Angular Rate Measurements
 #header VNYMR
 vn_setoutput=b'$VNWRG,06,14*XX' 
@@ -24,6 +30,8 @@ vn_setoutput=b'$VNWRG,06,14*XX'
 vn_setfreq20hz=b'$VNWRG,07,20*XX'
 
 ### clibration
+vn_heading_mode=b'$VNWRG,35, 1, 0, 1, 1*XX'
+
 vn_reset_hsi=b'$VNWRG,44,2,3,5*XX'
 vn_hsi_on=b'$VNWRG,44,1,3,5*XX'
 vn_hsi_off=b'$VNWRG,44,0,3,5*XX'
@@ -46,6 +54,7 @@ def load_reg23_from_file(ser):
 def write(ser,cmd):
     ser.write(cmd+b'\n')
     time.sleep(0.05)
+    ln = 'None'
     while ser.inWaiting():
         ln=ser.readline()
     ser.flush()
@@ -80,13 +89,16 @@ def init_serial(dev=None):
 
     ser = serial.Serial(dev,115200)
     
-    if os.path.isfile('mag_calib.txt'):
+    if False:#os.path.isfile('mag_calib.txt'):
         load_reg23_from_file(ser)
     #set freq and output
     write(ser,vn_pause)
     write(ser,vn_setoutput)
     write(ser,vn_setfreq20hz)
     write(ser,vn_hsi_off)
+    write(ser, vn_heading_mode)
+    write(ser,vn_acc_disturbance_0)
+    write(ser,vn_mag_disturbance_0)
     #set frequency
     write(ser,vn_resume)
     return ser

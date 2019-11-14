@@ -19,7 +19,7 @@ if __name__=='__main__':
             if 'FTDI' in lname:
                 dmap['VNAV_USB']='/dev/'+dname
     else:
-        for dev in ['/dev/ttyUSB%d'%i for i in [0,1,2]]:
+        for dev in ['/dev/ttyUSB%d'%i for i in [0,1,2,3]]:
             cmd = 'udevadm info '+dev
             #print(cmd)
             line=os.popen(cmd).readline()
