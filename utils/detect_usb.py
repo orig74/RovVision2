@@ -20,14 +20,14 @@ if __name__=='__main__':
                 dmap['PERI_USB']=dev
         
         if rov_type==2:
-            if '1-7.1' in line:
-                dmap['SONAR_USB']=dev
             if '1-7.2' in line:
-                dmap['ESC_USB']=dev
+                dmap['SONAR_USB']=dev
             if '1-7.3' in line:
-                dmap['VNAV_USB']=dev
-            if '1-9' in line:
                 dmap['PERI_USB']=dev
+            if '1-7.4' in line:
+                dmap['VNAV_USB']=dev
+            if '1-7.5' in line:
+                dmap['ESC_USB']=dev
 
     with open('/tmp/devusbmap.pkl','wb') as fp:
         #print(dmap)
