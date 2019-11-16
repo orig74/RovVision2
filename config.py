@@ -4,8 +4,8 @@ rov_type = int(os.environ.get('ROV_TYPE',1))
 if rov_type==1:
     cam_resx,cam_resy=1920,1200
     reverse_camera_order=True
-if rov_type==0:
-    cam_resx,cam_resy=1024,1024
+if rov_type==2:
+    cam_resx,cam_resy=1280,1024
     reverse_camera_order=False
 cam_res_rgbx,cam_res_rgby=cam_resx//2,cam_resy//2
 fps=10
