@@ -2,6 +2,8 @@
 echo 1
 echo $HEADLESS
 echo 2
+
+export ROV_TYPE=2
 #GAME_PATH=/DroneLab/baked_games/Ocean1_packed/LinuxNoEditor/
 GAME_PATH=/project_files/Ocean2_packed/LinuxNoEditor/
 PROJECT_PATH=/home/host/projects/RovVision2/

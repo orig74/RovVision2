@@ -36,6 +36,17 @@ def listener():
             if topic==topic_stereo:
                 imgl=np.frombuffer(data[2],'uint8').reshape(shape)
                 imgr=np.frombuffer(data[3],'uint8').reshape(shape)
+                    
+                ch,cw,cl = shape
+                ch = ch//2
+                cw = cw//2
+
+                if config.rov_type==2: #resizing for prev cameras
+                    nh,nw = config.cam_res_rgby, config.cam_res_rgbx
+                    imgl = imgl[ch-nh//2:ch+nh//2,cw-nw//2:cw+nw//2,:]
+                    imgr = imgr[ch-nh//2:ch+nh//2,cw-nw//2:cw+nw//2,:]
+                    shape = imgl.shape
+
                 if 0 and cvshow:
                     #if 'depth' in topic:
                     #    cv2.imshow(topic,img)
