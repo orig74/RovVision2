@@ -17,6 +17,14 @@ frame_start_time=None
 frame_start_number=None
 fps_last_num=0
 fps=None
+
+if config.rov_type==2:
+    sy = lambda n: int(n*1280/1920)
+    sx = lambda n: int(n*1024/1200)
+else:
+    sx = lambda x:x
+    sy = lambda y:y
+
 def draw_seperate(imgl,imgr,message_dict):
     if zmq_topics.topic_tracker in message_dict:
         tracker.draw_track_rects(message_dict[zmq_topics.topic_tracker],imgl,imgr)
@@ -48,46 +56,46 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
                 config.fps*(time.time()-frame_start_time))
             if fmt_cnt_l%10==0:
                 print('fpsline',line)
-        cv2.putText(img,line,(10,550+voff), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+        cv2.putText(img,line,(sy(10),sx(560+voff)), font, 0.5,(0,0,255),1,cv2.LINE_AA)
     if zmq_topics.topic_imu in message_dict:
         m=message_dict[zmq_topics.topic_imu]
         yaw,pitch,roll=m['yaw'],m['pitch'],m['roll']
-        draw_compass(img,1000+100,485+voff,yaw,pitch,roll)
+        draw_compass(img,sy(1000+100),sx(485+voff),yaw,pitch,roll)
     if zmq_topics.topic_depth in message_dict:
         target_depth = message_dict.get(zmq_topics.topic_depth_hold_pid,{}).get('T',0)
         draw_depth(img,0,0,message_dict[zmq_topics.topic_depth]['depth'],target_depth)
     if zmq_topics.topic_sonar in message_dict:
         sonar_rng = message_dict[zmq_topics.topic_sonar]
         line=' {:>.2f},{:>.2f} SRng'.format(*sonar_rng)
-        cv2.putText(img,line,(350,550+voff), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+        cv2.putText(img,line,(sy(450),sx(560+voff)), font, 0.5,(0,0,255),1,cv2.LINE_AA)
     if zmq_topics.topic_record_state in message_dict:
         if message_dict[zmq_topics.topic_record_state]:
-            cv2.putText(img,'REC',(10,15), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+            cv2.putText(img,'REC',(sy(10),sx(15)), font, 0.5,(0,0,255),1,cv2.LINE_AA)
     if zmq_topics.topic_system_state in message_dict:
         ss = message_dict[zmq_topics.topic_system_state][1]
         cv2.putText(img,'ARM' if ss['arm'] else 'DISARM' \
-                ,(50,15), font, 0.5,(0,0,255) if ss['arm'] else (0,255,0),1,cv2.LINE_AA)
+                ,(sy(50),sx(15)), font, 0.5,(0,0,255) if ss['arm'] else (0,255,0),1,cv2.LINE_AA)
         modes = sorted(ss['mode'])
         if len(modes)==0:
             modes_str='MANUAL'
         else:
             modes_str=' '.join(modes)
         cv2.putText(img, modes_str\
-                ,(140,15), font, 0.5,(255,255,255),1,cv2.LINE_AA)
+                ,(sy(140),sx(15)), font, 0.5,(255,255,255),1,cv2.LINE_AA)
     if zmq_topics.topic_tracker in message_dict:
         rng  = message_dict[zmq_topics.topic_tracker].get('range_f',-1.0)
         line='{:>.2f} TRng'.format(rng)
-        cv2.putText(img,line,(350,570+voff), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+        cv2.putText(img,line,(sy(350),sx(580+voff)), font, 0.5,(0,0,255),1,cv2.LINE_AA)
 
     if zmq_topics.topic_volt in message_dict:
         v=message_dict[zmq_topics.topic_volt]['V']
         i=message_dict[zmq_topics.topic_volt]['I']
         line='{:>.2f}V {:>.2f}I'.format(v,i)
-        cv2.putText(img,line,(50,570+voff), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+        cv2.putText(img,line,(sy(50),sx(580+voff)), font, 0.5,(0,0,255),1,cv2.LINE_AA)
 
     if zmq_topics.topic_hw_stats in message_dict:
         line=hw_stats_tools.get_hw_str(message_dict[zmq_topics.topic_hw_stats][1])
-        cv2.putText(img,line,(670+500,570+voff), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+        cv2.putText(img,line,(sy(670+500),sx(580+voff)), font, 0.5,(0,0,255),1,cv2.LINE_AA)
 
 from math import cos,sin,pi
 def draw_compass(img,x,y,heading,pitch,roll):

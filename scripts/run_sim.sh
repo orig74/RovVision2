@@ -3,7 +3,11 @@ echo 1
 echo $HEADLESS
 echo 2
 
-export ROV_TYPE=2
+if [ ! -v ROV_TYPE ]; then
+    export ROV_TYPE=1
+else
+    export ROV_TYPE=$ROV_TYPE
+fi
 #GAME_PATH=/DroneLab/baked_games/Ocean1_packed/LinuxNoEditor/
 GAME_PATH=/project_files/Ocean2_packed/LinuxNoEditor/
 PROJECT_PATH=/home/host/projects/RovVision2/
