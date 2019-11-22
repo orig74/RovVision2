@@ -30,6 +30,7 @@ parser.add_argument("--nowait",help="run all not wait for keyboard untill framen
 parser.add_argument("--nosingle",help="dont use the single files only the stream", action='store_true')
 parser.add_argument("--nosync", help="dont sync videos", action='store_true')
 parser.add_argument("--pub_data", help="publish data", action='store_true')
+parser.add_argument("--pub_camera", help="publish camera", action='store_true')
 parser.add_argument("--runtracker", help="run tracker on recorded vid", action='store_true')
 parser.add_argument("--path",help="dir path")
 parser.add_argument("--bs",help="history buff size",type=int ,default=1000)
@@ -143,6 +144,10 @@ if __name__=='__main__':
                 if imgs_raw[i] is None:
                     imgs_raw[i]=images[i].copy()#[:,:,::-1].copy()
                 imgs_raw[i]=imgs_raw[i][:,:,::-1]
+            
+            if args.pub_camera:
+                socket_pub.send_multipart([b'topic_stereo_camera',pickle.dumps(images)])
+            
             draw_seperate(images[0],images[1],messages)
             #join[:,0:sx,:]=images[0]
             #join[:,sx:,:]=images[1]
@@ -154,6 +159,7 @@ if __name__=='__main__':
 
             if save_avi is not None:
                 save_avi.write(join)
+
 
             font = cv2.FONT_HERSHEY_SIMPLEX
             cv2.putText(join,'Play {:.1f} tot {:.1f} sec'.format((fcnt-start_frame)/10 ,(end_frame-start_frame)/10)
