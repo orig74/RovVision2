@@ -20,8 +20,9 @@ lamb=dill.load(open('lambda.pkl','rb'))
 current_command=[0 for _ in range(8)] # 8 thrusters
 dt=1/60.0
 keep_running=True
-
-
+savetofile=False
+if savetofile:
+    savefd=open(r'dynsim.txt','w')
 #pub_pos_sim = utils.publisher(zmq_topics.topic_sitl_position_report_port)
 pub_pos_sim = utils.publisher(ue4_zmq_topics.zmq_pub_drone_fdm[1])
 pub_imu = utils.publisher(zmq_topics.topic_imu_port)
@@ -75,6 +76,9 @@ async def pubposition():
 
         print('dsim Y{:4.2f} P{:4.2f} R{:4.2f}'.format(imu['yaw'],imu['pitch'],imu['roll'])
                 +' X{:4.2f} Y{:4.2f} Z{:4.2f}'.format(*curr_q[:3]))
+        if savetofile:
+            print('dsim Y{:4.2f} P{:4.2f} R{:4.2f}'.format(imu['yaw'],imu['pitch'],imu['roll'])
+                    +' X{:4.2f} Y{:4.2f} Z{:4.2f}'.format(*curr_q[:3]),file=savefd)
         pub_imu.send_multipart([zmq_topics.topic_imu,pickle.dumps(imu)])
         pub_depth.send_multipart([zmq_topics.topic_depth,pickle.dumps({'ts':tic,'depth':curr_q[2]})])
 
@@ -95,8 +99,15 @@ async def main():
             pubposition(),
             )
 
-if __name__=='__main__':
+if 1 and __name__=='__main__':
 #    asyncio.run(main())
     loop = asyncio.get_event_loop()
     result = loop.run_until_complete(main())
+
+if 0 and __name__=='__main__':
+    q,u=np.zeros(6),np.zeros(6)
+    f=[1,1,-1,-1,0,0,0,0.0]
+    for i in range(1000):
+        q,u=get_next_state(q,u,f,dt,lamb)
+        print(q)
 
