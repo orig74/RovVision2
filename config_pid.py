@@ -40,15 +40,15 @@ roll_pid={
         'initial_i':0,
         'func_in_err':None}
 
-ps=0.001
+ps=0.003
 #ps=0.000
 pitch_pid={
         'P':5*ps,
-        'I':0.01*ps,
+        'I':0.03*ps,
         'D':5*ps,
-        'limit':0.2,
+        'limit':0.7,
         'step_limit':0.05,
-        'i_limit':0.1,
+        'i_limit':0.7,
         'FF':0,
         'angle_deg_type':True,
         'initial_i':0,
