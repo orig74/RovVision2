@@ -6,6 +6,7 @@ import asyncio
 import time
 import pickle
 import struct
+import os
 
 sys.path.append('..')
 sys.path.append('../utils')
@@ -56,17 +57,28 @@ async def send_serial_command_50hz():
     while keep_running:
         await asyncio.sleep(1/50.0)
 
+        rov_type = int(os.environ.get('ROV_TYPE','1'))
         # Need to convert comands to list of -1 -> 1?
         m = [0]*8
         c=current_command
-        m[0]=c[5]
-        m[1]=c[4]
-        m[2]=-c[6]
-        m[3]=-c[7]
-        m[4]=-c[1]
-        m[5]=-c[0]
-        m[6]=-c[2]
-        m[7]=-c[3]
+        if rov_type == 1:
+            m[0]=c[5]
+            m[1]=c[4]
+            m[2]=-c[6]
+            m[3]=-c[7]
+            m[4]=-c[1]
+            m[5]=-c[0]
+            m[6]=-c[2]
+            m[7]=-c[3]
+        elif rov_type == 2:
+            m[0]=c[6]
+            m[1]=c[7]
+            m[2]=-c[5]
+            m[3]=-c[4]
+            m[4]=c[2]
+            m[5]=-c[3]
+            m[6]=c[1]
+            m[7]=-c[0]
 
         m=np.clip(m,-config.thruster_limit,config.thruster_limit)
         dshot_frames = motor_cmnd_to_DShot(m)
