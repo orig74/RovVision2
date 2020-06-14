@@ -8,7 +8,7 @@ tmux new-session -d -s dronelab
 PROJECT_PATH=../
 else
 PROJECT_PATH=/home/host/projects/RovVision2/
-PYTHON=/miniconda/bin/python 
+#PYTHON=/miniconda/bin/python 
 tmux new-window
 fi 
 

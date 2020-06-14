@@ -56,9 +56,10 @@ async def pubposition():
         ps['yaw'],ps['roll'],ps['pitch']=-np.rad2deg(curr_q[3:])
         ps['yaw']=-ps['yaw']
         ps['posy']=-ps['posy']
-        ps['roll']+=90
+        ps['pitch']=-ps['pitch']
+        #ps['roll']=-ps['roll']
         #pub_pos_sim.send_multipart([xzmq_topics.topic_sitl_position_report,pickle.dumps((time.time(),curr_q))])
-        pub_pos_sim.send_multipart([ue4_zmq_topics.topic_sitl_position_report,pickle.dumps(position_struct)])
+        pub_pos_sim.send_multipart([ue4_zmq_topics.topic_sitl_position_report,pickle.dumps(ps)])
 
         tic=time.time()
         imu={'ts':tic}

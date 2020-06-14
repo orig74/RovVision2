@@ -6,9 +6,11 @@ from Wrappers import phandlers as ph
 import numpy as np
 import cv2
 
-drone_texture_names=['/Game/bluerovstereo1','/Game/bluerovstereo2' ]
+drone_texture_names=['/Game/mycontent/bluerovstereo1','/Game/mycontent/bluerovstereo2' ]
+#drone_texture_names=['bluerovstereo1','bluerovstereo2' ]
 
-drone_textures_depth_names=['/Game/TextureRenderTarget2D_depth']
+drone_textures_depth_names=['/Game/mycontent/TextureRenderTarget2D_depth']
+#drone_textures_depth_names=['TextureRenderTarget2D_depth']
 #drone_textures_depth_names=[]
 #needed actors
 drone_actors_names=['BlueRov1']
@@ -16,7 +18,7 @@ drone_actors_names=['BlueRov1']
 
 context = zmq.Context()
 
-show_cv=False
+show_cv=True
 pub_cv=True
 fps = 10
 
@@ -62,7 +64,7 @@ def main_loop(gworld):
         i+=1
         #print(p,'pos',ph.GetActorLocation(a))
     print('-- textures --')
-    print('-- starting openrov simulation --')
+    print('-- starting rovvision simulation --')
     drone_textures=[]
     for tn in drone_texture_names:
         drone_textures.append(ph.GetTextureByName(tn))
@@ -71,29 +73,37 @@ def main_loop(gworld):
         drone_textures_depth.append(ph.GetTextureByName(tn))
 
     if not all(drone_textures):
-        print("Error, Could not find all textures")
+        print("Error, Could not find all textures", drone_textures)
         while 1:
             yield
     drone_actors=[]
+    print('---looking for actors---')
     for drn in drone_actors_names:
         drone_actors.append(ph.FindActorByName(gworld,drn))
+    print('---looking for actors 2---',drone_actors)
 
     if not all(drone_actors):
         print("Error, Could not find all drone actors")
         while 1:
             yield
+    print('---debug 1---')
     
     #change cameras angle
     for cam_name in ['SceneCaptureBROV1left','SceneCaptureBROV1right']: 
         #ca=ph.FindActorByName(gworld,'SceneCaptureBROV1left')
+        print('---debug 1.1---')
         ca=ph.FindActorByName(gworld,cam_name)
+        print('---debug 1.2---',ca)
         ph.SetActorRotation(ca,(1,-pitch,89))
-
+        #ph.SetActorRotation(ca,(0,-pitch,0))
+        print('---debug 1.3---')
         yield
         #ph.SetActorRotation(caml,(1,1,89)) #facing down
         print('camera ' +cam_name + ' rotation ---',ph.GetActorRotation(ca))
+        print('---debug 1.4---')
 
     #print('--- ',caml)
+    print('---debug 2---')
 
 
 
@@ -141,7 +151,7 @@ def main_loop(gworld):
         socket_pub.send_multipart([config.topic_unreal_depth%0,pickle.dumps((frame_cnt,img_depth.shape)),img_depth.tostring()])
 
         if show_cv:
-            cv2.imshow('drone camera %d'%drone_index,img)
+            cv2.imshow('drone camera %d'%drone_index,imgl)
             cv2.waitKey(1)
 
         frame_cnt += 1

@@ -9,11 +9,13 @@ else
     export ROV_TYPE=$ROV_TYPE
 fi
 #GAME_PATH=/DroneLab/baked_games/Ocean1_packed/LinuxNoEditor/
-GAME_PATH=/project_files/Ocean2_packed/LinuxNoEditor/
-PROJECT_PATH=/home/host/projects/RovVision2/
+#GAME_PATH=/project_files/Ocean2_packed/LinuxNoEditor/
+GAME_PATH=/project_files/Ocean2_packed_2.24.3/LinuxNoEditor/
+PACKED_NAME=Ocean2
+PROJECT_PATH=/home/host/projects/RovVision2
 DRONESIMLAB_PATH=../../DroneSimLab/
 SIM=
-PYTHON=/miniconda/bin/python 
+PYTHON=python 
 
 source run_common.sh
 
@@ -28,7 +30,14 @@ run 0 sim ue4_bridge.py
 run 1 sim run_dynamic_sim.py
 tmux select-pane -t 2
 init_docker_image
-tmux send-keys "unset DISPLAY;cd $GAME_PATH;PATH=/miniconda/bin/:$PATH ./run.sh" ENTER
+#tmux send-keys "unset DISPLAY;cd $GAME_PATH;PATH=/miniconda/bin/:$PATH ./run.sh" ENTER
+ENTRY_POINT=unreal_proxy
+ENTRY_PATH=unreal_proxy/
+
+tmux send-keys "cd ${PROJECT_PATH}/sim" ENTER
+tmux send-keys "python3 $DRONESIMLAB_PATH/UE4PyhtonBridge/set_path.py --entry_point $ENTRY_POINT --entry_path $ENTRY_PATH --packed_game_name $PACKED_NAME --packed_game_path $GAME_PATH" ENTER
+tmux send-keys "cd ${GAME_PATH}" ENTER
+tmux send-keys "cd $GAME_PATH; ./run.sh" ENTER
 
 sleep 1
 

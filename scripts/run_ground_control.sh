@@ -1,7 +1,7 @@
 #!/bin/bash
 source run_common.sh
 PROJECT_PATH=/home/host/projects/RovVision2/
-PYTHON=/miniconda/bin/python 
+#PYTHON=${1:-/miniconda/bin/python}
 
 #[ $USER == 'uav' ] && export RESIZE_VIEWER=1500
 [ $USER == 'uav' ] && export RESIZE_VIEWER=2300
