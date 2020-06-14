@@ -43,9 +43,9 @@ roll_pid={
 ps=0.003
 #ps=0.000
 pitch_pid={
-        'P':5*ps,
-        'I':0.03*ps,
-        'D':5*ps,
+        'P':1*ps,
+        'I':0.1*ps,
+        'D':1*ps,
         'limit':0.7,
         'step_limit':0.05,
         'i_limit':0.7,
