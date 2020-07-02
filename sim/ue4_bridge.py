@@ -64,12 +64,14 @@ def listener():
             if topic==topic_depth:
                 img=np.frombuffer(data[2],'float16').reshape(shape)
                 min_range=img.min() 
+                #import pdb;pdb.set_trace()
                 img=np.squeeze(img).copy()
+                #img.byteswap()
 
                 img_show=(img/10.0).clip(0,255).astype('uint8')
                 img[img>5000]=np.nan
                 max_range=np.nanmax(img)
-                #print('sonar::',min_range,max_range)
+                print('sonar::',min_range,max_range)
                 pub_sonar.send_multipart([zmq_topics.topic_sonar,pickle.dumps([min_range,max_range])])
 
                 if cvshow:

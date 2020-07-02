@@ -20,7 +20,7 @@ zmq_sub=utils.subscribe([topic_depth],ue4_zmq_topics.zmq_pub_unreal_proxy[1])
 cvshow=1
 #cvshow=False
 test=1
-
+cv2.namedWindow(topic_depth.decode())
 print('start...')
 def listener():
     cnt=0
@@ -32,11 +32,19 @@ def listener():
             frame_cnt,shape=pickle.loads(data[1])
             
             if topic==topic_depth:
+                #img=np.frombuffer(data[2],'float32').reshape(shape)
                 img=np.frombuffer(data[2],'float16').reshape(shape)
                 img=np.squeeze(img).copy()
-
+                #img=img.byteswap()
+                if 0:
+                    import matplotlib
+                    from matplotlib import pyplot as plt
+                    plt.hist(img.flatten(), density=True, bins=300)
+                    plt.show()
+                print(img.max(),img.min())
+                    #kkk
                 img_show=(img/10.0).clip(0,255).astype('uint8')
-
+                
                 if cvshow:
                     cv2.imshow(topic.decode(),img_show)
                     cv2.waitKey(1)

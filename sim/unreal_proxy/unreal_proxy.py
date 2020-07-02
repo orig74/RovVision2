@@ -18,7 +18,7 @@ drone_actors_names=['BlueRov1']
 
 context = zmq.Context()
 
-show_cv=True
+show_cv=False
 pub_cv=True
 fps = 10
 
@@ -145,7 +145,7 @@ def main_loop(gworld):
         imgl=ph.GetTextureData(drone_textures[1])
         #topics.append(config.topic_unreal_drone_rgb_camera%0)
 
-        img_depth=ph.GetTextureData16f(drone_textures_depth[0],channels=[3],verbose=0) #depth data will be in red componnent
+        img_depth=ph.GetTextureData32f(drone_textures_depth[0],channels=[3],verbose=1) #depth data will be in red componnent
         #img_depth=ph.GetTextureData(drone_textures_depth[0],channels=[2]) #depth data will be in red componnent
         socket_pub.send_multipart([config.topic_unreal_stereo_camera%0,pickle.dumps((frame_cnt,imgl.shape)),imgl.tostring(),imgr.tostring()])
         socket_pub.send_multipart([config.topic_unreal_depth%0,pickle.dumps((frame_cnt,img_depth.shape)),img_depth.tostring()])
