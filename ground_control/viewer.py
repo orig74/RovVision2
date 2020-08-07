@@ -16,7 +16,7 @@ import zmq_topics
 import config
 from joy_mix import Joy_map
 from gst import init_gst_reader,get_imgs,set_files_fds,get_files_fds,save_main_camera_stream
-from annotations import draw,draw_seperate
+from annotations import draw,draw_seperate,draw_mono
 import zmq_wrapper as utils
 import image_enc_dec
 
@@ -120,16 +120,24 @@ if __name__=='__main__':
 
         #print('-1-',main_data)
 
-        if images[0] is not None and images[1] is not None:
-            fmt_cnt_l=image_enc_dec.decode(images[0])
-            fmt_cnt_r=image_enc_dec.decode(images[1])
-            draw_seperate(images[0],images[1],message_dict)
-            #join[:,0:sx,:]=images[0]
-            #join[:,sx:,:]=images[1]
-            join[bmargy//2:-bmargy//2,bmargx:sx+bmargx,:]=images[0]
-            join[bmargy//2:-bmargy//2,sx+bmargx:,:]=images[1]
-            images=[None,None]
-            draw(join,message_dict,fmt_cnt_l,fmt_cnt_r)
+        join = None
+        if config.camera_setup == 'stereo':
+            if images[0] is not None and images[1] is not None:
+                fmt_cnt_l=image_enc_dec.decode(images[0])
+                fmt_cnt_r=image_enc_dec.decode(images[1])
+                draw_seperate(images[0],images[1],message_dict)
+                #join[:,0:sx,:]=images[0]
+                #join[:,sx:,:]=images[1]
+                join[bmargy//2:-bmargy//2,bmargx:sx+bmargx,:]=images[0]
+                join[bmargy//2:-bmargy//2,sx+bmargx:,:]=images[1]
+                images=[None,None]
+                draw(join,message_dict,fmt_cnt_l,fmt_cnt_r)
+        else:
+            if images[0] is not None:
+                fmt_cnt_l=image_enc_dec.decode(images[0])
+                draw_mono(images[0],message_dict,fmt_cnt_l)
+                join=images[0]
+        if join is not None:
             if resize_viewer:
                 scale=resize_width/config.cam_resx 
                 sp0,sp1,_ = join.shape
@@ -140,6 +148,7 @@ if __name__=='__main__':
                 cv2.imshow('3dviewer',join)
             if data_file_fd is not None:
                 pickle.dump([zmq_topics.topic_viewer_data,{'frame_cnt':(rcv_cnt,fmt_cnt_l,fmt_cnt_r),'ts':time.time()}],data_file_fd,-1)
+            
             #cv2.imshow('left',images[0])
             #cv2.imshow('right',images[1])
         k=cv2.waitKey(10)

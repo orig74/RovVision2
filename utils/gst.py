@@ -67,8 +67,13 @@ def init_gst_reader(npipes):
     for cmd in cmds: #start together
         Popen(cmd, shell=True, bufsize=0)
 
-images=[None,None]
-save_files_fds=[None,None]
+if config.camera_setup == 'stereo':
+    images=[None,None]
+    save_files_fds=[None,None]
+else:
+    images=[None]
+    save_files_fds=[None]
+
 def get_files_fds():
     return save_files_fds
 

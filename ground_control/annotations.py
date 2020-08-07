@@ -97,16 +97,80 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
         line=hw_stats_tools.get_hw_str(message_dict[zmq_topics.topic_hw_stats][1])
         cv2.putText(img,line,(sy(670+500),sx(580+voff)), font, 0.5,(0,0,255),1,cv2.LINE_AA)
 
+def draw_mono(img,message_dict,fmt_cnt_l):
+    global fps_time,fps,fps_last_num,frame_start_time,frame_start_number
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    #print('-2-',md)
+    #line1='{:08d}'.format(fmt_cnt_l)
+    #cv2.putText(img,line1,(10,50), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+
+    voff=0#113
+    #if vd.get('record_state',False):
+    #    cv2.putText(img,'REC '+vd['disk_usage'],(10,200),font, 0.5,(0,0,255),1,cv2.LINE_AA)
+    if frame_start_time is None:
+        frame_start_time=time.time()
+        frame_start_number=fmt_cnt_l
+    if fmt_cnt_l is not None:
+        line=' {:>8}'.format(fmt_cnt_l)
+        if fmt_cnt_l%100==0 and fmt_cnt_l!=fps_last_num:
+            fps=100.0/(time.time()-fps_time)
+            #print('---',time.time()-fps_time)
+            fps_time=time.time()
+            fps_last_num=fmt_cnt_l
+        if fps is not None:
+            line+=' {:>.2f}fps'.format(fps)
+            line+=' {:>05.2f}delay'.format(\
+                (fmt_cnt_l-frame_start_number)-\
+                config.fps*(time.time()-frame_start_time))
+            if fmt_cnt_l%10==0:
+                print('fpsline',line)
+        cv2.putText(img,line,(sy(10),sx(560+voff)), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+    if zmq_topics.topic_imu in message_dict:
+        m=message_dict[zmq_topics.topic_imu]
+        yaw,pitch,roll=m['yaw'],m['pitch'],m['roll']
+        draw_compass(img,img.shape[1]//2,img.shape[0]//2,yaw,pitch,roll,rr=150.0)
+    if zmq_topics.topic_depth in message_dict:
+        target_depth = message_dict.get(zmq_topics.topic_depth_hold_pid,{}).get('T',0)
+        draw_depth(img,0,0,message_dict[zmq_topics.topic_depth]['depth'],target_depth)
+    if zmq_topics.topic_sonar in message_dict:
+        sonar_rng = message_dict[zmq_topics.topic_sonar]
+        line=' {:>.2f},{:>.2f} SRng'.format(*sonar_rng)
+        cv2.putText(img,line,(sy(450),sx(560+voff)), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+    if zmq_topics.topic_record_state in message_dict:
+        if message_dict[zmq_topics.topic_record_state]:
+            cv2.putText(img,'REC',(sy(10),sx(15)), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+    if zmq_topics.topic_system_state in message_dict:
+        ss = message_dict[zmq_topics.topic_system_state][1]
+        cv2.putText(img,'ARM' if ss['arm'] else 'DISARM' \
+                ,(sy(50),sx(15)), font, 0.5,(0,0,255) if ss['arm'] else (0,255,0),1,cv2.LINE_AA)
+        modes = sorted(ss['mode'])
+        if len(modes)==0:
+            modes_str='MANUAL'
+        else:
+            modes_str=' '.join(modes)
+        cv2.putText(img, modes_str\
+                ,(sy(140),sx(15)), font, 0.5,(255,255,255),1,cv2.LINE_AA)
+    if zmq_topics.topic_tracker in message_dict:
+        rng  = message_dict[zmq_topics.topic_tracker].get('range_f',-1.0)
+        line='{:>.2f} TRng'.format(rng)
+        cv2.putText(img,line,(sy(350),sx(580+voff)), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+
+    if zmq_topics.topic_volt in message_dict:
+        v=message_dict[zmq_topics.topic_volt]['V']
+        i=message_dict[zmq_topics.topic_volt]['I']
+        line='{:>.2f}V {:>.2f}I'.format(v,i)
+        cv2.putText(img,line,(sy(50),sx(580+voff)), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+
+    if zmq_topics.topic_hw_stats in message_dict:
+        line=hw_stats_tools.get_hw_str(message_dict[zmq_topics.topic_hw_stats][1])
+        cv2.putText(img,line,(sy(670+500),sx(580+voff)), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+
 from math import cos,sin,pi
-def draw_compass(img,x,y,heading,pitch,roll):
+def draw_compass(img,x,y,heading,pitch,roll,rr=50.0):
     font = cv2.FONT_HERSHEY_SIMPLEX
     cv2.putText(img,str(int(heading%360)),(x,y+30), font, 0.5,(0,000,255),1,cv2.LINE_AA)
 
-    r=50.0
-    #mt=r-3
-
-
-    cv2.circle(img, (x,y), int(r), (0,0,255), 1)
+    cv2.circle(img, (x,y), int(rr), (0,0,255), 1)
     for i in range(36):
         t=i*10/180.0*pi
         if i%9==0:
@@ -118,16 +182,16 @@ def draw_compass(img,x,y,heading,pitch,roll):
         cs=cos(t)
         si=sin(t)
         cv2.line(img,
-                (int(x+cs*(r-mt)),int(y+si*(r-mt))),
-                (int(x+cs*r),int(y+si*r)),(0,0,255),1)
+                (int(x+cs*(rr-mt)),int(y+si*(rr-mt))),
+                (int(x+cs*rr),int(y+si*rr)),(0,0,255),1)
 
     t=(heading-90)/180.0*pi
     cs=cos(t)
     si=sin(t)
     mt=3
     cv2.line(img,
-        (int(x+cs*(r-mt)),int(y+si*(r-mt))),
-        (int(x+cs*r),int(y+si*r)),(0,255,255),3)
+        (int(x+cs*(rr-mt)),int(y+si*(rr-mt))),
+        (int(x+cs*rr),int(y+si*rr)),(0,255,255),3)
 
     r=30
     mt=5
@@ -144,9 +208,9 @@ def draw_compass(img,x,y,heading,pitch,roll):
     cv2.line(img,
         (int(xx-cs*(r-mt)),int(yy-si*(r-mt))),
         (int(xx-cs*r),int(yy-si*r)),(0,255,255),2)
-    cv2.putText(img,'Y:'+str(int(heading)),(x-3,y+60), font, 0.5,(0,255,255),1,cv2.LINE_AA)
-    cv2.putText(img,'P:'+str(int(pitch)),(x-3,y+75), font, 0.5,(0,255,255),1,cv2.LINE_AA)
-    cv2.putText(img,'R:'+str(int(roll)),(x-3,y+90), font, 0.5,(0,255,255),1,cv2.LINE_AA)
+    cv2.putText(img,'Y:'+str(int(heading)),(x-3,y+int(rr)+10), font, 0.5,(0,255,255),1,cv2.LINE_AA)
+    cv2.putText(img,'P:'+str(int(pitch)),(x-3,y+int(rr)+25), font, 0.5,(0,255,255),1,cv2.LINE_AA)
+    cv2.putText(img,'R:'+str(int(roll)),(x-3,y+int(rr)+40), font, 0.5,(0,255,255),1,cv2.LINE_AA)
 
 
 
