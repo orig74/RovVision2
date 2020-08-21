@@ -120,7 +120,6 @@ if __name__=='__main__':
 
         #print('-1-',main_data)
 
-        join = None
         if config.camera_setup == 'stereo':
             if images[0] is not None and images[1] is not None:
                 fmt_cnt_l=image_enc_dec.decode(images[0])
@@ -133,6 +132,7 @@ if __name__=='__main__':
                 images=[None,None]
                 draw(join,message_dict,fmt_cnt_l,fmt_cnt_r)
         else:
+            join = None
             if images[0] is not None:
                 fmt_cnt_l=image_enc_dec.decode(images[0])
                 draw_mono(images[0],message_dict,fmt_cnt_l)
