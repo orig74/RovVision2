@@ -1,5 +1,6 @@
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 import matplotlib
+import numpy as np
 import argparse
 matplotlib.use('TKAgg')
 import matplotlib.pyplot as plt
@@ -16,6 +17,7 @@ import cv2,os
 import sys,os,time
 import zmq_topics
 import zmq_wrapper as utils
+import config
 parser = argparse.ArgumentParser()
 parser.add_argument("--ip",help="main ground control ip addr", default='127.0.0.1')
 parser.add_argument("--scale",help="map size deafult 20", default=20.0, type=float)
@@ -28,6 +30,79 @@ subs_socks.append(utils.subscribe([zmq_topics.topic_sonar], zmq_topics.topic_son
 
 ##### map radious im meters
 rad=float(args.scale)
+
+##############move to utils..###################
+
+def roty(a):
+    R_y = \
+        np.array([\
+            [np.cos(a),    0,      np.sin(a)  ],
+            [0,                     1,      0         ],
+            [-np.sin(a),   0,      np.cos(a)  ]
+                    ])
+    return R_y
+def rotx(a):
+        ca = np.cos(a)
+        sa = np.sin(a)
+
+        R_x = \
+            np.array([  [   1,  0,  0   ],
+                        [   0,  ca, -sa ],
+                        [   0,  sa, ca  ],
+                        ])
+        return R_x
+
+def rotz(a):
+    ch = np.cos(a)
+    sh = np.sin(a)
+    Rz = np.array([
+        [   ch,     -sh,    0],
+        [   sh,     ch,     0],
+        [   0,      0,      1]])
+    return Rz
+
+
+def get_rot(yaw,pitch,roll):
+    return rotz(np.radians(yaw)) @ roty(np.radians(pitch)) @ rotx(np.radians(roll))
+
+BL=0.122
+W,H=config.cam_res_rgbx,config.cam_res_rgby
+ypr=(0,90,0)
+f=W/2
+sz=(W,H)
+M = np.array([\
+        [   f, 0,  sz[0]/2   ],
+        [   0,  f, sz[1]/2   ],
+        [   0,  0,  1,  ]])
+#opencv to water
+RO=get_rot(-90,0,-90)
+class Tracer(object):
+    def __init__(self, M):
+        self.current_loc=np.array([0,0.])
+        self.last_rel_loc=np.array([0,0.])
+        self.M=M
+        self.ref_pix=None
+    def feed(self,zrange,new_ref,ypr,x,y):
+        if new_ref or self.ref_pix is None:
+            self.ref_ypr=ypr
+            self.current_loc+=self.last_rel_loc
+            self.ref_pix=np.array([[x,y,1.0]]).T
+        MI=np.linalg.inv(self.M)
+        loc1=get_rot(*self.ref_ypr).T @ RO @ MI @ self.ref_pix * zrange
+        pix2=np.array([[x,y,1.0]]).T
+        loc2=get_rot(*ypr).T @ RO @ MI @ pix2 * zrange
+        #print(loc2)
+        #T=np.linalg.inv(M) @ pix2 * zrange - get_rot(*ypr)@loc1
+        #DC=(-R@T).flatten()
+        DC=(loc2-loc1).flatten()
+        self.last_rel_loc=DC[:2]
+        return self.current_loc+DC[:2]
+
+
+
+################### end move to utils #########################
+
+
 
 class CycArr():
     def __init__(self,size=20000):
@@ -66,12 +141,15 @@ gdata=Data()
 #xf,yf,zf=ab_filt(),ab_filt(),ab_filt()
 
 ch,sh=0,0
+
+tracer=Tracer(M)
+
 fd = open(r'trace_data.pkl','wb')
+tin_data={}
 def update_graph(axes):
     global hdl_pos,hdl_arrow,ch,sh
     tic=time.time()
     new_data=False
-    tin_data={}
     while 1:
         socks=zmq.select(subs_socks,[],[],0.001)[0]
         if time.time()-tic>=0.09:
@@ -87,27 +165,41 @@ def update_graph(axes):
                 data=pickle.loads(ret[1])
                 if topic==zmq_topics.topic_tracker:
                     #new_data=True
+                    new_ref=False
                     keys=['valid','pt_l','pt_r','range','ref_cnt'] 
                     #print([(i,data[i]) for i in keys])
+                    new_ref = data['ref_cnt']!=tin_data.get('ref_cnt',-1)
                     for k in keys:
                         tin_data[k]=data[k]
                     pickle.dump(tin_data,fd)
-                    print(tin_data) 
+                    #print(tin_data) 
+                    new_data=True
+                    ypr=(tin_data['yaw'],tin_data['pitch'],tin_data['roll'])
+                    xy=tin_data['pt_l']
+                    ret=tracer.feed(tin_data['sonar'][0],new_ref,ypr,xy[0],xy[1])
+                    ret=(ret[1],-ret[0])
+                    gdata.pos_hist.add(ret)
+                    gdata.trace_hist.add(ret)
+                    gdata.curr_pos=ret
+                    gdata.heading_rot=tin_data['yaw']
+                    print('---',ret)
+
                 if topic==zmq_topics.topic_imu:
                     for k in ['yaw','pitch','roll']:
                         tin_data[k]=data[k]
                 if topic==zmq_topics.topic_sonar:
-                    tin_data['sonar']=data
-                    #new_data=True
+                    tin_data['sonar']=(data[0]/100.0,data[1]/100.0)
+                    gdata.range_arr.add(tin_data['sonar'][0])
                     #toprint=['valid','pt_l','pt_r','range']
                     #print('--imu--',data)
 
     if not pause_satus and new_data:
         xs = np.arange(len(gdata.trace_hist))
+        pos_arr = gdata.pos_hist()
         hdl_pos[0].set_ydata(pos_arr[:,1])
         hdl_pos[0].set_xdata(pos_arr[:,0])
         #hdl_last_pos
-        for i in [0,1,2]:
+        for i in [0,1]:
             hdl_trace[i][0].set_xdata(xs)
             hdl_trace[i][0].set_ydata(gdata.trace_hist()[:,i])
         ax2.set_xlim(len(gdata.trace_hist)-100,len(gdata.trace_hist))
