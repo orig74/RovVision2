@@ -25,11 +25,11 @@ ser = serial.Serial(detect_usb.devmap['ESC_USB'], 115200)
 
 
 def mcmnds_to_serialbuffer(cmnds):
-    serial_buff = [0]*10
+    fmt = "<BbbbbbbbbB"
+    serial_buff = [255]*10
     for idx, cmd in enumerate(cmnds):
-        byte_val = 128 + cmd * 127
-        serial_buff[idx+1] = max(min(byte_val, 255), 1)
-    return serial_buff
+        serial_buff[idx+1] = int(cmd * 127)
+    return struct.pack(fmt, *serial_buff)
 
 
 async def send_serial_command_50hz():
@@ -42,12 +42,12 @@ async def send_serial_command_50hz():
         if rov_type == 1:
             m[0]=c[5]
             m[1]=c[4]
-            m[2]=-c[6]
-            m[3]=-c[7]
-            m[4]=-c[1]
+            m[2]=c[6]
+            m[3]=c[7]
+            m[4]=c[1]
             m[5]=-c[0]
             m[6]=-c[2]
-            m[7]=-c[3]
+            m[7]=c[3]
         elif rov_type == 2:
             m[0]=c[6]
             m[1]=c[7]
@@ -61,9 +61,11 @@ async def send_serial_command_50hz():
         m=np.clip(m,-config.thruster_limit,config.thruster_limit)
         s_buff = mcmnds_to_serialbuffer(m)
         ser.write(s_buff)
-
-
-### todo: add process to publish vector nav data???
+        ln = 'None'
+        while ser.inWaiting():
+            ln=ser.readline()
+        if ln != 'None':
+            print('>',ln)
 
 
 async def recv_and_process():

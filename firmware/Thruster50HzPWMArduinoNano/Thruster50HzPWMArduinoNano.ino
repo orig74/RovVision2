@@ -1,45 +1,62 @@
 #include <Servo.h>
 
+
+#define PWM_MIDPOINT 1495
+#define TIMEOUT 500000
+
+
+typedef struct {
+  uint8_t header;
+  int8_t motors[8];
+  uint8_t tail;  
+} message_t;
+
+
 Servo thrusters[8];
 
 void setup() {
-  thrusters[0].attach(A0);
-  thrusters[1].attach(A1);
-  thrusters[2].attach(A2);
-  thrusters[3].attach(A3);
-  thrusters[4].attach(8);
-  thrusters[5].attach(9);
-  thrusters[6].attach(10);
-  thrusters[7].attach(11);
+  thrusters[0].attach(11);
+  thrusters[1].attach(10);
+  thrusters[2].attach(9);
+  thrusters[3].attach(8);
+  thrusters[4].attach(A3);
+  thrusters[5].attach(A2);
+  thrusters[6].attach(A1);
+  thrusters[7].attach(A0);
   for (int t_ind = 0; t_ind < 8; t_ind++) {
-    thrusters[t_ind].writeMicroseconds(1500);
+    thrusters[t_ind].writeMicroseconds(PWM_MIDPOINT);
   }
+  delay(1000);
   
   Serial.begin(115200);
 }
 
 
+message_t  message_buff;
+unsigned long last_msg_us = micros();
 void loop() {
-  static char serial_buff[10];
-  static long itts_since_last = 0;
-  int sbuff_ind = 0;
-  
   if (Serial.available() >= 10) {
-    Serial.readBytes(serial_buff, 10);
-    itts_since_last = 0;
-  } else {
-    delayMicroseconds(100);
-    itts_since_last++;
+    Serial.readBytes((char *)&message_buff, sizeof(message_t));
+    
+    if (message_buff.header == 255 && message_buff.tail == 255) {
+      last_msg_us = micros();
+      for (int t_ind = 0; t_ind < 8; t_ind++) {
+        thrusters[t_ind].writeMicroseconds(PWM_MIDPOINT + 3.93*message_buff.motors[t_ind]);
+      }
+      
+    } else {
+      // Error flushing
+      Serial.println("Serial Error!");
+      while(Serial.available()) 
+        {
+          Serial.read();
+        }
+    }
   }
 
-  if (itts_since_last < 1000) {
+  if ((micros() - last_msg_us) > TIMEOUT) {
     for (int t_ind = 0; t_ind < 8; t_ind++) {
-      int thrust_vl_us = 1000 + 3.92 * serial_buff[t_ind + 1];
-      thrusters[t_ind].writeMicroseconds(thrust_vl_us);
-    }
-  } else {
-    for (int t_ind = 0; t_ind < 8; t_ind++) {
-      thrusters[t_ind].writeMicroseconds(1500);
-    }
+      thrusters[t_ind].writeMicroseconds(PWM_MIDPOINT);
+     }
   }
 }
