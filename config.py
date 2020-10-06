@@ -26,9 +26,9 @@ gst_speed_preset=1
 #tracker = 'local'
 tracker = 'rope'
 
-joy_deadband=0.05
+joy_deadband=0.00
 
-thruster_limit=0.5
+thruster_limit=0.7
 
 viewer_blacks=(50,100)
 
