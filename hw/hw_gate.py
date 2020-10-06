@@ -23,33 +23,12 @@ subs_socks.append(utils.subscribe([zmq_topics.topic_thrusters_comand],zmq_topics
 
 ser = serial.Serial(detect_usb.devmap['ESC_USB'], 115200)
 
-def motor_cmnd_to_DShot(cmnds):
-    dshot_msgs = [0]*len(cmnds)
+
+def mcmnds_to_serialbuffer(cmnds):
+    serial_buff = [0]*10
     for idx, cmd in enumerate(cmnds):
-        zero_val = 48
-        if np.sign(cmd) >= 0.001:
-            zero_val = 1048
-        cmd_dshot = int(zero_val + min(max(round(abs(cmd)*999), 0), 999)) << 1
-        csum = (cmd_dshot ^ (cmd_dshot >> 4) ^ (cmd_dshot >> 8)) & 0xf
-        dshot_msgs[idx] = cmd_dshot << 4 | csum
-
-    return dshot_msgs
-
-
-def dshotmsg_to_serialbuffer(dshot_msg_l):
-    serial_buff = [0]*17
-    serial_buff[0] = 145    #start and code nibbles
-    binary_message_list = [[0]*16 for i in range(len(dshot_msg_l))]
-    for msg_indx, msg in enumerate(dshot_msg_l):
-        for bit_indx, bit in enumerate(bin(msg)[2:][::-1]):
-            binary_message_list[msg_indx][15 - bit_indx] = int(bit)
-    frame_list = list(np.array(binary_message_list).transpose())
-    for buff_indx in range(16):
-        frame_byte = 0
-        for bit in frame_list[buff_indx]:
-            frame_byte = (frame_byte << 1) | bit
-        serial_buff[buff_indx + 1] = frame_byte
-
+        byte_val = 128 + cmd * 127
+        serial_buff[idx+1] = max(min(byte_val, 255), 1)
     return serial_buff
 
 
@@ -58,7 +37,6 @@ async def send_serial_command_50hz():
         await asyncio.sleep(1/50.0)
 
         rov_type = int(os.environ.get('ROV_TYPE','1'))
-        # Need to convert comands to list of -1 -> 1?
         m = [0]*8
         c=current_command
         if rov_type == 1:
@@ -81,10 +59,8 @@ async def send_serial_command_50hz():
             m[7]=-c[0]
 
         m=np.clip(m,-config.thruster_limit,config.thruster_limit)
-        dshot_frames = motor_cmnd_to_DShot(m)
-        s_buff_64 = dshotmsg_to_serialbuffer(dshot_frames)
-        ser.write(s_buff_64)
-        #serial.write([struct.pack('>B', byte) for byte in s_buff_64])
+        s_buff = mcmnds_to_serialbuffer(m)
+        ser.write(s_buff)
 
 
 ### todo: add process to publish vector nav data???

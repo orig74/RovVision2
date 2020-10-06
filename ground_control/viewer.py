@@ -156,7 +156,7 @@ if __name__=='__main__':
             #cv2.imshow('right',images[1])
 
         # Send frame to web server buffer
-        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 20]
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 60]
         _, jpg = cv2.imencode(".jpg", join, encode_param)
         buffer.put(jpg.data)
 
