@@ -1,7 +1,7 @@
 #include <Servo.h>
 
 
-#define PWM_MIDPOINT 1495
+#define PWM_MIDPOINT 1482
 #define TIMEOUT 500000
 
 
@@ -41,8 +41,12 @@ void loop() {
     if (message_buff.header == 255 && message_buff.tail == 255) {
       last_msg_us = micros();
       for (int t_ind = 0; t_ind < 8; t_ind++) {
-        thrusters[t_ind].writeMicroseconds(PWM_MIDPOINT + 3.93*message_buff.motors[t_ind]);
+	int microseconds = PWM_MIDPOINT + 4 * message_buff.motors[t_ind];
+        thrusters[t_ind].writeMicroseconds(microseconds);
+	Serial.print(microseconds);
+        Serial.print(" ");
       }
+      Serial.println("");
       
     } else {
       // Error flushing

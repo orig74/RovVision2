@@ -59,7 +59,7 @@ while not done:
         axes_vals = []
         for i in range(axes):
             axis = joystick.get_axis(i)
-            dead_band = 0.1
+            dead_band = 0.02
             expo  = 0.6
             if isxbox:
                 if abs(axis)<dead_band:

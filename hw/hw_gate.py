@@ -57,7 +57,7 @@ async def send_serial_command_50hz():
             m[5]=-c[3]
             m[6]=c[1]
             m[7]=-c[0]
-
+        print(["%.1f"%i for i in m])
         m=np.clip(m,-config.thruster_limit,config.thruster_limit)
         s_buff = mcmnds_to_serialbuffer(m)
         ser.write(s_buff)
