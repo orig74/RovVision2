@@ -57,7 +57,7 @@ async def recv_and_process():
                         pid_r=PID(**roll_pid)
                     else:
                         #if joy and joy['inertial'] and abs(joy['yaw'])<0.05:
-                        if joy and abs(joy['yaw'])<0.1:
+                        if joy and abs(joy['yaw'])<0.05:
                             yaw_cmd = pid_y(yaw,target_att[0],0,0)
                         else:
                             target_att[0]=yaw

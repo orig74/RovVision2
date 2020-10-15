@@ -18,6 +18,7 @@ from joy_mix import Joy_map
 
 async def recv_and_process():
     keep_running=True
+    system_state={'mode':[]}
     
     jm=Joy_map()
     
@@ -27,6 +28,10 @@ async def recv_and_process():
         for sock in socks:
             ret=sock.recv_multipart()
             topic,data=ret[0],pickle.loads(ret[1])
+            
+            if topic==zmq_topics.topic_system_state:
+                _,system_state=data
+
             if topic==zmq_topics.topic_axes:
                 #print('joy ',ret[jm.yaw])
                 jm.update_axis(data)
@@ -34,7 +39,10 @@ async def recv_and_process():
                 joy = jm.joy_mix() 
                 if joy['inertial']:
                     roll_copensate,pitch_copensate=roll,pitch
-              
+              	
+                #if 'ATT_HOLD' in system_state['mode']:
+                #    thruster_joy_cmd = mixer.mix(joy['ud'],joy['lr'],joy['fb'],0, 0, 0,pitch_copensate,roll_copensate)
+                #else:
                 thruster_joy_cmd = mixer.mix(joy['ud'],joy['lr'],joy['fb'],joy['roll'],joy['pitch'],joy['yaw'],pitch_copensate,roll_copensate)
 
                 thrusters_source.send_pyobj(['joy',time.time(),thruster_joy_cmd])
@@ -55,6 +63,7 @@ if __name__=='__main__':
     subs_socks=[]
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_axes,zmq_topics.topic_button],zmq_topics.topic_joy_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_imu],zmq_topics.topic_imu_port))
+    subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
 
     ### plugin outputs
     thrusters_source = zmq_wrapper.push_source(zmq_topics.thrusters_sink_port) 

@@ -43,10 +43,7 @@ void loop() {
       for (int t_ind = 0; t_ind < 8; t_ind++) {
 	int microseconds = PWM_MIDPOINT + 4 * message_buff.motors[t_ind];
         thrusters[t_ind].writeMicroseconds(microseconds);
-	Serial.print(microseconds);
-        Serial.print(" ");
       }
-      Serial.println("");
       
     } else {
       // Error flushing
