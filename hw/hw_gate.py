@@ -49,14 +49,14 @@ async def send_serial_command_50hz():
             m[6]=-c[2]
             m[7]=c[3]
         elif rov_type == 2:
-            m[0]=c[6]
-            m[1]=c[7]
-            m[2]=-c[5]
-            m[3]=-c[4]
-            m[4]=c[2]
-            m[5]=-c[3]
-            m[6]=c[1]
-            m[7]=-c[0]
+            m[0]=-c[6]
+            m[1]=-c[7]
+            m[2]=c[5]
+            m[3]=c[4]
+            m[4]=-c[2]
+            m[5]=c[3]
+            m[6]=-c[1]
+            m[7]=c[0]
         print(["%.1f"%i for i in m])
         m=np.clip(m,-config.thruster_limit,config.thruster_limit)
         s_buff = mcmnds_to_serialbuffer(m)
