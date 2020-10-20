@@ -59,9 +59,17 @@ while not done:
         axes_vals = []
         for i in range(axes):
             axis = joystick.get_axis(i)
+            dead_band = 0.02
+            expo  = 0.6
             if isxbox:
-                if abs(axis)<0.1:
+                if abs(axis)<dead_band:
                     axis=0.0
+                elif axis > 0:
+                    axis -= dead_band
+                elif axis < 0:
+                    axis += dead_band
+                #Calc expo
+                axis *= abs(axis) ** expo 
             axes_vals.append(axis)
         if axes==6: #add hat to axes to maintain compatibility
             axes_vals+=[float(hat[0]),float(hat[1])]

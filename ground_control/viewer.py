@@ -19,6 +19,7 @@ from gst import init_gst_reader,get_imgs,set_files_fds,get_files_fds,save_main_c
 from annotations import draw,draw_seperate,draw_mono
 import zmq_wrapper as utils
 import image_enc_dec
+import web_streamer
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--data_path", help="path for data" , default='../../data')
@@ -61,6 +62,8 @@ if __name__=='__main__':
     record_state=False
     jm=Joy_map()
     bmargx,bmargy=config.viewer_blacks
+    buffer = web_streamer.Broadcast()
+    server, server_thread = web_streamer.run_server(buffer)
 
     while 1:
         #join=np.zeros((sy,sx*2,3),'uint8')
@@ -128,7 +131,7 @@ if __name__=='__main__':
                 #join[:,0:sx,:]=images[0]
                 #join[:,sx:,:]=images[1]
                 join[bmargy//2:-bmargy//2,bmargx:sx+bmargx,:]=images[0]
-                join[bmargy//2:-bmargy//2,sx+bmargx:,:]=images[1]
+                join[bmargy//2:-bmargy//2,sx+bmargx:,:]=images[1] # + 0.5*images[0]
                 images=[None,None]
                 draw(join,message_dict,fmt_cnt_l,fmt_cnt_r)
         else:
@@ -151,9 +154,17 @@ if __name__=='__main__':
             
             #cv2.imshow('left',images[0])
             #cv2.imshow('right',images[1])
+
+        # Send frame to web server buffer
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 60]
+        _, jpg = cv2.imencode(".jpg", join, encode_param)
+        buffer.put(jpg.data)
+
         k=cv2.waitKey(10)
         if k==ord('q'):
             for p in gst_pipes:
                 p.terminate()
                 p.poll()
             break
+
+    server.shutdown()

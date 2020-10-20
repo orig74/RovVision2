@@ -2,7 +2,7 @@
 ds=0.1
 depth_pid={
         'P':2.5*ds,
-        'I':0.001*ds,
+        'I':0.002*ds,
         'D':5*ds,
         'limit':0.2,
         'step_limit':0.05,
@@ -15,10 +15,10 @@ depth_pid={
 ys=0.03
 #ys=0.00
 yaw_pid={
-        'P':1.5*ys,
-        'I':0.000*ys,
-        'D':0.3*ys,
-        'limit':0.5,
+        'P':0.08*ys,
+        'I':0*ys,
+        'D':0*ys,
+        'limit':0.2,
         'step_limit':0.05,
         'i_limit':0.1,
         'FF':0,
@@ -29,9 +29,9 @@ yaw_pid={
 #rs=0.03
 rs=0.001
 roll_pid={
-        'P':10*rs,
-        'I':0.00*rs,
-        'D':2.6*rs,
+        'P':0.5*rs,
+        'I':0*rs,
+        'D':0*rs,
         'limit':0.2,
         'step_limit':0.05,
         'i_limit':0.1,

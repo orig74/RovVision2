@@ -132,8 +132,6 @@ class StereoTrack():
         return rx+cx,ry+cy
 
 
-
-
     def __track_stereo(self,imgl,imgr):
         cx,cy = imgl.shape[1]//2,imgl.shape[0]//2
         wx,wy = self.stereo_wx,self.stereo_wy
