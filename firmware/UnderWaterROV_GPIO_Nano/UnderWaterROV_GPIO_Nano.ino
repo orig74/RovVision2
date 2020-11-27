@@ -103,9 +103,11 @@ void loop() {
           if(cnt1%2==0){
             DepthSensor.read();
             float depth_m = DepthSensor.depth();
-            byte depth_byte = (byte) min(max(round(depth_m*10), 0), 255);
-            byte messege[6] = {255, depth_byte, lowByte(adc_volt), highByte(adc_volt), lowByte(adc_amps), highByte(adc_amps};
-            Serial.write(messege, 6);)
+            depth_uint16 = (uint16_t) min(max(round(depth_m*200), 0), 65536);
+            byte depth_byte_0 = (byte) depth_uint16;
+            byte depth_byte_1 = (byte) depth_uint16 >> 8;
+            byte messege[7] = {255, depth_byte_0, depth_byte_1 lowByte(adc_volt), highByte(adc_volt), lowByte(adc_amps), highByte(adc_amps};
+            Serial.write(messege, 7);)
           }
           cnt1++;
       }

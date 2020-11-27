@@ -57,16 +57,16 @@ while True:
             ser.write(b'%c'%(data+2))  
             #ser.flush()
 
-    if ser.in_waiting >= 6:
+    if ser.in_waiting >= 7:
         if ser.read(1)[0] == 255:
-            periph_msg = ser.read(5)
+            periph_msg = ser.read(6)
             tic=time.time()
-            bar_D = float(periph_msg[0])/10
+            bar_D = float(periph_msg[0] | periph_msg[1] << 8) / 200
             pub_depth.send_multipart([zmq_topics.topic_depth,pickle.dumps({'ts':tic,'depth':bar_D})])
 
-            adc_V = round(float(periph_msg[1] | periph_msg[2] << 8), 2)
+            adc_V = round(float(periph_msg[2] | periph_msg[3] << 8), 2)
             batt_V = adc_V * ADC_VOLTAGE_MUL * BATT_VOLTAGE_MULT
-            adc_I = round(float(periph_msg[3] | periph_msg[4] << 8), 2)
+            adc_I = round(float(periph_msg[4] | periph_msg[5] << 8), 2)
        	    batt_I = (adc_I * ADC_VOLTAGE_MUL - BATT_AMP_OFFSET) * BATT_AMP_PERVOLT
             pub_volt.send_multipart([zmq_topics.topic_volt,pickle.dumps({'ts':tic,'V':batt_V,'I':batt_I})])
             print("Batt V: {}".format(batt_V))
