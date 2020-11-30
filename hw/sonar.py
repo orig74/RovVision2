@@ -16,14 +16,16 @@ if myPing.initialize() is False:
     print("Failed to initialize Ping!")
     exit(1)
 
-pub_imu = utils.publisher(zmq_topics.topic_sonar_port)
+pub_sonar = utils.publisher(zmq_topics.topic_sonar_port)
 cnt=0
 while 1:
     time.sleep(0.1)
     data = myPing.get_distance()
     if cnt%10==0:
         print('sonar ',data)
-    tosend = pickle.dumps([data['distance'],data['confidence']])
-    pub_imu.send_multipart([zmq_topics.topic_sonar,tosend])
+    tic=time.time()
+    tosend = pickle.dumps({'ts':tic, 'sonar':[data['distance'],data['confidence']]})
+    pub_sonar.send_multipart([zmq_topics.topic_sonar,tosend])
+
     cnt+=1
 #

@@ -65,7 +65,7 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
         target_depth = message_dict.get(zmq_topics.topic_depth_hold_pid,{}).get('T',0)
         draw_depth(img,0,0,message_dict[zmq_topics.topic_depth]['depth'],target_depth)
     if zmq_topics.topic_sonar in message_dict:
-        sonar_rng = message_dict[zmq_topics.topic_sonar]
+        sonar_rng = message_dict[zmq_topics.topic_sonar]['sonar']
         line=' {:>.2f},{:>.2f} SRng'.format(*sonar_rng)
         cv2.putText(img,line,(sy(450),sx(560+voff)), font, 0.5,(0,0,255),1,cv2.LINE_AA)
     if zmq_topics.topic_record_state in message_dict:
