@@ -74,6 +74,9 @@ class Joy_map:
     def att_hold_event(self):
         return self.__test_togle(self._yelow) and self.__no_shift()
 
+    def sonar_hold_event(self):
+        return self.__test_togle(self._blue) and self.__no_shift()
+
     def depth_hold_event(self):
         return self.__test_togle(self._red) and self.__no_shift()
 

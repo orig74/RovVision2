@@ -44,6 +44,9 @@ topic_viewer_data=b'topic_viewer_data'
 
 topic_depth_hold_pid=b'topic_depth_control'
 topic_depth_hold_port=9996
+topic_sonar_hold_pid=b'topic_sonar_control'
+topic_sonar_hold_port=9997
+
 topic_att_hold_yaw_pid=b'topic_att_yaw_control'
 topic_att_hold_pitch_pid=b'topic_att_pitch_control'
 topic_att_hold_roll_pid=b'topic_att_roll_control'

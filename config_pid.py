@@ -12,8 +12,20 @@ depth_pid={
         'initial_i':0,
         'func_in_err':None}
 
+ss=0.1
+sonar_pid={
+        'P':2.5*ss,
+        'I':0.002*ss,
+        'D':5*ss,
+        'limit':0.2,
+        'step_limit':0.05,
+        'i_limit':0.01,
+        'FF':0,
+        'angle_deg_type':False,
+        'initial_i':0,
+        'func_in_err':None}
+
 ys=0.03
-#ys=0.00
 yaw_pid={
         'P':0.08*ys,
         'I':0*ys,
@@ -26,7 +38,6 @@ yaw_pid={
         'initial_i':0,
         'func_in_err':None}
 
-#rs=0.03
 rs=0.001
 roll_pid={
         'P':0.5*rs,
@@ -41,7 +52,6 @@ roll_pid={
         'func_in_err':None}
 
 ps=0.003
-#ps=0.000
 pitch_pid={
         'P':1*ps,
         'I':0.1*ps,

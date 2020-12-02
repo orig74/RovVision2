@@ -53,6 +53,12 @@ async def recv_and_process():
                     jm.update_buttons(data)
                     if jm.depth_hold_event():
                         togle_mode('DEPTH_HOLD')
+                        if 'SONAR_HOLD' in system_state['mode']:
+                            system_state['mode'].remove('SONAR_HOLD')
+                    if jm.sonar_hold_event():
+                        togle_mode('SONAR_HOLD')
+                        if 'DEPTH_HOLD' in system_state['mode']:
+                            system_state['mode'].remove('DEPTH_HOLD')
                     if jm.att_hold_event():
                         togle_mode('ATT_HOLD')
                     if jm.Rx_hold_event():
