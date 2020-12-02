@@ -188,7 +188,7 @@ def update_graph(axes):
                     for k in ['yaw','pitch','roll']:
                         tin_data[k]=data[k]
                 if topic==zmq_topics.topic_sonar:
-                    tin_data['sonar']=(data[0]/100.0,data[1]/100.0)
+                    tin_data['sonar']=(data['sonar'][0]/100.0,data['sonar'][1]/100.0)
                     gdata.range_arr.add(tin_data['sonar'][0])
                     #toprint=['valid','pt_l','pt_r','range']
                     #print('--imu--',data)
@@ -231,11 +231,11 @@ def pause(evt):
     print('pause=',pause_satus)
 
 def center(evt):
-    gdata.map_center = gdata.curr_pos.copy()
+    gdata.map_center = gdata.curr_pos
 
 from matplotlib.widgets import Button
 
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(16, 8))
 plt.subplots_adjust(bottom=0.2)
 axcenter = plt.axes([0.59, 0.05, 0.1, 0.075])
 axpause = plt.axes([0.7, 0.05, 0.1, 0.075])

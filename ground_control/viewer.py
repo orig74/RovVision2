@@ -162,9 +162,9 @@ if __name__=='__main__':
 
         k=cv2.waitKey(10)
         if k==ord('q'):
-            for p in gst_pipes:
-                p.terminate()
-                p.poll()
+            #for p in gst_pipes:
+            #    p.terminate()
+            #    p.poll()
             break
 
     server.shutdown()
