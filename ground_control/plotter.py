@@ -71,6 +71,7 @@ def update_graph(axes):
             for sock in socks:
                 ret = sock.recv_multipart()
                 topic , data = ret
+                print(topic)
                 if it>0:
                     print(r'---',topic)
                     it-=1
@@ -163,7 +164,7 @@ def update_pid(ax_hdls,topic):
 
 from matplotlib.widgets import Button
 
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(16, 8))
 plt.subplots_adjust(bottom=0.2)
 axcenter = plt.axes([0.59, 0.05, 0.1, 0.075])
 axpause = plt.axes([0.7, 0.05, 0.1, 0.075])

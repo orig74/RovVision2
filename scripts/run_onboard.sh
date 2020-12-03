@@ -23,8 +23,9 @@ run 4 plugins att_hold_plugin.py
 run 5 plugins tracker_plugin.py
 tmux new-window
 new_6_win
-run 0  plugins pos_hold_plugin.py
-run 1  onboard hw_stats.py
+run 0 plugins pos_hold_plugin.py
+run 1 plugins sonar_hold_plugin.py
+run 2 onboard hw_stats.py
 
 #only hw from here
 if [ ! -v SIM ]
@@ -38,6 +39,5 @@ run 1 hw flircam_proxy.py
 run 2 hw periph_gate.py
 run 3 hw vnav.py
 run 4 hw sonar.py
-run 5 plugins sonar_hold_plugin.py
 tmux att
 fi

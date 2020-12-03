@@ -63,8 +63,8 @@ def mix(up_down,left_right,fwd_back,roll,pitch,yaw,pitch_copensate=0.0,roll_cope
 
     thrusters[4:]+=fwd_back*np.sqrt(2)
 
-    thrusters[[0,3]]-=roll
-    thrusters[[1,2]]+=roll
+    thrusters[[0,3]]-=0.5*roll	# Reduced since roll axis least inertia
+    thrusters[[1,2]]+=0.5*roll
 
     thrusters[[0,1]]-=pitch
     thrusters[[2,3]]+=pitch

@@ -14,10 +14,10 @@ depth_pid={
 
 ss=0.1
 sonar_pid={
-        'P':2.5*ss,
-        'I':0.002*ss,
-        'D':5*ss,
-        'limit':0.2,
+        'P':0.5*ss,
+        'I':0.0*ss,
+        'D':0.0*ss,
+        'limit':0.1,
         'step_limit':0.05,
         'i_limit':0.01,
         'FF':0,
