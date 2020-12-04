@@ -32,6 +32,9 @@ topic_sonar_port = 9301
 topic_depth = b'topic_depth'
 topic_depth_port = 9302
 
+topic_gps=b'topic_gps'
+topic_gps_port=9304
+
 #messages:
 #stop/start recording
 
@@ -65,6 +68,3 @@ topic_volt_port=10102
 
 topic_hw_stats=b'topic_hw_stats'
 topic_hw_stats_port=10103
-
-topic_gps=b'topic_gps'
-topic_gps_port=10104
