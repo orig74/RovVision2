@@ -15,6 +15,9 @@ typedef struct {
 Servo thrusters[8];
 
 void setup() {
+  for (int t_ind = 0; t_ind < 8; t_ind++) {
+    thrusters[t_ind].writeMicroseconds(PWM_MIDPOINT);
+  }
   thrusters[0].attach(11);
   thrusters[1].attach(10);
   thrusters[2].attach(9);
@@ -23,9 +26,6 @@ void setup() {
   thrusters[5].attach(A2);
   thrusters[6].attach(A1);
   thrusters[7].attach(A0);
-  for (int t_ind = 0; t_ind < 8; t_ind++) {
-    thrusters[t_ind].writeMicroseconds(PWM_MIDPOINT);
-  }
   delay(1000);
   
   Serial.begin(115200);

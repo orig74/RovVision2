@@ -29,14 +29,15 @@ async def recv_and_process():
             ret=sock.recv_multipart()
             if ret[0]==zmq_topics.topic_stereo_camera:
                 frame_cnt,shape=pickle.loads(ret[1])
-                imgl=np.frombuffer(ret[2],'uint8').reshape(shape).copy()
-                image_enc_dec.encode(imgl,frame_cnt)
-                togst = [imgl]
-                if config.camera_setup == 'stereo':
-                    imgr=np.frombuffer(ret[3],'uint8').reshape(shape).copy()
-                    image_enc_dec.encode(imgr,frame_cnt)
-                    togst.append(imgr)
-                gst.send_gst(togst)
+                if frame_cnt%config.send_modulo==0:
+                    imgl=np.frombuffer(ret[2],'uint8').reshape(shape).copy()
+                    image_enc_dec.encode(imgl,frame_cnt)
+                    togst = [imgl]
+                    if config.camera_setup == 'stereo':
+                        imgr=np.frombuffer(ret[3],'uint8').reshape(shape).copy()
+                        image_enc_dec.encode(imgr,frame_cnt)
+                        togst.append(imgr)
+                    gst.send_gst(togst)
 
         await asyncio.sleep(0.001)
  

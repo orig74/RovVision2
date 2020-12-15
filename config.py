@@ -15,6 +15,7 @@ if rov_type==3:
 
 cam_res_rgbx,cam_res_rgby=cam_resx//2,cam_resy//2
 fps=10
+send_modulo=1 # Sends frames through gstreamer every x frames at above fps
 save_modulo=5 # saves img every x frames at above fps
 
 #gstreamer

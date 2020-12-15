@@ -14,7 +14,7 @@ import config
 pub_depth = zmq_wrapper.publisher(zmq_topics.topic_depth_port) 
 pub_volt = zmq_wrapper.publisher(zmq_topics.topic_volt_port)
 ser = serial.Serial(detect_usb.devmap['PERI_USB'], 115200)
-
+time.sleep(2)
 
 BATT_AMP_OFFSET = 0.330
 BATT_AMP_PERVOLT = 37.8788
@@ -28,8 +28,8 @@ subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_lights],zmq_topics.top
 
 #start triggering at config fps
 ser.write(b'\x01')
-ser.write(bytes([config.fps]))
-ser.flush()
+ser.write(b'%c'%(config.fps+10))
+#ser.flush()
 print('trigger sent')
 
 while True:
@@ -39,7 +39,7 @@ while True:
         topic,data=ret[0],pickle.loads(ret[1])
         if topic==zmq_topics.topic_lights:
             print('got lights command',data)
-            ser.write(b'%c'%(data+2))  
+            ser.write(b'%c'%(data+2))
             #ser.flush()
 
     if ser.in_waiting >= 9:

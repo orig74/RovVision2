@@ -48,13 +48,18 @@ void loop() {
   static byte cur_state;
   static int adc_volt;
   static int adc_amps;
-  unsigned long trigger_event_us = (unsigned long) (500000 / TRIG_FPS_DEFAULT)
+  static unsigned long trigger_event_us;
   byte bt;
 
+  if (trigger_event_us == 0) trigger_event_us = (unsigned long) (500000 / TRIG_FPS_DEFAULT);
 
   // SERIAL RX
   while (Serial.available() > 0) {
       bt = Serial.read();
+
+      // Update trigger fps
+      if (bt > 10 && bt < 64) trigger_event_us = 500000 / (unsigned long) (bt - 10);
+
       switch(bt) {
           case 7:
               light_power = 1;
@@ -81,8 +86,6 @@ void loop() {
               start_trig = false;
               break;
           default:
-              // Update trigger fps
-              if (bt >= 10 and bt < 64) trigger_event_us =  500000 / (unsigned long) (bt - 10);
               break;
       }
   }
