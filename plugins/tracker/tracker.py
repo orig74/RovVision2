@@ -46,7 +46,7 @@ class StereoTrack():
         if self.corr_scale_map is None or not corr.shape == self.corr_scale_map.shape:
             self.corr_scale_map=np.zeros(corr.shape)
             crx=corr.shape[0]
-            diag=np.array([[i/crx if i<crx/2 else (crx-i)/crx for i in range(crx)]]) +0.5
+            diag=np.array([[i/crx if i<crx/2 else (crx-i)/crx for i in range(crx)]]) + 0.5
             diag=diag*0.2+0.8
             self.corr_scale_map[:,:]=diag
             self.corr_scale_map[:,:]*=diag.T
@@ -102,7 +102,7 @@ class StereoTrack():
         u2,d2=cy-wy//2-sy+self.ofy,cy+wy//2+sy+self.ofy
         search=imgl[u2:d2,l2:r2]
 
-        if l2<0 or u2<0 or r2>imgl.shape[1] or d2>imgl.shape[1]:
+        if l2<200 or u2<0 or r2>imgl.shape[1] or d2>imgl.shape[0]:
             print('track break too close to edge')
             self.__init_left_corr(imgl)
             return cx+self.ofx,cy
@@ -142,7 +142,6 @@ class StereoTrack():
         u1,d1=cy_off-wy//2,cy_off+wy//2
         patern=imgl[u1:d1,l1:r1]
         corr_pat=patern.copy()
-
 
         l2,r2=cx_off-wx//2-sxl,cx_off+wx//2+sxr
         l2=np.clip(l2,0,imgl.shape[1]-1)
@@ -213,7 +212,7 @@ class StereoTrack():
         wx,wy = self.wx,self.wy
         sx,sy = 30,30
 
-        if abs(pt_l[1]-pt_r[1])>=5: #not supposed to be a diffrence in hight in stereo
+        if abs(pt_l[1]-pt_r[1])>=15: #not supposed to be a diffrence in height in stereo
             print('track stereo fail ',pt_l[1]-pt_r[1])
             return False
 
@@ -357,10 +356,16 @@ def draw_track_rects(ret,imgl,imgr):
 if __name__=="__main__":
     sys.path.append('../../')
     import gst
+    from matplotlib import pyplot as plt
+
+    fig = plt.figure()
+    axes = fig.add_subplot(111)
+    tracker_plt, = axes.plot([], [], 'bo')
     dd=StereoTrack()
-    fr=gst.gst_file_reader('../../../data/190726-063112/',False)
+    fr=gst.gst_file_reader('/home/cosc/research/CVlab/bluerov_data/201013-135610', False)  #'../../../data/190726-063112/'
     #fr=gst.gst_file_reader('../../../data/190726-140343/',False)
     keep_run=True
+    x, y = [0], [0]
     for i,data in enumerate(fr):
         #print(i)
         if not keep_run:
@@ -369,13 +374,31 @@ if __name__=="__main__":
         if cnt>0:
             ret=dd(*images)
             print(ret)
+            if ret['valid']:
+                try:
+                    #x.append(x[-1] + ret['dx'])
+                    #y.append(y[-1] + ret['dy'])
+                    pxy = ret['pt_l']
+                    x.append(pxy[0])
+                    y.append(pxy[1])
+
+                    tracker_plt.set_data(x, y)
+                    axes.relim()
+                    axes.autoscale_view(True, True, True)
+                    fig.canvas.draw()
+                    img = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+                    img = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+                    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+                    cv2.imshow("Tracker Loc", img)
+                except:
+                    print("Invalid Ret")
+
             iml,imr=images
             iml=iml.copy()
             imr=imr.copy()
-            print(cnt,iml.shape) 
+            #print(cnt,iml.shape)
             draw_track_rects(ret,iml,imr)
-            cv2.imshow('left',iml)
-            cv2.imshow('rigth',imr)
+            cv2.imshow('Stereo pair',np.hstack([iml, imr]))
             
             while 1:
                 k=cv2.waitKey(0)

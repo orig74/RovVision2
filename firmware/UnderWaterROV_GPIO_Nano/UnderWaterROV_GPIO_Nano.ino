@@ -9,9 +9,9 @@
 #define VOLTAGE_ADC_PIN A0
 
 //Camera trigger stuff
-#define TRIG_FPS 10
-#define TRIGGER_RATE_MICROS (1000000/TRIG_FPS)
-#define TRIGGER_RATE_MICROS_HALF (TRIGGER_RATE_MICROS/2)
+#define TRIG_FPS_DEFAULT 10
+#define SENSOR_UPDATE_FPS 5
+#define SENSOR_EVENT_MICROS (1000000/SENSOR_UPDATE_FPS)
 
 #define SERIAL_BAUD_RATE 115200
 #define SERIAL_TX_DELAY 500000
@@ -41,20 +41,15 @@ void setup() {
   DepthSensor.setFluidDensity(1029); // kg/m^3 (997 for freshwater, 1029 for seawater)
 }
 
-unsigned int cnt1=0;
-unsigned int cnt2=0;
-
 void loop() {
   static boolean rec, start_trig, trigger_state;
-  static float light_power;
-  static unsigned long prev_trigger_micros;
-  static unsigned long prev_serial_tx_micros;
+  static float light_power, prev_light_power;
+  static unsigned long prev_trig_event_us, prev_sensor_event_us;
   static byte cur_state;
   static int adc_volt;
-  static int adc_amps; 
-
+  static int adc_amps;
+  unsigned long trigger_event_us = (unsigned long) (500000 / TRIG_FPS_DEFAULT)
   byte bt;
-  unsigned long time_us = micros();
 
 
   // SERIAL RX
@@ -86,49 +81,51 @@ void loop() {
               start_trig = false;
               break;
           default:
+              // Update trigger fps
+              if (bt >= 10 and bt < 64) trigger_event_us =  500000 / (unsigned long) (bt - 10);
               break;
       }
   }
 
+  // Update light PWM
+  if (light_power != prev_light_power) {
+    Lights.writeMicroseconds(1100 + (int) round(800*light_power));
+    prev_light_power = light_power;
+  }
+
   // Task to trigger cameras
-  if ((micros() - prev_trigger_micros) > TRIGGER_RATE_MICROS_HALF) {
-      prev_trigger_micros += TRIGGER_RATE_MICROS_HALF;
+  if ((micros() - prev_trig_event_us) >= trigger_event_us) {
+      prev_trig_event_us += trigger_event_us;
  
       if (!trigger_state && true) { //start_trig
           // trigger low and currently triggering
           digitalWrite(TRIGER_PIN, HIGH);
           digitalWrite(INDICATOR_LED, HIGH);
           trigger_state = true;
-
-          if(cnt1%2==0){
-            DepthSensor.read();
-            float depth_m = DepthSensor.depth();
-            float temp_c = DepthSensor.temperature();
-            uint16_t depth_u16 = (uint16_t) min(max(round(depth_m*200), 0), 65536);
-            uint16_t temp_u16 = (uint16_t) min(max(round(temp_c*200), 0), 65536);
-            byte messege[9] = {255, lowByte(depth_u16), highByte(depth_u16), 
-                                    lowByte(temp_u16), highByte(temp_u16), 
-                                    lowByte(adc_volt), highByte(adc_volt), 
-                                    lowByte(adc_amps), highByte(adc_amps)};
-            Serial.write(messege, 9);
-          }
-          cnt1++;
       }
       else {
-          // trigger high (always bring lines low even if trigger has been turned off)
-          if (cnt2%10==0)
-            adc_volt = analogRead(VOLTAGE_ADC_PIN);
-            adc_amps = analogRead(CURRENT_ADC_PIN);
           digitalWrite(TRIGER_PIN, LOW);
           digitalWrite(INDICATOR_LED, LOW);
-          Lights.writeMicroseconds(1100 + (int) round(800*light_power));
 
           trigger_state = false;
-          cnt2++;
       }
-
-
   }
 
+  // Sensor read task
+  if((micros() - prev_sensor_event_us) >= SENSOR_EVENT_MICROS) {
+    prev_sensor_event_us += SENSOR_EVENT_MICROS;
 
+    DepthSensor.read();
+    float depth_m = DepthSensor.depth();
+    float temp_c = DepthSensor.temperature();
+    uint16_t depth_u16 = (uint16_t) min(max(round(depth_m*200), 0), 65536);
+    uint16_t temp_u16 = (uint16_t) min(max(round(temp_c*200), 0), 65536);
+    adc_volt = analogRead(VOLTAGE_ADC_PIN);
+    adc_amps = analogRead(CURRENT_ADC_PIN);
+    byte message[9] = {255, lowByte(depth_u16), highByte(depth_u16),
+                            lowByte(temp_u16), highByte(temp_u16),
+                            lowByte(adc_volt), highByte(adc_volt),
+                            lowByte(adc_amps), highByte(adc_amps)};
+    Serial.write(message, 9);
+  }
 }

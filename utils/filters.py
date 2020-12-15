@@ -11,10 +11,10 @@ class ab_filt():
     def __call__(self,xm,dt=1.0):
         self.x += self.v*dt
 
-        rk = xm - self.x;
+        rk = xm - self.x
 
-        self.x += self.alpha * rk;
-        self.v += ( self.beta * rk ) / dt;
+        self.x += self.alpha * rk
+        self.v += ( self.beta * rk ) / dt
         return (self.x,self.v)
 
 

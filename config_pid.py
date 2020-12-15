@@ -14,10 +14,10 @@ depth_pid={
 
 ss=0.1
 sonar_pid={
-        'P':0.5*ss,
+        'P':2.5*ss,
         'I':0.0*ss,
         'D':0.0*ss,
-        'limit':0.1,
+        'limit':0.2,
         'step_limit':0.05,
         'i_limit':0.01,
         'FF':0,
@@ -27,7 +27,7 @@ sonar_pid={
 
 ys=0.03
 yaw_pid={
-        'P':0.08*ys,
+        'P':0.16*ys,
         'I':0*ys,
         'D':0*ys,
         'limit':0.2,

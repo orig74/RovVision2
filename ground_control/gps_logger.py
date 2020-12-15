@@ -17,6 +17,7 @@ pub_sock = zmq_wrapper.publisher(zmq_topics.topic_gps_port)
 subs_socks=[]
 subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_depth],zmq_topics.topic_depth_port))
 
+
 def get_data(url):
     try:
         r = requests.get(url)

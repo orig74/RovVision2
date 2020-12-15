@@ -130,7 +130,7 @@ class ImageEventHandler(PySpin.ImageEvent):
                 self.theimage = (time.time(), self._image_count, bayer.shrink_bayer_to_rgb(im_data))
                 #self.theimage = (time.time(), self._image_count, im_data)
 
-                if record_state and self._image_count%5==0: #save every 0.5 sec
+                if record_state and self._image_count%config.save_modulo==0:
                     raw_data=image.GetData().reshape((height,width))
                     imgname='../../data/'+record_state+'/{}{:08d}.{}'\
                     .format(self.name[0],self._image_count,'pgm')

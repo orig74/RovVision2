@@ -10,6 +10,7 @@ sys.path.append('../')
 import detect_usb
 import zmq_wrapper
 import zmq_topics
+import config
 pub_depth = zmq_wrapper.publisher(zmq_topics.topic_depth_port) 
 pub_volt = zmq_wrapper.publisher(zmq_topics.topic_volt_port)
 ser = serial.Serial(detect_usb.devmap['PERI_USB'], 115200)
@@ -25,8 +26,9 @@ print('connected to ', detect_usb.devmap['PERI_USB'])
 subs_socks=[]
 subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_lights],zmq_topics.topic_controller_port))
 
-#start triggering
+#start triggering at config fps
 ser.write(b'\x01')
+ser.write(bytes([config.fps]))
 ser.flush()
 print('trigger sent')
 
