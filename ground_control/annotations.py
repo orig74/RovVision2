@@ -44,16 +44,16 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
         frame_start_number=fmt_cnt_l
     if fmt_cnt_l is not None:
         line=' {:>8}'.format(fmt_cnt_l)
-        if fmt_cnt_l%10==0 and fmt_cnt_l!=fps_last_num:
-            fps=10.0/(time.time()-fps_time)
+        if fmt_cnt_l%100==0 and fmt_cnt_l!=fps_last_num:
+            fps=100/(time.time()-fps_time)
             #print('---',time.time()-fps_time)
             fps_time=time.time()
             fps_last_num=fmt_cnt_l
         if fps is not None:
-            line+=' {:>.2f}fps'.format(fps)
-            line+=' {:>05.2f}delay'.format(\
-                (fmt_cnt_l-frame_start_number)-\
-                (config.fps/config.send_modulo)*(time.time()-frame_start_time))
+            line+=' {:>.2f}Cfps'.format(fps)
+            #line+=' {:>05.2f}delay'.format(\
+            #    (fmt_cnt_l-frame_start_number)/config.send_modulo-\
+            #    (config.fps/config.send_modulo)*(time.time()-frame_start_time))
             if fmt_cnt_l%10==0:
                 print('fpsline',line)
         cv2.putText(img,line,(sy(10),sx(560+voff)), font, 0.5,(0,0,255),1,cv2.LINE_AA)
