@@ -12,11 +12,8 @@ elif config.tracker=='local':
     from tracker import tracker
 import hw_stats_tools
 
-fps_time=time.time()
-frame_start_time=None
-frame_start_number=None
-fps_last_num=0
-fps=None
+prev_fps_time=time.time()
+prev_frame_cnt = None
 
 if config.rov_type==2:
     sy = lambda n: int(n*1280/1920)
@@ -30,7 +27,7 @@ def draw_seperate(imgl,imgr,message_dict):
         tracker.draw_track_rects(message_dict[zmq_topics.topic_tracker],imgl,imgr)
 
 def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
-    global fps_time,fps,fps_last_num,frame_start_time,frame_start_number
+    global prev_fps_time, prev_frame_cnt
     font = cv2.FONT_HERSHEY_SIMPLEX
     #print('-2-',md)
     #line1='{:08d}'.format(fmt_cnt_l)
@@ -39,23 +36,17 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
     voff=113
     #if vd.get('record_state',False):
     #    cv2.putText(img,'REC '+vd['disk_usage'],(10,200),font, 0.5,(0,0,255),1,cv2.LINE_AA)
-    if frame_start_time is None:
-        frame_start_time=time.time()
-        frame_start_number=fmt_cnt_l
+    if prev_frame_cnt is None:
+        prev_fps_time=time.time()
+        prev_frame_cnt=fmt_cnt_l
     if fmt_cnt_l is not None:
         line=' {:>8}'.format(fmt_cnt_l)
-        if fmt_cnt_l%100==0 and fmt_cnt_l!=fps_last_num:
-            fps=100/(time.time()-fps_time)
-            #print('---',time.time()-fps_time)
-            fps_time=time.time()
-            fps_last_num=fmt_cnt_l
-        if fps is not None:
-            line+=' {:>.2f}Cfps'.format(fps)
-            #line+=' {:>05.2f}delay'.format(\
-            #    (fmt_cnt_l-frame_start_number)/config.send_modulo-\
-            #    (config.fps/config.send_modulo)*(time.time()-frame_start_time))
-            if fmt_cnt_l%10==0:
-                print('fpsline',line)
+        cfps = (fmt_cnt_l - prev_frame_cnt) / (time.time() - prev_fps_time)
+        rfps = (fmt_cnt_l - prev_frame_cnt) % config.save_modulo / (time.time() - prev_fps_time)
+        prev_frame_cnt = fmt_cnt_l
+        prev_fps_time = time.time()
+        line+=' {:>.2f}Cfps, {:>.2f}Rfps'.format(cfps, rfps)
+        print('fpsline',line)
         cv2.putText(img,line,(sy(10),sx(560+voff)), font, 0.5,(0,0,255),1,cv2.LINE_AA)
     if zmq_topics.topic_imu in message_dict:
         m=message_dict[zmq_topics.topic_imu]
@@ -98,7 +89,7 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
         cv2.putText(img,line,(sy(670+500),sx(580+voff)), font, 0.5,(0,0,255),1,cv2.LINE_AA)
 
 def draw_mono(img,message_dict,fmt_cnt_l):
-    global fps_time,fps,fps_last_num,frame_start_time,frame_start_number
+    global prev_fps_time, prev_frame_cnt
     font = cv2.FONT_HERSHEY_SIMPLEX
     #print('-2-',md)
     #line1='{:08d}'.format(fmt_cnt_l)
@@ -107,24 +98,18 @@ def draw_mono(img,message_dict,fmt_cnt_l):
     voff=0#113
     #if vd.get('record_state',False):
     #    cv2.putText(img,'REC '+vd['disk_usage'],(10,200),font, 0.5,(0,0,255),1,cv2.LINE_AA)
-    if frame_start_time is None:
-        frame_start_time=time.time()
-        frame_start_number=fmt_cnt_l
+    if prev_frame_cnt is None:
+        prev_fps_time = time.time()
+        prev_frame_cnt = fmt_cnt_l
     if fmt_cnt_l is not None:
-        line=' {:>8}'.format(fmt_cnt_l)
-        if fmt_cnt_l%100==0 and fmt_cnt_l!=fps_last_num:
-            fps=100.0/(time.time()-fps_time)
-            #print('---',time.time()-fps_time)
-            fps_time=time.time()
-            fps_last_num=fmt_cnt_l
-        if fps is not None:
-            line+=' {:>.2f}fps'.format(fps)
-            line+=' {:>05.2f}delay'.format(\
-                (fmt_cnt_l-frame_start_number)-\
-                config.fps*(time.time()-frame_start_time))
-            if fmt_cnt_l%10==0:
-                print('fpsline',line)
-        cv2.putText(img,line,(sy(10),sx(560+voff)), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+        line = ' {:>8}'.format(fmt_cnt_l)
+        cfps = (fmt_cnt_l - prev_frame_cnt) / (time.time() - prev_fps_time)
+        rfps = (fmt_cnt_l - prev_frame_cnt) % config.save_modulo / (time.time() - prev_fps_time)
+        prev_frame_cnt = fmt_cnt_l
+        prev_fps_time = time.time()
+        line += ' {:>.2f}Cfps, {:>.2f}Rfps'.format(cfps, rfps)
+        print('fpsline', line)
+        cv2.putText(img, line, (sy(10), sx(560 + voff)), font, 0.5, (0, 0, 255), 1, cv2.LINE_AA)
     if zmq_topics.topic_imu in message_dict:
         m=message_dict[zmq_topics.topic_imu]
         yaw,pitch,roll=m['yaw'],m['pitch'],m['roll']

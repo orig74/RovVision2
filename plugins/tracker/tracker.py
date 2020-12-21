@@ -212,7 +212,7 @@ class StereoTrack():
         wx,wy = self.wx,self.wy
         sx,sy = 30,30
 
-        if abs(pt_l[1]-pt_r[1])>=15: #not supposed to be a diffrence in height in stereo
+        if abs(pt_l[1]-pt_r[1])>=10: #not supposed to be a diffrence in height in stereo
             print('track stereo fail ',pt_l[1]-pt_r[1])
             return False
 
@@ -267,7 +267,6 @@ class StereoTrack():
             #self.t_pt=None
             self.last_t_pt=None
         else:
-
             t_pt = triangulate(self.proj_cams[0],self.proj_cams[1],pt_l_x,pt_l_y,pt_r_x,pt_r_y)
 
             res['range']=t_pt[0] # range in the x direction
@@ -362,7 +361,7 @@ if __name__=="__main__":
     axes = fig.add_subplot(111)
     tracker_plt, = axes.plot([], [], 'bo')
     dd=StereoTrack()
-    fr=gst.gst_file_reader('/home/cosc/research/CVlab/bluerov_data/201013-135610', False)  #'../../../data/190726-063112/'
+    fr=gst.gst_file_reader('/home/cosc/research/CVlab/bluerov_data/181209-184247', False)  #'../../../data/190726-063112/'
     #fr=gst.gst_file_reader('../../../data/190726-140343/',False)
     keep_run=True
     x, y = [0], [0]

@@ -33,7 +33,7 @@ async def recv_and_process():
             topic,data=ret[0],pickle.loads(ret[1])
 
             if topic==zmq_topics.topic_sonar:
-                new_sonar_ts, range=data['ts'],data['sonar'][0]
+                new_sonar_ts, range=data['ts'],data['sonar'][0]/1000    # Convert to m
                 if ab is None:
                     ab=ab_filt([range,0])
                 else:

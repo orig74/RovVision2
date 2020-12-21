@@ -176,7 +176,7 @@ def update_graph(axes):
                     new_data=True
                     ypr=(tin_data['yaw'],tin_data['pitch'],tin_data['roll'])
                     xy=tin_data['pt_l']
-                    ret=tracer.feed(tin_data['sonar'][0],new_ref,ypr,xy[0],xy[1])
+                    ret=tracer.feed(tin_data['range'],new_ref,ypr,xy[0],xy[1])
                     ret=(ret[1],-ret[0])
                     gdata.pos_hist.add(ret)
                     gdata.trace_hist.add(ret)
@@ -188,8 +188,8 @@ def update_graph(axes):
                     for k in ['yaw','pitch','roll']:
                         tin_data[k]=data[k]
                 if topic==zmq_topics.topic_sonar:
-                    tin_data['sonar']=(data['sonar'][0]/100.0,data['sonar'][1]/100.0)
-                    gdata.range_arr.add(tin_data['sonar'][0])
+                    tin_data['sonar']=(data['sonar'][0]/1000.0,data['sonar'][1]/100.0)
+                    gdata.range_arr.add(tin_data['sonar'][0]/1000)
                     #toprint=['valid','pt_l','pt_r','range']
                     #print('--imu--',data)
 

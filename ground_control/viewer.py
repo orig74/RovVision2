@@ -87,7 +87,7 @@ if __name__=='__main__':
                 if topic==zmq_topics.topic_button:
                     jm.update_buttons(data)
                     if jm.record_event(): 
-                        #togel recording
+                        #toggle recording
                         if not record_state:
                             record_state=datetime.now().strftime('%y%m%d-%H%M%S') 
                         else:

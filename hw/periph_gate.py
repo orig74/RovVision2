@@ -21,10 +21,12 @@ BATT_AMP_PERVOLT = 37.8788
 ADC_VOLTAGE_MUL = 0.0046
 BATT_VOLTAGE_MUL = 11
 
+LIGHTS_MAX=5
 
 print('connected to ', detect_usb.devmap['PERI_USB'])
 subs_socks=[]
 subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_lights],zmq_topics.topic_controller_port))
+subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_record_state ],zmq_topics.topic_record_state_port))
 
 #start triggering at config fps
 ser.write(b'\x01')
@@ -32,14 +34,25 @@ ser.write(b'%c'%(config.fps+10))
 #ser.flush()
 print('trigger sent')
 
+cur_lights_cmd = 0
+
 while True:
     socks=zmq.select(subs_socks,[],[],0.005)[0]
     for sock in socks:
         ret=sock.recv_multipart()
         topic,data=ret[0],pickle.loads(ret[1])
+        if topic == zmq_topics.topic_record_state:
+            print('Record start/stop sync light blink')
+            ser.write(b'%c' % (0+2))
+            time.sleep(0.5)
+            ser.write(b'%c' % (LIGHTS_MAX+2))
+            time.sleep(0.5)
+            ser.write(b'%c' % (cur_lights_cmd+2))
+
         if topic==zmq_topics.topic_lights:
             print('got lights command',data)
             ser.write(b'%c'%(data+2))
+            cur_lights_cmd = data
             #ser.flush()
 
     if ser.in_waiting >= 9:
