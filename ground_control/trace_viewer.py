@@ -21,12 +21,15 @@ import config
 parser = argparse.ArgumentParser()
 parser.add_argument("--ip",help="main ground control ip addr", default='127.0.0.1')
 parser.add_argument("--scale",help="map size deafult 20", default=20.0, type=float)
+parser.add_argument("--camera_pitch",help="cameras added pitch", default=0.0, type=float)
 args = parser.parse_args()
 
 subs_socks=[]
 subs_socks.append(utils.subscribe([zmq_topics.topic_tracker], zmq_topics.topic_tracker_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_imu], zmq_topics.topic_imu_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_sonar], zmq_topics.topic_sonar_port))
+subs_socks.append(utils.subscribe([b''], zmq_topics.topic_local_route_port))
+
 
 ##### map radious im meters
 rad=float(args.scale)
@@ -63,7 +66,7 @@ def rotz(a):
 
 
 def get_rot(yaw,pitch,roll):
-    return rotz(np.radians(yaw)) @ roty(np.radians(pitch)) @ rotx(np.radians(roll))
+    return rotz(np.radians(yaw)) @ roty(np.radians(pitch)-np.radians(args.camera_pitch)) @ rotx(np.radians(roll))
 
 BL=0.122
 W,H=config.cam_res_rgbx,config.cam_res_rgby
