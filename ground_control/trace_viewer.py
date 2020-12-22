@@ -66,7 +66,7 @@ def rotz(a):
 
 
 def get_rot(yaw,pitch,roll):
-    return rotz(np.radians(yaw)) @ roty(np.radians(pitch)-np.radians(args.camera_pitch)) @ rotx(np.radians(roll))
+    return rotz(np.radians(yaw)) @ roty(np.radians(pitch)+np.radians(args.camera_pitch)) @ rotx(np.radians(roll))
 
 BL=0.122
 W,H=config.cam_res_rgbx,config.cam_res_rgby
