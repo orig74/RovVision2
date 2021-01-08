@@ -21,12 +21,15 @@ import config
 parser = argparse.ArgumentParser()
 parser.add_argument("--ip",help="main ground control ip addr", default='127.0.0.1')
 parser.add_argument("--scale",help="map size deafult 20", default=20.0, type=float)
+parser.add_argument("--camera_pitch",help="cameras added pitch", default=0.0, type=float)
 args = parser.parse_args()
 
 subs_socks=[]
 subs_socks.append(utils.subscribe([zmq_topics.topic_tracker], zmq_topics.topic_tracker_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_imu], zmq_topics.topic_imu_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_sonar], zmq_topics.topic_sonar_port))
+subs_socks.append(utils.subscribe([b''], zmq_topics.topic_local_route_port))
+
 
 ##### map radious im meters
 rad=float(args.scale)
@@ -63,7 +66,8 @@ def rotz(a):
 
 
 def get_rot(yaw,pitch,roll):
-    return rotz(np.radians(yaw)) @ roty(np.radians(pitch)) @ rotx(np.radians(roll))
+    #return rotz(np.radians(yaw)) @ roty(np.radians(pitch)+np.radians(args.camera_pitch)) @ rotx(np.radians(roll))
+    return roty(np.radians(yaw)) @ rotx(np.radians(pitch)+np.radians(args.camera_pitch)) @ rotz(np.radians(roll))
 
 BL=0.122
 W,H=config.cam_res_rgbx,config.cam_res_rgby
@@ -75,7 +79,7 @@ M = np.array([\
         [   0,  f, sz[1]/2   ],
         [   0,  0,  1,  ]])
 #opencv to water
-RO=get_rot(-90,0,-90)
+RO=get_rot(0,0,0)
 class Tracer(object):
     def __init__(self, M):
         self.current_loc=np.array([0,0.])
@@ -175,14 +179,16 @@ def update_graph(axes):
                     #print(tin_data) 
                     new_data=True
                     ypr=(tin_data['yaw'],tin_data['pitch'],tin_data['roll'])
+                    ch=np.cos(np.radians(tin_data['yaw']))
+                    sh=np.sin(np.radians(tin_data['yaw']))
                     xy=tin_data['pt_l']
-                    ret=tracer.feed(tin_data['range'],new_ref,ypr,xy[0],xy[1])
+                    ret=tracer.feed(tin_data['range'],new_ref,ypr,xy[0],-xy[1])
                     ret=(ret[1],-ret[0])
                     gdata.pos_hist.add(ret)
                     gdata.trace_hist.add(ret)
                     gdata.curr_pos=ret
                     gdata.heading_rot=tin_data['yaw']
-                    print('---',ret)
+                    print('---',ret,tin_data['pt_l'],tin_data['range'])
 
                 if topic==zmq_topics.topic_imu:
                     for k in ['yaw','pitch','roll']:
