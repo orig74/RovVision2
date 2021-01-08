@@ -1,7 +1,7 @@
 #include <Servo.h>
 
 
-#define PWM_MIDPOINT 1482
+#define PWM_MIDPOINT 1490
 #define TIMEOUT 500000
 
 

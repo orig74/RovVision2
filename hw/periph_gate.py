@@ -35,19 +35,21 @@ ser.write(b'%c'%(config.fps+10))
 print('trigger sent')
 
 cur_lights_cmd = 0
+prev_rec_state = 0
 
 while True:
     socks=zmq.select(subs_socks,[],[],0.005)[0]
     for sock in socks:
         ret=sock.recv_multipart()
         topic,data=ret[0],pickle.loads(ret[1])
-        if topic == zmq_topics.topic_record_state:
+        if topic == zmq_topics.topic_record_state and data != prev_rec_state:
             print('Record start/stop sync light blink')
             ser.write(b'%c' % (0+2))
             time.sleep(0.5)
             ser.write(b'%c' % (LIGHTS_MAX+2))
             time.sleep(0.5)
             ser.write(b'%c' % (cur_lights_cmd+2))
+            prev_rec_state = data
 
         if topic==zmq_topics.topic_lights:
             print('got lights command',data)
