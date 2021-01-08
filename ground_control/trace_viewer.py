@@ -66,7 +66,8 @@ def rotz(a):
 
 
 def get_rot(yaw,pitch,roll):
-    return rotz(np.radians(yaw)) @ roty(np.radians(pitch)+np.radians(args.camera_pitch)) @ rotx(np.radians(roll))
+    #return rotz(np.radians(yaw)) @ roty(np.radians(pitch)+np.radians(args.camera_pitch)) @ rotx(np.radians(roll))
+    return roty(np.radians(yaw)) @ rotx(np.radians(pitch)+np.radians(args.camera_pitch)) @ rotz(np.radians(roll))
 
 BL=0.122
 W,H=config.cam_res_rgbx,config.cam_res_rgby
@@ -78,7 +79,7 @@ M = np.array([\
         [   0,  f, sz[1]/2   ],
         [   0,  0,  1,  ]])
 #opencv to water
-RO=get_rot(-90,0,-90)
+RO=get_rot(0,0,0)
 class Tracer(object):
     def __init__(self, M):
         self.current_loc=np.array([0,0.])
@@ -178,14 +179,16 @@ def update_graph(axes):
                     #print(tin_data) 
                     new_data=True
                     ypr=(tin_data['yaw'],tin_data['pitch'],tin_data['roll'])
+                    ch=np.cos(np.radians(tin_data['yaw']))
+                    sh=np.sin(np.radians(tin_data['yaw']))
                     xy=tin_data['pt_l']
-                    ret=tracer.feed(tin_data['range'],new_ref,ypr,xy[0],xy[1])
+                    ret=tracer.feed(tin_data['range'],new_ref,ypr,xy[0],-xy[1])
                     ret=(ret[1],-ret[0])
                     gdata.pos_hist.add(ret)
                     gdata.trace_hist.add(ret)
                     gdata.curr_pos=ret
                     gdata.heading_rot=tin_data['yaw']
-                    print('---',ret)
+                    print('---',ret,tin_data['pt_l'],tin_data['range'])
 
                 if topic==zmq_topics.topic_imu:
                     for k in ['yaw','pitch','roll']:
