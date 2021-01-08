@@ -195,7 +195,7 @@ def update_graph(axes):
                         tin_data[k]=data[k]
                 if topic==zmq_topics.topic_sonar:
                     tin_data['sonar']=(data['sonar'][0]/1000.0,data['sonar'][1]/100.0)
-                    gdata.range_arr.add(tin_data['sonar'][0]/1000)
+                    gdata.range_arr.add(tin_data['sonar'][0]-0.2) #Sonar is 20cm above camera downward facing
                     #toprint=['valid','pt_l','pt_r','range']
                     #print('--imu--',data)
 
@@ -251,6 +251,7 @@ axclear = plt.axes([0.81, 0.05, 0.1, 0.075])
 
 
 ax1=plt.subplot2grid((3,2), (0,1),rowspan=3)
+ax1.grid()
 hdl_pos = ax1.plot([1,2],[1,2],'-')
 hdl_arrow = ax1.arrow(1,1,0.5,0.5,width=0.1)
 plt.xlabel('[m]')
