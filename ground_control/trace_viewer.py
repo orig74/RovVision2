@@ -67,11 +67,18 @@ def rotz(a):
 
 def get_rot(yaw,pitch,roll):
     #return rotz(np.radians(yaw)) @ roty(np.radians(pitch)+np.radians(args.camera_pitch)) @ rotx(np.radians(roll))
-    return roty(np.radians(yaw)) @ rotx(np.radians(pitch)+np.radians(args.camera_pitch)) @ rotz(np.radians(roll))
+    #return roty(np.radians(yaw)) @ rotx(np.radians(pitch)+np.radians(args.camera_pitch)) @ rotz(np.radians(roll))
+    #R=rotz(np.radians(roll)) @ rotx(np.radians(pitch)+np.radians(args.camera_pitch)) @ roty(np.radians(yaw))
+    MR=rotx(np.radians(roll))
+    MP=roty(np.radians(pitch))
+    MCP=roty(np.radians(args.camera_pitch))
+    MY=rotz(np.radians(yaw))
+    R=MCP @ MR @ MP @ MY
+    return R
 
 BL=0.122
 W,H=config.cam_res_rgbx,config.cam_res_rgby
-ypr=(0,90,0)
+ypr=(0,0,0)
 f=W/2
 sz=(W,H)
 M = np.array([\
@@ -79,7 +86,11 @@ M = np.array([\
         [   0,  f, sz[1]/2   ],
         [   0,  0,  1,  ]])
 #opencv to water
-RO=get_rot(0,0,0)
+RO = np.array([\
+        [   0, 0,  -1],
+        [   -0, -1, 0],
+        [   -1, 0, 0]])
+#RO=get_rot(90,0,90)
 class Tracer(object):
     def __init__(self, M):
         self.current_loc=np.array([0,0.])
@@ -157,7 +168,7 @@ def update_graph(axes):
     while 1:
         socks=zmq.select(subs_socks,[],[],0.001)[0]
         if time.time()-tic>=0.09:
-            print('too much time break',time.time()-tic())
+            print('too much time break',time.time()-tic)
             break
         if len(socks)==0:
             break
@@ -179,11 +190,11 @@ def update_graph(axes):
                     #print(tin_data) 
                     new_data=True
                     ypr=(tin_data['yaw'],tin_data['pitch'],tin_data['roll'])
-                    ch=np.cos(np.radians(tin_data['yaw']))
-                    sh=np.sin(np.radians(tin_data['yaw']))
+                    ch=np.cos(np.radians(tin_data['yaw']-90))
+                    sh=np.sin(np.radians(tin_data['yaw']-90))
                     xy=tin_data['pt_l']
-                    ret=tracer.feed(tin_data['range'],new_ref,ypr,xy[0],-xy[1])
-                    ret=(ret[1],-ret[0])
+                    ret=tracer.feed(-tin_data['range'],new_ref,ypr,xy[0],xy[1])
+                    ret=(ret[0],ret[1])
                     gdata.pos_hist.add(ret)
                     gdata.trace_hist.add(ret)
                     gdata.curr_pos=ret
@@ -195,7 +206,7 @@ def update_graph(axes):
                         tin_data[k]=data[k]
                 if topic==zmq_topics.topic_sonar:
                     tin_data['sonar']=(data['sonar'][0]/1000.0,data['sonar'][1]/100.0)
-                    gdata.range_arr.add(tin_data['sonar'][0]/1000)
+                    gdata.range_arr.add(tin_data['sonar'][0]-0.2) #Sonar is 20cm above camera downward facing
                     #toprint=['valid','pt_l','pt_r','range']
                     #print('--imu--',data)
 
@@ -211,7 +222,7 @@ def update_graph(axes):
         ax2.set_xlim(len(gdata.trace_hist)-100,len(gdata.trace_hist))
         ax2.set_ylim(-0.2*4,0.2*4)
         hdl_arrow.remove()
-        hdl_arrow = ax1.arrow(gdata.curr_pos[0],gdata.curr_pos[1],-ch*0.1,-sh*0.1,width=0.3)
+        hdl_arrow = ax1.arrow(gdata.curr_pos[0],gdata.curr_pos[1],ch*0.05,-sh*0.05,width=0.2,alpha=0.3)
 
         cx,cy = gdata.map_center[:2]
         ax1.set_xlim(-rad+cx,rad+cx)
@@ -224,7 +235,9 @@ def update_graph(axes):
         ax3.set_xlim(len(xs)-100,len(xs))
         ax3.set_ylim(0,2)
 
-        axes.figure.canvas.draw()
+        #import pdb;pdb.set_trace()
+        #axes.figure.canvas.draw()
+        fig.canvas.draw()
 
 def clear(evt):
     gdata.reset()
@@ -251,10 +264,12 @@ axclear = plt.axes([0.81, 0.05, 0.1, 0.075])
 
 
 ax1=plt.subplot2grid((3,2), (0,1),rowspan=3)
+ax1.grid()
 hdl_pos = ax1.plot([1,2],[1,2],'-')
 hdl_arrow = ax1.arrow(1,1,0.5,0.5,width=0.1)
 plt.xlabel('[m]')
 plt.ylabel('[m]')
+plt.axis('equal')
 
 ax2=plt.subplot2grid((3,2), (0,0))
 plt.title('trace not oriented')
