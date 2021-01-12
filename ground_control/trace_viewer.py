@@ -110,6 +110,9 @@ class Tracer(object):
         #T=np.linalg.inv(M) @ pix2 * zrange - get_rot(*ypr)@loc1
         #DC=(-R@T).flatten()
         DC=(loc2-loc1).flatten()
+        if (DC[0]**2+DC[1]**2)>1.0**2:
+            print('Error big jump!')
+            DC=np.array([0,0])
         self.last_rel_loc=DC[:2]
         return self.current_loc+DC[:2]
 
