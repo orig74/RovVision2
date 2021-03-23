@@ -29,12 +29,14 @@ vn_setoutput=b'$VNWRG,06,14*XX'
 ##### 
 vn_setfreq20hz=b'$VNWRG,07,20*XX'
 
-### clibration
+### VPE control
+# Offsets: Enable 01, HeadingMode 012, FilteringMode 01, TuningMode 01
+# Heading modes 0: Absolute mag, 1: Relative mag, 2: Indoor
 vn_heading_mode=b'$VNWRG,35, 1, 0, 1, 1*XX'
 
 vn_reset_hsi=b'$VNWRG,44,2,3,5*XX'
-vn_hsi_on=b'$VNWRG,44,1,3,5*XX'
-vn_hsi_off=b'$VNWRG,44,0,3,5*XX'
+vn_hsi_on=b'$VNWRG,44,1,3,4*XX'
+vn_hsi_off=b'$VNWRG,44,0,3,4*XX'
 vn_read_hsi=b'$VNRRG,47*XX'
 vn_read_saved_mag=b'$VNRRG,23*XX'
 vn_clear_mag=b'$VNWRG,23,1,0,0,0,1,0,0,0,1,0,0,0*76'

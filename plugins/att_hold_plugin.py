@@ -86,7 +86,7 @@ async def recv_and_process():
                 else:
                     if pid_y is not None:
                         pid_y.reset(),pid_r.reset(),pid_y.reset()
-                    target_att=[yaw,pitch,roll]
+                    target_att=[yaw,0,0]
                     thrusters_source.send_pyobj(['att',time.time(),mixer.zero_cmd()])
 
 
