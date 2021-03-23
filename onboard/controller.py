@@ -23,6 +23,7 @@ subs_socks.append(thruster_sink)
 async def recv_and_process():
     keep_running=True
     thruster_cmd=np.zeros(8)
+    timer1hz=time.time()+1/1.0
     timer10hz=time.time()+1/10.0
     timer20hz=time.time()+1/20.0
     system_state={'arm':False,'mode':[], 'lights':0} #lights 0-5
@@ -46,6 +47,7 @@ async def recv_and_process():
             if sock==thruster_sink:
                 source,_,thruster_src_cmd=sock.recv_pyobj() 
                 thrusters_dict[source]=thruster_src_cmd
+                timer1hz=time.time()+1
             else:
                 ret=sock.recv_multipart()
                 topic,data=ret[0],pickle.loads(ret[1])
@@ -89,6 +91,9 @@ async def recv_and_process():
         if tic-timer10hz>0:
             timer10hz=tic+1/10.0
             pub_sock.send_multipart([zmq_topics.topic_system_state,pickle.dumps((tic,system_state))]) 
+        if tic-timer1hz>0:
+            timer1hz=tic+1/1.0
+            system_state['arm'] = False
         if tic-timer20hz>0:
             timer20hz=tic+1/20.0
             if not system_state['arm']:
