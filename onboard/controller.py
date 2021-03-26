@@ -27,7 +27,7 @@ async def recv_and_process():
     timer20hz=time.time()+1/20.0
     system_state={'arm':False,'mode':[], 'lights':0} #lights 0-5
     thrusters_dict={}
-
+    last_axes_joy_message_time = 0 #keep alive time
     jm=Joy_map()
 
     def togle_mode(m):
@@ -73,6 +73,7 @@ async def recv_and_process():
                             system_state['mode']=[]
                            
                 if topic==zmq_topics.topic_axes:
+                    last_axes_joy_message_time=time.time()
                     jm.update_axis(data)
                     if jm.inc_lights_event():
                         system_state['lights']=min(5,system_state['lights']+1)
@@ -86,6 +87,10 @@ async def recv_and_process():
 
 
         tic=time.time()
+        
+        if tic-last_axes_joy_message_time>5.0: #when lost joy signal disarm
+            system_state['arm']=False
+
         if tic-timer10hz>0:
             timer10hz=tic+1/10.0
             pub_sock.send_multipart([zmq_topics.topic_system_state,pickle.dumps((tic,system_state))]) 
