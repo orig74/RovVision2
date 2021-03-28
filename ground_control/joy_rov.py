@@ -29,7 +29,7 @@ clock = pygame.time.Clock()
 pub_sock=utils.publisher(zmq_topics.topic_joy_port)
 done = False
 cnt=0
-axes_vals=None
+axes_vals=[]
 
 start_time=time.time()
 joy_log=open('joy.log','wb')
@@ -57,44 +57,68 @@ while not done:
                 buttons = [joystick.get_button(i) for i in range(n_buttons)]
                 pub(zmq_topics.topic_button,pickle.dumps(buttons))
 
-        if event.type == pygame.KEYDOWN:
-            axes_vals = [0 for i in range(10)]
-            buttons = [0 for i in range(10)]
-            #https://www.pygame.org/docs/ref/key.html
-            if event.mod == pygame.KMOD_NONE:
-                lshift=False 
-            else:
-                if event.mod & pygame.KMOD_LSHIFT:
-                    lshift=True
-                    print('Left shift was in a pressed state when this event ')
-            keys=pygame.key.get_pressed()
-            mag=0.3
-            if keys[pygame.K_LEFT]:
-                print('left')
-                axes_vals[3]=-mag
-            if keys[pygame.K_RIGHT]:
-                print('right')
-                axes_vals[3]=mag
-            if keys[pygame.K_UP]:
-                print('fw')
-                axes_vals[4]=mag
-            if keys[pygame.K_DOWN]:
-                print('bk')
-                axes_vals[4]=-mag
-            if keys[pygame.K_0]:
-                print('arm/disarm')
-            if keys[pygame.K_1]:
-                print('depth hold')
-            if keys[pygame.K_2]:
-                print('att hold')
-            if keys[pygame.K_a]:
-                print('float')
-            if keys[pygame.K_z]:
-                print('dive')
-            if keys[pygame.K_x]:
-                print('yaw left')
-            if keys[pygame.K_c]:
-                print('yaw right')
+            if event.type in [pygame.KEYDOWN,pygame.KEYUP]: 
+                axes_vals = [0 for i in range(8)]
+                buttons = [0 for i in range(10)]
+                #https://www.pygame.org/docs/ref/key.html
+                if event.mod == pygame.KMOD_NONE:
+                    lshift=False 
+                    lctrl=1.0
+                else:
+                    if event.mod & pygame.KMOD_LSHIFT:
+                        lshift=True
+                    if event.mod & pygame.KMOD_RCTRL:
+                        lctrl=2.0
+                    if event.mod & pygame.KMOD_RALT:
+                        buttons[5]=1
+                    if event.mod & pygame.KMOD_LALT:
+                        buttons[4]=1 
+                keys=pygame.key.get_pressed()
+                for k in range(len(keys)):
+                    if keys[k]: print('key pressed',k,pygame.key.name(k))
+                mag=0.5
+                if keys[pygame.K_LEFT]:
+                    print('left')
+                    axes_vals[3]=-mag*lctrl
+                if keys[pygame.K_RIGHT]:
+                    print('right')
+                    axes_vals[3]=mag*lctrl
+
+                if keys[pygame.K_UP]:
+                    print('fw')
+                    axes_vals[4]=-mag*lctrl
+
+                if keys[pygame.K_DOWN]:
+                    print('bk')
+                    axes_vals[4]=mag*lctrl
+
+                if keys[pygame.K_1]:
+                    print('arm,disarm')
+                    buttons[7]=1
+                if keys[pygame.K_2]:
+                    print('depth hold')
+                    buttons[1]=1
+                if keys[pygame.K_3]:
+                    print('att hold')
+                    buttons[3]=1
+                if keys[pygame.K_a]:
+                    print('float')
+                    axes_vals[1]=-mag*lctrl
+
+                if keys[pygame.K_z]:
+                    print('dive')
+                    axes_vals[1]=mag*lctrl
+
+                if keys[pygame.K_x]:
+                    print('yaw left')
+                    axes_vals[0]=-mag*lctrl
+
+                if keys[pygame.K_c]:
+                    print('yaw right')
+                    axes_vals[0]=mag*lctrl
+                print('buttons=',buttons)
+                pub(zmq_topics.topic_button,pickle.dumps(buttons))
+
 
 
         if joystick and joystick.get_numhats()>0:
@@ -141,13 +165,14 @@ while not done:
             if axes==6: #add hat to axes to maintain compatibility
                 axes_vals+=[float(hat[0]),float(hat[1])]
 
-    if cnt%10==0:
+    if cnt%100==0:
         print(cnt,'axes_vals=',','.join(['{:4.3f}'.format(i) for i in axes_vals]))
     #mixng axes
     
-    pub(zmq_topics.topic_axes,pickle.dumps(axes_vals,-1))
+    if axes_vals:
+        pub(zmq_topics.topic_axes,pickle.dumps(axes_vals,-1))
         #print('{:> 5} P {:> 5.3f} S {:> 5.3f} V {:> 5.3f}'.format(cnt,port,starboard,vertical),end='\r')
 
     #pygame.time.wait(0)
-    clock.tick(15)
+    clock.tick(30)
 pygame.quit()

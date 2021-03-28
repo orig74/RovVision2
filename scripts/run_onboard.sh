@@ -7,7 +7,8 @@ tmux kill-session -t dronelab
 tmux new-session -d -s dronelab
 PROJECT_PATH=../
 else
-PROJECT_PATH=/home/host/projects/RovVision2/
+#PROJECT_PATH=/home/host/projects/RovVision2/
+PROJECT_PATH="${PROJECT_PATH:-/home/host/projects/RovVision2/}"
 #PYTHON=/miniconda/bin/python 
 tmux new-window
 fi 

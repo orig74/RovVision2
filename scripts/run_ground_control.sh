@@ -1,6 +1,6 @@
 #!/bin/bash
 source run_common.sh
-PROJECT_PATH=/home/host/projects/RovVision2/
+PROJECT_PATH="${PROJECT_PATH:-/home/host/projects/RovVision2/}"
 #PYTHON=${1:-/miniconda/bin/python}
 
 #[ $USER == 'uav' ] && export RESIZE_VIEWER=1500
