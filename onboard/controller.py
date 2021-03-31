@@ -88,9 +88,8 @@ async def recv_and_process():
 
         tic=time.time()
         
-        if tic-last_axes_joy_message_time>5.0: #when lost joy signal disarm
+        if tic-last_axes_joy_message_time>2.0: #when lost joy signal disarm
             system_state['arm']=False
-
         if tic-timer10hz>0:
             timer10hz=tic+1/10.0
             pub_sock.send_multipart([zmq_topics.topic_system_state,pickle.dumps((tic,system_state))])

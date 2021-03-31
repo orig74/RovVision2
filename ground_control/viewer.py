@@ -133,7 +133,7 @@ if __name__=='__main__':
                 #join[:,0:sx,:]=images[0]
                 #join[:,sx:,:]=images[1]
                 join[bmargy//2:-bmargy//2,bmargx:sx+bmargx,:]=images[0]
-                join[bmargy//2:-bmargy//2,sx+bmargx:,:]=images[1] # + 0.5*images[0]
+                join[bmargy//2:-bmargy//2,sx+bmargx:,:]= images[1] #+ 0.5*images[0]
                 images=[None,None]
                 draw(join,message_dict,fmt_cnt_l,fmt_cnt_r)
         else:

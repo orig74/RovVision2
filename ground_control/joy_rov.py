@@ -26,6 +26,7 @@ cnt=0
 start_time=time.time()
 joy_log=open('joy.log','wb')
 hat=[0,0]
+axes_vals = []
 
 def pub(topic,data):
     pub_sock.send_multipart([topic,data])
@@ -56,7 +57,6 @@ while not done:
                     print('hat',hat)
                     pub(zmq_topics.topic_hat,pickle.dumps(hat))
 
-
             axes_vals = []
             for i in range(axes):
                 axis = joystick.get_axis(i)
@@ -78,9 +78,9 @@ while not done:
     if cnt%10==0:
         print(cnt,'axes_vals=',','.join(['{:4.3f}'.format(i) for i in axes_vals]))
     #mixng axes
-    
-    pub(zmq_topics.topic_axes,pickle.dumps(axes_vals,-1))
-        #print('{:> 5} P {:> 5.3f} S {:> 5.3f} V {:> 5.3f}'.format(cnt,port,starboard,vertical),end='\r')
+    if len(axes_vals):
+        pub(zmq_topics.topic_axes,pickle.dumps(axes_vals,-1))
+    #print('{:> 5} P {:> 5.3f} S {:> 5.3f} V {:> 5.3f}'.format(cnt,port,starboard,vertical),end='\r')
 
     #pygame.time.wait(0)
     clock.tick(15)
