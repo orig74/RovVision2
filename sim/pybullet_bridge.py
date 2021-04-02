@@ -46,7 +46,7 @@ def getrov():
                                         fileName="br1.obj",
                                         rgbaColor=[1, 0, 0, 1],
                                         specularColor=[0.4, .4, 0],
-                                        visualFramePosition=[0,0,1.4],
+                                        visualFramePosition=[0,0,0],
                                         visualFrameOrientation=vfo,
                                         meshScale=meshScale)#set the center of mass frame (loadURDF sets base link frame) startPos/Ornp.resetBasePositionAndOrientation(boxId, startPos, startOrientation)
     boxId=pb.createMultiBody(baseMass=1,
@@ -59,7 +59,7 @@ def getrov():
 
 def get_next_state(curr_q,curr_u,control,dt,lamb):
     forces=control
-    print('forces = ',forces)
+    #print('forces = ',forces)
     u_dot_f=lamb(curr_q,curr_u,*forces).flatten()
     next_q=curr_q+curr_u*dt
     next_u=curr_u+u_dot_f*dt
@@ -68,7 +68,9 @@ def get_next_state(curr_q,curr_u,control,dt,lamb):
 def translateM(M,dx,dy,dz):
     T = np.zeros((4,4),dtype=float)
     T[np.diag_indices(4)]=1.0
-    T[0,3]=0.1
+    T[0,3]=dx
+    T[1,3]=dy
+    T[2,3]=dz
     VM = T @ np.array(M).reshape((4,4))
     VM = VM.flatten().tolist()
     return VM
@@ -98,23 +100,25 @@ def main():
         curr_q,curr_u=next_q,next_u
 
         ps={}
-        #print('dsim {:4.2f} {:4.2f} {:4.2f} {:3.1f} {:3.1f} {:3.1f}'.format(*curr_q),current_command)
+        print('dsim {:4.2f} {:4.2f} {:4.2f} {:3.1f} {:3.1f} {:3.1f}'.format(*curr_q),current_command)
         ps['posx'],ps['posy'],ps['posz']=curr_q[:3]
-        ps['yaw'],ps['roll'],ps['pitch']=-np.rad2deg(curr_q[3:])
-        ps['yaw']=-ps['yaw']
-        ps['posy']=-ps['posy']
-        ps['pitch']=-ps['pitch'] 
+        yaw,roll,pitch = curr_q[3:]
+        ps['yaw'],ps['roll'],ps['pitch']=np.rad2deg(curr_q[3:])
+        #ps['yaw']=-ps['yaw']
+        #ps['posy']=-ps['posy']
+        #ps['pitch']=-ps['pitch'] 
         #ps['roll']=-ps['roll']
         #pub_pos_sim.send_multipart([xzmq_topics.topic_sitl_position_report,pickle.dumps((time.time(),curr_q))])
         zmq_pub.send_multipart([ue4_zmq_topics.topic_sitl_position_report,pickle.dumps(ps)])
         px,py,pz=ps['posx'],ps['posy'],ps['posz']
-        yaw,roll,pitch = ps['yaw'],ps['roll'],ps['pitch']
 
         if cnt%frame_ratio==0:
-            print('====',yaw,pitch,roll)
+            #print('====',yaw,pitch,roll)
             #first camera
-            VM = pb.computeViewMatrixFromYawPitchRoll((px,py,pz),1.0,yaw,pitch,roll,2)
-            VM=translateM(VM,0.4,-0.1,0) 
+            yawd,pitchd,rolld=ps['yaw'],ps['roll'],ps['pitch']
+            VM = pb.computeViewMatrixFromYawPitchRoll((px,py,pz),1.0,yawd,pitchd,rolld,2)
+            #VM=translateM(VM,0.4,-0.1,0) 
+            VM=translateM(VM,.5,-0.,0.0) 
             PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
             width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
                 width=config.cam_res_rgbx, 
@@ -125,8 +129,8 @@ def main():
             imgl=rgbImg
 
             #second camera
-            VM = pb.computeViewMatrixFromYawPitchRoll((px,py,pz),1.0,yaw,pitch,roll,2)
-            VM=translateM(VM,0.4,0.1,0) 
+            VM = pb.computeViewMatrixFromYawPitchRoll((px,py,pz),1.0,yawd,pitchd,rolld,2)
+            VM=translateM(VM,-0.5,0.,0) 
             PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
             width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
                 width=config.cam_res_rgbx, 
@@ -167,6 +171,7 @@ def main():
                 cv2.waitKey(1)
             frame_cnt+=1
 
+            #print('====',px,py,pz,roll,pitch,yaw)
             pb.resetBasePositionAndOrientation(boxId,(px,py,pz),pb.getQuaternionFromEuler((roll,pitch,yaw)))
             ### test
         time.sleep(0.010)
