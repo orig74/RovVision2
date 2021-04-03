@@ -15,7 +15,9 @@ import numpy as np
 import zmq_topics
 import config
 from joy_mix import Joy_map
-from gst import init_gst_reader,get_imgs,set_files_fds,get_files_fds,save_main_camera_stream
+vid_zmq = config.is_sim and config.sim_type=='PB'
+if not vid_zmq:
+    from gst import init_gst_reader,get_imgs,set_files_fds,get_files_fds,save_main_camera_stream
 from annotations import draw,draw_seperate,draw_mono
 import zmq_wrapper as utils
 import image_enc_dec
@@ -39,6 +41,7 @@ subs_socks.append(utils.subscribe([zmq_topics.topic_depth_hold_pid], zmq_topics.
 subs_socks.append(utils.subscribe([zmq_topics.topic_sonar], zmq_topics.topic_sonar_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_sonar_hold_pid], zmq_topics.topic_sonar_hold_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_stereo_camera_ts], zmq_topics.topic_camera_port)) #for sync perposes
+#subs_socks.append(utils.subscribe([zmq_topics.topic_stereo_camera], zmq_topics.topic_camera_port)) #for sync perposes
 subs_socks.append(utils.subscribe([zmq_topics.topic_tracker], zmq_topics.topic_tracker_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_volt], zmq_topics.topic_volt_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_hw_stats], zmq_topics.topic_hw_stats_port))
@@ -49,13 +52,15 @@ subs_socks.append(utils.subscribe([zmq_topics.topic_att_hold_yaw_pid,
                                    zmq_topics.topic_att_hold_pitch_pid,
                                    zmq_topics.topic_att_hold_roll_pid], zmq_topics.topic_att_hold_port))
     
+sub_vid=utils.subscribe([zmq_topics.topic_stereo_camera], zmq_topics.topic_camera_port) #for sync perposes
 #socket_pub = utils.publisher(config.zmq_local_route)
 if args.pub_data:
     socket_pub = utils.publisher(zmq_topics.topic_local_route_port,'0.0.0.0')
 pub_record_state = utils.publisher(zmq_topics.topic_record_state_port)
 
 if __name__=='__main__':
-    init_gst_reader(2)
+    if not vid_zmq:
+        init_gst_reader(2)
     sx,sy=config.cam_res_rgbx,config.cam_res_rgby
     data_file_fd=None
     #main_camera_fd=None
@@ -70,7 +75,19 @@ if __name__=='__main__':
     while 1:
         #join=np.zeros((sy,sx*2,3),'uint8')
         join=np.zeros((sy+bmargy,sx*2+bmargx,3),'uint8')
-        images=get_imgs()
+        if not vid_zmq:
+            images = get_imgs()
+        else:
+            while 1:
+                ret=sub_vid.recv_multipart()
+                frame_cnt,shape = pickle.loads(ret[1])
+                images = []
+                for im in ret[2:]:
+                    images.append(np.frombuffer(im,'uint8').reshape(shape))
+                print('======',len(images),ret[0])
+                if len(images)>0:
+                    break
+        
         rcv_cnt+=1
         #if all(images):
         while 1:
@@ -79,7 +96,15 @@ if __name__=='__main__':
                 break
             for sock in socks:
                 ret = sock.recv_multipart()
-                topic , data = ret
+                topic = ret[0]
+                if topic == zmq_topics.topic_stereo_camera:
+                    print('errrrrrrooooorr')
+                #    frame_cnt,shape = pickle.loads(ret[1])
+                #    images = []
+                #    for im in ret[2:]:
+                #        images.append(np.frombuffer(im,'uint8').reshape(shape))
+                #else:
+                data = ret[1]
                 data=pickle.loads(ret[1])
                 
                 message_dict[topic]=data
@@ -98,26 +123,27 @@ if __name__=='__main__':
                 if args.pub_data:
                     socket_pub.send_multipart([ret[0],ret[1]])
 
-                if record_state:
-                    if get_files_fds()[0] is None:
-                        print('start recording...')
-                        fds=[]
-                        #datestr=sensor_gate_data['record_date_str']
-                        datestr=record_state
-                        save_path=args.data_path+'/'+datestr
-                        if not os.path.isdir(save_path):
-                            os.mkdir(save_path)
-                        for i in [0,1]:
-                            #datestr=datetime.now().strftime('%y%m%d-%H%M%S')
-                            fds.append(open(save_path+'/vid_{}.mp4'.format('lr'[i]),'wb'))
-                        set_files_fds(fds)
-                        data_file_fd=open(save_path+'/viewer_data.pkl','wb')
-                        pickle.dump([b'start_time',time.time()],data_file_fd,-1)
-                else:
-                    if get_files_fds()[0] is not None:
-                        print('done recording...')
-                        set_files_fds([None,None])
-                        data_file_fd=None
+                if not vid_zmq:
+                    if record_state:
+                        if get_files_fds()[0] is None:
+                            print('start recording...')
+                            fds=[]
+                            #datestr=sensor_gate_data['record_date_str']
+                            datestr=record_state
+                            save_path=args.data_path+'/'+datestr
+                            if not os.path.isdir(save_path):
+                                os.mkdir(save_path)
+                            for i in [0,1]:
+                                #datestr=datetime.now().strftime('%y%m%d-%H%M%S')
+                                fds.append(open(save_path+'/vid_{}.mp4'.format('lr'[i]),'wb'))
+                            set_files_fds(fds)
+                            data_file_fd=open(save_path+'/viewer_data.pkl','wb')
+                            pickle.dump([b'start_time',time.time()],data_file_fd,-1)
+                    else:
+                        if get_files_fds()[0] is not None:
+                            print('done recording...')
+                            set_files_fds([None,None])
+                            data_file_fd=None
 
                 if data_file_fd is not None:
                     pickle.dump([topic,data],data_file_fd,-1)

@@ -8,8 +8,9 @@ else
     export ROV_TYPE=$ROV_TYPE
 fi
 
-SIM=PB
+export SIM=PB
 PYTHON=python 
+export RESIZE_VIEWER=1800
 PROJECT_PATH=`git rev-parse --show-toplevel`
 source run_common.sh
 

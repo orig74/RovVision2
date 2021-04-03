@@ -16,9 +16,12 @@ import ue4_zmq_topics
 import zmq_topics
 import config
 import dill
+from numpy import sin,cos
 
 zmq_sub=utils.subscribe([zmq_topics.topic_thrusters_comand],zmq_topics.topic_thrusters_comand_port)
 zmq_pub=utils.publisher(zmq_topics.topic_camera_port)
+pub_imu = utils.publisher(zmq_topics.topic_imu_port)
+pub_depth = utils.publisher(zmq_topics.topic_depth_port)
 
 pub_sonar = utils.publisher(zmq_topics.topic_sonar_port)
 cvshow=0
@@ -30,7 +33,8 @@ lamb=dill.load(open('lambda.pkl','rb'))
 current_command=[0 for _ in range(8)] # 8 thrusters
 dt=1/60.0
 #pybullet init
-physicsClient = pb.connect(pb.GUI)#or p.DIRECT for non-graphical version
+#physicsClient = pb.connect(pb.GUI)#or p.DIRECT for non-graphical version
+physicsClient = pb.connect(pb.DIRECT)#or p.DIRECT for non-graphical version
 pb.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 pb.setGravity(0,0,-0)
 print('start...')
@@ -40,14 +44,15 @@ import random
 robj=[]
 def set_random_objects():
     random.seed(0)
-    for _ in range(50):
+    for _ in range(400):
         urdf = "random_urdfs/{0:03d}/{0:03d}.urdf".format(random.randint(1,1000)) 
-        obj = pb.loadURDF(urdf)
+        x = (random.random()-0.5)*5
+        y = (random.random()-0.5)*5
+        z = (random.random())*-10
+        obj = pb.loadURDF(urdf,basePosition=[x,y,z],globalScaling=3,baseOrientation=[random.random() for _ in range(4)])
         robj.append(obj)
-        x = (random.random()-0.5)*10
-        y = (random.random()-0.5)*10
         print('---loading--',urdf,x,y)
-        pb.resetBasePositionAndOrientation(obj,(x,y,-1),pb.getQuaternionFromEuler((0,0,0,)))
+        #pb.resetBasePositionAndOrientation(obj,(x,y,z),pb.getQuaternionFromEuler((0,0,0,)))
 
 set_random_objects()
 keep_running = True
@@ -126,7 +131,7 @@ def main():
         ps['yaw'],ps['roll'],ps['pitch']=np.rad2deg(curr_q[3:])
         #ps['yaw']=-ps['yaw']
         #ps['posy']=-ps['posy']
-        #ps['pitch']=-ps['pitch'] 
+    #ps['pitch']=-ps['pitch'] 
         #ps['roll']=-ps['roll']
         #pub_pos_sim.send_multipart([xzmq_topics.topic_sitl_position_report,pickle.dumps((time.time(),curr_q))])
         zmq_pub.send_multipart([ue4_zmq_topics.topic_sitl_position_report,pickle.dumps(ps)])
@@ -136,7 +141,7 @@ def main():
             #print('====',yaw,pitch,roll)
             #first camera
             yawd,pitchd,rolld=ps['yaw'],ps['roll'],ps['pitch']
-            VM = pb.computeViewMatrixFromYawPitchRoll((py,px,pz),1.0,-yawd+00,pitchd,rolld,2)
+            VM = pb.computeViewMatrixFromYawPitchRoll((py,px,-pz),1.0,-yawd+00,pitchd,rolld,2)
             #VM=translateM(VM,0.4,-0.1,0) 
             VM=translateM(VM,0.2,-1.1,0.0)#left camera 0.2 for left 
             PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
@@ -144,21 +149,22 @@ def main():
                 width=config.cam_res_rgbx, 
                 height=config.cam_res_rgby,
                 viewMatrix=VM,
-                projectionMatrix=PM)
+                projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL)
                     #get images from py bullet
-            imgl=rgbImg
+            imgl=rgbImg[:,:,:3]#inly interested in rgb
+            print('===',imgl.shape)
 
             #second camera
             if not mono:
-                VM = pb.computeViewMatrixFromYawPitchRoll((px,py,pz),1.0,-yawd,pitchd,rolld,2)
+                VM = pb.computeViewMatrixFromYawPitchRoll((px,py,-pz),1.0,-yawd,pitchd,rolld,2)
                 VM=translateM(VM,-0.2,-1.1,0.0)#left camera 0.2 for left 
                 PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
                 width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
                     width=config.cam_res_rgbx, 
                     height=config.cam_res_rgby,
                     viewMatrix=VM,
-                    projectionMatrix=PM)
-                imgr=rgbImg #todo...
+                    projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL)
+                imgr=rgbImg[:,:,:3] #todo...
                         
 
             if cvshow:
@@ -196,8 +202,24 @@ def main():
 
             #print('====',px,py,pz,roll,pitch,yaw)
             #pb.resetBasePositionAndOrientation(boxId,(px,py,pz),pb.getQuaternionFromEuler((roll,pitch,yaw)))
-            pb.resetBasePositionAndOrientation(boxId,(py,px,pz),pb.getQuaternionFromEuler((roll,-pitch,-yaw+np.radians(0))))
+            pb.resetBasePositionAndOrientation(boxId,(py,px,-pz),pb.getQuaternionFromEuler((roll,-pitch,-yaw+np.radians(0))))
             ### test
+            tic=time.time()
+            imu={'ts':tic}
+            imu['yaw'],imu['pitch'],imu['roll']=np.rad2deg(curr_q[3:])
+            #rates from dsym notebook
+            #R.ang_vel_in(R).express(R).to_matrix(R)
+            #good video in https://www.youtube.com/watch?v=WZEFoWP0Tzs
+            q3,q4,q5=curr_q[3:]
+            u3,u4,u5=curr_u[3:]
+            imu['rates']=(
+                    -u3*sin(q4) + u5,
+                    u3*sin(q5)*cos(q4) + u4*cos(q5),
+                    u3*cos(q4)*cos(q5) - u4*sin(q5))
+            pub_imu.send_multipart([zmq_topics.topic_imu,pickle.dumps(imu)])
+            pub_depth.send_multipart([zmq_topics.topic_depth,pickle.dumps({'ts':tic,'depth':curr_q[2]})])
+
+
         time.sleep(0.010)
         if cnt%20==0 and imgl is not None:
             print('send...',cnt, imgl.shape)
