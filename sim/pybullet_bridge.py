@@ -33,8 +33,9 @@ lamb=dill.load(open('lambda.pkl','rb'))
 current_command=[0 for _ in range(8)] # 8 thrusters
 dt=1/60.0
 #pybullet init
+render = pb.DIRECT # pb.GUI
 #physicsClient = pb.connect(pb.GUI)#or p.DIRECT for non-graphical version
-physicsClient = pb.connect(pb.DIRECT)#or p.DIRECT for non-graphical version
+physicsClient = pb.connect(render)#or p.DIRECT for non-graphical version
 pb.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 pb.setGravity(0,0,-0)
 print('start...')
@@ -114,7 +115,8 @@ def main():
     curr_u = np.zeros(6)
     current_command = np.zeros(8)
 
-    boxId = getrov()
+    if render==pb.GUI:
+        boxId = getrov()
 
     while keep_running:
         tic_cycle = time.time()
@@ -209,7 +211,8 @@ def main():
 
             #print('====',px,py,pz,roll,pitch,yaw)
             #pb.resetBasePositionAndOrientation(boxId,(px,py,pz),pb.getQuaternionFromEuler((roll,pitch,yaw)))
-            pb.resetBasePositionAndOrientation(boxId,(py,px,-pz),pb.getQuaternionFromEuler((roll,-pitch,-yaw+np.radians(0))))
+            if render==pb.GUI:
+                pb.resetBasePositionAndOrientation(boxId,(py,px,-pz),pb.getQuaternionFromEuler((roll,-pitch,-yaw+np.radians(0))))
             ### test
             tic=time.time()
             imu={'ts':tic}
