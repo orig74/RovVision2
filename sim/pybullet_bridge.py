@@ -99,10 +99,15 @@ def translateM(M,dx,dy,dz):
     VM = VM.flatten().tolist()
     return VM
 
+def resize(img,factor):
+    h,w = img.shape[:2]
+    return cv2.resize(img,(int(w*factor),int(h*factor)))
+
 def main():
     cnt=0
     frame_cnt=0
     frame_ratio=6 # for 6 sim cycles 1 video frame
+    resize_fact=0.5
     mono=False
     imgl = None
     curr_q = np.zeros(6)
@@ -145,14 +150,16 @@ def main():
             #VM=translateM(VM,0.4,-0.1,0) 
             VM=translateM(VM,0.2,-1.1,0.0)#left camera 0.2 for left 
             PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
+            w = int(config.cam_res_rgbx*resize_fact)
+            h = int(config.cam_res_rgby*resize_fact)
             width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
-                width=config.cam_res_rgbx, 
-                height=config.cam_res_rgby,
+                width=w, 
+                height=h,
                 viewMatrix=VM,
                 projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL)
                     #get images from py bullet
-            imgl=rgbImg[:,:,:3]#inly interested in rgb
-            print('===',imgl.shape)
+            imgl=resize(rgbImg[:,:,:3],1/resize_fact)#inly interested in rgb
+            #print('===',imgl.shape)
 
             #second camera
             if not mono:
@@ -160,11 +167,11 @@ def main():
                 VM=translateM(VM,-0.2,-1.1,0.0)#left camera 0.2 for left 
                 PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
                 width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
-                    width=config.cam_res_rgbx, 
-                    height=config.cam_res_rgby,
+                    width=w, 
+                    height=h,
                     viewMatrix=VM,
                     projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL)
-                imgr=rgbImg[:,:,:3] #todo...
+                imgr=resize(rgbImg[:,:,:3],1/resize_fact) #todo...
                         
 
             if cvshow:
