@@ -35,6 +35,21 @@ pb.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 pb.setGravity(0,0,-0)
 print('start...')
 planeId = pb.loadURDF("plane.urdf")
+pb.resetBasePositionAndOrientation(planeId,(0,0,-20),pb.getQuaternionFromEuler((0,0,0,)))
+import random
+robj=[]
+def set_random_objects():
+    random.seed(0)
+    for _ in range(50):
+        urdf = "random_urdfs/{0:03d}/{0:03d}.urdf".format(random.randint(1,1000)) 
+        obj = pb.loadURDF(urdf)
+        robj.append(obj)
+        x = (random.random()-0.5)*10
+        y = (random.random()-0.5)*10
+        print('---loading--',urdf,x,y)
+        pb.resetBasePositionAndOrientation(obj,(x,y,-1),pb.getQuaternionFromEuler((0,0,0,)))
+
+set_random_objects()
 keep_running = True
 
 def getrov():
@@ -71,7 +86,11 @@ def translateM(M,dx,dy,dz):
     T[0,3]=dx
     T[1,3]=dy
     T[2,3]=dz
-    VM = T @ np.array(M).reshape((4,4))
+    #T[3,0]=dx
+    #T[3,1]=dy
+    #T[3,2]=dz
+    VM = T.T @ np.array(M).reshape((4,4))
+    #VM =  np.array(M).reshape((4,4)) @ T.T
     VM = VM.flatten().tolist()
     return VM
 
@@ -79,6 +98,7 @@ def main():
     cnt=0
     frame_cnt=0
     frame_ratio=6 # for 6 sim cycles 1 video frame
+    mono=False
     imgl = None
     curr_q = np.zeros(6)
     curr_u = np.zeros(6)
@@ -93,7 +113,7 @@ def main():
             topic=data[0]
             if topic==zmq_topics.topic_thrusters_comand:
                 _,current_command=pickle.loads(data[1])
-
+                current_command=[i*1.3 for i in current_command]
 
         next_q,next_u=get_next_state(curr_q,curr_u,current_command,dt,lamb)
         next_q,next_u=next_q.flatten(),next_u.flatten()
@@ -116,9 +136,9 @@ def main():
             #print('====',yaw,pitch,roll)
             #first camera
             yawd,pitchd,rolld=ps['yaw'],ps['roll'],ps['pitch']
-            VM = pb.computeViewMatrixFromYawPitchRoll((px,py,pz),1.0,yawd,pitchd,rolld,2)
+            VM = pb.computeViewMatrixFromYawPitchRoll((py,px,pz),1.0,-yawd+00,pitchd,rolld,2)
             #VM=translateM(VM,0.4,-0.1,0) 
-            VM=translateM(VM,.5,-0.,0.0) 
+            VM=translateM(VM,0.2,-1.1,0.0)#left camera 0.2 for left 
             PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
             width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
                 width=config.cam_res_rgbx, 
@@ -129,15 +149,16 @@ def main():
             imgl=rgbImg
 
             #second camera
-            VM = pb.computeViewMatrixFromYawPitchRoll((px,py,pz),1.0,yawd,pitchd,rolld,2)
-            VM=translateM(VM,-0.5,0.,0) 
-            PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
-            width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
-                width=config.cam_res_rgbx, 
-                height=config.cam_res_rgby,
-                viewMatrix=VM,
-                projectionMatrix=PM)
-            imgr=rgbImg #todo...
+            if not mono:
+                VM = pb.computeViewMatrixFromYawPitchRoll((px,py,pz),1.0,-yawd,pitchd,rolld,2)
+                VM=translateM(VM,-0.2,-1.1,0.0)#left camera 0.2 for left 
+                PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
+                width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
+                    width=config.cam_res_rgbx, 
+                    height=config.cam_res_rgby,
+                    viewMatrix=VM,
+                    projectionMatrix=PM)
+                imgr=rgbImg #todo...
                         
 
             if cvshow:
@@ -150,8 +171,10 @@ def main():
                 cv2.imshow('l',imgls)
                 cv2.imshow('r',imgrs)
                 cv2.waitKey(1)
-
-            zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),imgl.tostring(),imgr.tostring()])
+            if mono:
+                zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),imgl.tostring()])
+            else:
+                zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),imgl.tostring(),imgr.tostring()])
             time.sleep(0.001) 
             zmq_pub.send_multipart([zmq_topics.topic_stereo_camera_ts,pickle.dumps((frame_cnt,time.time()))]) #for sync
                 
@@ -172,7 +195,8 @@ def main():
             frame_cnt+=1
 
             #print('====',px,py,pz,roll,pitch,yaw)
-            pb.resetBasePositionAndOrientation(boxId,(px,py,pz),pb.getQuaternionFromEuler((roll,pitch,yaw)))
+            #pb.resetBasePositionAndOrientation(boxId,(px,py,pz),pb.getQuaternionFromEuler((roll,pitch,yaw)))
+            pb.resetBasePositionAndOrientation(boxId,(py,px,pz),pb.getQuaternionFromEuler((roll,-pitch,-yaw+np.radians(0))))
             ### test
         time.sleep(0.010)
         if cnt%20==0 and imgl is not None:
