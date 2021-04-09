@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import time
 
 
 CHKBD_DIMS = (4, 11)
@@ -110,10 +111,10 @@ class Calibrator():
             self.ValidCalib = True
 
     def StereoRectify(self, l_img, r_img):
-        l_img_sr = cv2.remap(l_img, self.LeftStereoMapX, self.LeftStereoMapY, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT, 0)
+        l_img_sr = cv2.remap(l_img, self.LeftStereoMapX, self.LeftStereoMapY, cv2.INTER_LINEAR, cv2.BORDER_CONSTANT, 0)
         x, y, w, h = self.RoiL
         l_img_sr_roi = l_img_sr[y:y+h, x:x+w]
-        r_img_sr = cv2.remap(r_img, self.RightStereoMapX, self.RightStereoMapY, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT, 0)
+        r_img_sr = cv2.remap(r_img, self.RightStereoMapX, self.RightStereoMapY, cv2.INTER_LINEAR, cv2.BORDER_CONSTANT, 0)
         x, y, w, h = self.RoiR
         r_img_sr_roi = r_img_sr[y:y+h, x:x+w]
         return l_img_sr_roi, r_img_sr_roi
