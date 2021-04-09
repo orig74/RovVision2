@@ -12,6 +12,7 @@ class Calibrator():
         self.imgPnts_r = []
         self.objPnts = []
         self.imshape = None
+        self.ValidCalib = False
         self.LoadCalib()
         self.objp = np.zeros((CHKBD_DIMS[0] * CHKBD_DIMS[1], 3), np.float32)
         idx = 0
@@ -23,12 +24,17 @@ class Calibrator():
         # plt.show()
 
     def LoadCalib(self):
-        self.LeftStereoMapX = np.load("CalibParams/Left_Stereo_Map_x.npy")
-        self.LeftStereoMapY = np.load("CalibParams/Left_Stereo_Map_y.npy")
-        self.RoiL = np.load("CalibParams/RoiL.npy")
-        self.RightStereoMapX = np.load("CalibParams/Right_Stereo_Map_x.npy")
-        self.RightStereoMapY = np.load("CalibParams/Right_Stereo_Map_y.npy")
-        self.RoiR = np.load("CalibParams/RoiR.npy")
+        try:
+            self.LeftStereoMapX = np.load("CalibParams/Left_Stereo_Map_x.npy")
+            self.LeftStereoMapY = np.load("CalibParams/Left_Stereo_Map_y.npy")
+            self.RoiL = np.load("CalibParams/RoiL.npy")
+            self.RightStereoMapX = np.load("CalibParams/Right_Stereo_Map_x.npy")
+            self.RightStereoMapY = np.load("CalibParams/Right_Stereo_Map_y.npy")
+            self.RoiR = np.load("CalibParams/RoiR.npy")
+            self.ValidCalib = True
+        except:
+            print("Unable to load Calib params!")
+            self.ValidCalib = False
 
     def ResetCalibration(self):
         self.imgPnts_l = []
@@ -101,6 +107,7 @@ class Calibrator():
             np.save("CalibParams/Right_Stereo_Map_y", self.RightStereoMapY)
             np.save("CalibParams/RoiR", self.RoiR)
             np.save("CalibParams/RoiL", self.RoiL)
+            self.ValidCalib = True
 
     def StereoRectify(self, l_img, r_img):
         l_img_sr = cv2.remap(l_img, self.LeftStereoMapX, self.LeftStereoMapY, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT, 0)

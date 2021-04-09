@@ -14,7 +14,7 @@ if rov_type==3:
     camera_setup='mono' #'mono'
 
 cam_res_rgbx,cam_res_rgby=cam_resx//2,cam_resy//2
-fps=10
+fps=6
 send_modulo=1 # Sends frames through gstreamer every x frames at above fps
 save_modulo=3 # saves img every x frames at above fps
 

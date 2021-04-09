@@ -18,6 +18,7 @@ import zmq_wrapper as utils
 import bayer
 import config
 import camCalib
+import threading
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--cvshow",help="show opencv mode", action='store_true')
@@ -25,7 +26,7 @@ args = parser.parse_args()
 #
 subs_socks=[]
 subs_socks.append( utils.subscribe([ zmq_topics.topic_record_state ],zmq_topics.topic_record_state_port))
-subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
 
 socket_pub = utils.publisher(zmq_topics.topic_camera_port)
 
@@ -363,6 +364,7 @@ def run_single_camera(cams):
     global record_state
     system_state={'mode':[]}
     calibrating_cams = False
+    prev_frame_cnt = 0
 
     cams=list(cams)#[:1]
     try:
@@ -459,17 +461,21 @@ def run_single_camera(cams):
                         ts=min(ts_r,ts_l)
 
                         # Stereo calibration and rectification
-                        if True:
-                            if 'CAM_CALIB' in system_state['mode']:
-                                if calibrating_cams:
-                                    calibrator.AddImgPnts(imgl, imgr, drawCHKBD=True)
-                                else:
-                                    calibrator.ResetCalibration()
-                                    calibrating_cams = True
-                            elif calibrating_cams:
-                                calibrator.RunStereoCalibration(calIdxStep=1)
-                                calibrating_cams = False
-                            imgl, imgr = calibrator.StereoRectify(imgl, imgr)
+                        if 1:
+                            if frame_cntl % 2 == 0:
+                                if 'CAM_CALIB' in system_state['mode']:
+                                    if calibrating_cams:
+                                        imgl, imgr = calibrator.AddImgPnts(imgl, imgr, drawCHKBD=True)
+                                    else:
+                                        calibrator.ResetCalibration()
+                                        calibrating_cams = True
+                                elif calibrating_cams:
+                                    calib_thread = threading.Thread(target=calibrator.RunStereoCalibration, args=(1,))
+                                    calib_thread.start()
+                                    #calibrator.RunStereoCalibration(calIdxStep=1)
+                                    calibrating_cams = False
+                            if calibrator.ValidCalib:
+                                imgl, imgr = calibrator.StereoRectify(imgl, imgr)
 
                         if frame_cntl!=frame_cntr:
                             print('Error somthing wrong frame_cntl!=frame_cntr',frame_cntl,frame_cntr)
@@ -477,24 +483,21 @@ def run_single_camera(cams):
                         time.sleep(0.001)
                         socket_pub.send_multipart([zmq_topics.topic_stereo_camera_ts,pickle.dumps((frame_cntl,ts))])
                         cnt=frame_cntl
-                    else:
-                        #print('---',tim_l[0],tim_r[0],cnt)
-                        while 1:
-                            socks=zmq.select(subs_socks,[],[],0)[0]
-                            if len(socks)==0: #flush the message buffer if needed
-                                break
-                            for sock in socks:
-                                ret=sock.recv_multipart()
-                                topic,data=ret[0],pickle.loads(ret[1])
-                                if topic==zmq_topics.topic_record_state:
-                                    new_record_state_str=pickle.loads(ret[1])
-                                    if not record_state and new_record_state_str:
-                                        #switch to recording
-                                        os.mkdir('../../data/'+new_record_state_str)
-                                if topic==zmq_topics.topic_system_state:
-                                    _,system_state=data
 
-                                    record_state=new_record_state_str
+                    socks=zmq.select(subs_socks,[],[],0)[0]
+                    for sock in socks:
+                        ret=sock.recv_multipart()
+                        topic,data=ret[0],pickle.loads(ret[1])
+                        if topic==zmq_topics.topic_record_state:
+                            new_record_state_str=data
+                            if not record_state and new_record_state_str:
+                                #switch to recording
+                                os.mkdir('../../data/'+new_record_state_str)
+                            record_state=new_record_state_str
+                        if topic==zmq_topics.topic_system_state:
+                            _,system_state=data
+
+                                    
                         sleep(0.001)
         for cam in cams:
             cam.EndAcquisition()
