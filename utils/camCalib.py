@@ -5,6 +5,7 @@ import time
 
 CHKBD_DIMS = (4, 11)
 CHKBD_SCALE = 0.03
+CALIB_DIR = "/home/stereo/CalibParams/"
 
 
 class Calibrator():
@@ -25,13 +26,20 @@ class Calibrator():
         # plt.show()
 
     def LoadCalib(self):
+        self.LeftStereoMapX = np.load(CALIB_DIR + "Left_Stereo_Map_x.npy")
+        self.LeftStereoMapY = np.load(CALIB_DIR + "Left_Stereo_Map_y.npy")
+        self.RoiL = np.load(CALIB_DIR + "RoiL.npy")
+        self.RightStereoMapX = np.load(CALIB_DIR + "Right_Stereo_Map_x.npy")
+        self.RightStereoMapY = np.load(CALIB_DIR + "Right_Stereo_Map_y.npy")
+        self.RoiR = np.load(CALIB_DIR + "RoiR.npy")
+        self.ValidCalib = True
         try:
-            self.LeftStereoMapX = np.load("CalibParams/Left_Stereo_Map_x.npy")
-            self.LeftStereoMapY = np.load("CalibParams/Left_Stereo_Map_y.npy")
-            self.RoiL = np.load("CalibParams/RoiL.npy")
-            self.RightStereoMapX = np.load("CalibParams/Right_Stereo_Map_x.npy")
-            self.RightStereoMapY = np.load("CalibParams/Right_Stereo_Map_y.npy")
-            self.RoiR = np.load("CalibParams/RoiR.npy")
+            self.LeftStereoMapX = np.load(CALIB_DIR + "Left_Stereo_Map_x.npy")
+            self.LeftStereoMapY = np.load(CALIB_DIR + "Left_Stereo_Map_y.npy")
+            self.RoiL = np.load(CALIB_DIR + "RoiL.npy")
+            self.RightStereoMapX = np.load(CALIB_DIR + "Right_Stereo_Map_x.npy")
+            self.RightStereoMapY = np.load(CALIB_DIR + "Right_Stereo_Map_y.npy")
+            self.RoiR = np.load(CALIB_DIR + "RoiR.npy")
             self.ValidCalib = True
         except:
             print("Unable to load Calib params!")
@@ -102,12 +110,12 @@ class Calibrator():
             self.LoadCalib()
         else:
             print("Saving parameters ......")
-            np.save("CalibParams/Left_Stereo_Map_x", self.LeftStereoMapX)
-            np.save("CalibParams/Left_Stereo_Map_y", self.LeftStereoMapY)
-            np.save("CalibParams/Right_Stereo_Map_x", self.RightStereoMapX)
-            np.save("CalibParams/Right_Stereo_Map_y", self.RightStereoMapY)
-            np.save("CalibParams/RoiR", self.RoiR)
-            np.save("CalibParams/RoiL", self.RoiL)
+            np.save(CALIB_DIR + "Left_Stereo_Map_x", self.LeftStereoMapX)
+            np.save(CALIB_DIR + "Left_Stereo_Map_y", self.LeftStereoMapY)
+            np.save(CALIB_DIR + "Right_Stereo_Map_x", self.RightStereoMapX)
+            np.save(CALIB_DIR + "Right_Stereo_Map_y", self.RightStereoMapY)
+            np.save(CALIB_DIR + "RoiR", self.RoiR)
+            np.save(CALIB_DIR + "RoiL", self.RoiL)
             self.ValidCalib = True
 
     def StereoRectify(self, l_img, r_img):

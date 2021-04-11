@@ -364,6 +364,7 @@ def run_single_camera(cams):
     global record_state
     system_state={'mode':[]}
     calibrating_cams = False
+    calib_thread = threading.Thread(target=calibrator.RunStereoCalibration, args=(1,))
     prev_frame_cnt = 0
 
     cams=list(cams)#[:1]
@@ -470,10 +471,11 @@ def run_single_camera(cams):
                                         calibrator.ResetCalibration()
                                         calibrating_cams = True
                                 elif calibrating_cams:
-                                    calib_thread = threading.Thread(target=calibrator.RunStereoCalibration, args=(1,))
                                     calib_thread.start()
                                     #calibrator.RunStereoCalibration(calIdxStep=1)
                                     calibrating_cams = False
+                                if calib_thread.is_alive():
+                                    print("Calibrating...")
                             if calibrator.ValidCalib:
                                 imgl, imgr = calibrator.StereoRectify(imgl, imgr)
 
