@@ -92,8 +92,8 @@ def translateM(M,dx,dy,dz):
     T[0,3]=dx
     T[1,3]=dy
     T[2,3]=dz
-    VM = T @ np.array(M).reshape((4,4)) 
-    #VM =  np.array(M).reshape((4,4)) @ T.T
+    #VM = T @ np.array(M).reshape((4,4)) 
+    VM =  np.array(M).reshape((4,4)) @ T.T
     VM = VM.flatten().tolist()
     return VM
 
@@ -163,7 +163,7 @@ def main():
             #second camera
             if not mono:
                 VM = pb.computeViewMatrixFromYawPitchRoll((py,px,-pz),1.0,-yawd,pitchd,rolld,2)
-                VM=translateM(VM,0.20,0.00,0.0)#left camera 0.2 for left 
+                VM=translateM(VM,-0.20,0.00,0.0)#left camera 0.2 for left 
                 PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
                 width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
                     width=w, 
