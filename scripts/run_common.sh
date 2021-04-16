@@ -3,7 +3,7 @@ tmux send-keys "cd $DRONESIMLAB_PATH/dockers/python3_dev && ./run_image.sh" ENTE
 }
 
 function init_pb {
-tmux send-keys "source ~/python_venvs/pybullet/bin/activate" ENTER
+tmux send-keys "source ${PB_ENV:-~/python_venvs/pybullet}/bin/activate" ENTER
 }
 function new_4_win {
 tmux split-window -h
