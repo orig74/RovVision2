@@ -30,6 +30,7 @@ pub_sock=utils.publisher(zmq_topics.topic_joy_port)
 done = False
 cnt=0
 axes_vals=[]
+lctrl=1.0
 
 start_time=time.time()
 joy_log=open('joy.log','wb')
