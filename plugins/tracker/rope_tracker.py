@@ -343,6 +343,13 @@ if __name__=="__main__":
                 if k%256==ord('s'):
                     cv2.imwrite('iml.png',iml)
 
+                if k%256==ord('='):
+                    dd.dec_clear_freqs()
+                    break
+                if k%256==ord('-'):
+                    dd.inc_clear_freqs()
+                    break
+
                 if k%256==ord('d'):
                     dd.debug=True
                 if k%256==ord('r'):
