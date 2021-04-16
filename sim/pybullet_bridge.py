@@ -89,12 +89,9 @@ def get_next_state(curr_q,curr_u,control,dt,lamb):
 def translateM(M,dx,dy,dz):
     T = np.zeros((4,4),dtype=float)
     T[np.diag_indices(4)]=1.0
-    #T[0,3]=dx
-    #T[1,3]=dy
-    #T[2,3]=dz
-    T[3,0]=dx
-    T[3,1]=dy
-    T[3,2]=dz
+    T[0,3]=dx
+    T[1,3]=dy
+    T[2,3]=dz
     VM = T @ np.array(M).reshape((4,4)) 
     #VM =  np.array(M).reshape((4,4)) @ T.T
     VM = VM.flatten().tolist()
@@ -132,7 +129,7 @@ def main():
         curr_q,curr_u=next_q,next_u
 
         ps={}
-        print('dsim {:4.2f} {:4.2f} {:4.2f} {:3.1f} {:3.1f} {:3.1f}'.format(*curr_q),current_command)
+        #print('dsim {:4.2f} {:4.2f} {:4.2f} {:3.1f} {:3.1f} {:3.1f}'.format(*curr_q),current_command)
         ps['posx'],ps['posy'],ps['posz']=curr_q[:3]
         yaw,roll,pitch = curr_q[3:]
         ps['yaw'],ps['roll'],ps['pitch']=np.rad2deg(curr_q[3:])
@@ -148,10 +145,9 @@ def main():
             #print('====',yaw,pitch,roll)
             #first camera
             yawd,pitchd,rolld=ps['yaw'],ps['roll'],ps['pitch']
-            VM = pb.computeViewMatrixFromYawPitchRoll((py,px,-pz),1.0,-yawd+00,pitchd,rolld,2)
-            #VM=translateM(VM,0.4,-0.1,0) 
-            #VM=translateM(VM,0.2,-1.1,0.0)#left camera 0.2 for left 
-            VM=translateM(VM,0.05,0,0.0)#left camera 0.2 for left 
+            VM = pb.computeViewMatrixFromYawPitchRoll((py,px,-pz),1.0,-yawd,pitchd,rolld,2)
+            #if not mono:
+            #    VM=translateM(VM,-0.0,0,0.0)#left camera 0.2 for left 
             PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
             w = int(config.cam_res_rgbx*resize_fact)
             h = int(config.cam_res_rgby*resize_fact)
@@ -166,8 +162,8 @@ def main():
 
             #second camera
             if not mono:
-                VM = pb.computeViewMatrixFromYawPitchRoll((px,py,-pz),1.0,-yawd,pitchd,rolld,2)
-                VM=translateM(VM,-0.05,0.0,0.0)#left camera 0.2 for left 
+                VM = pb.computeViewMatrixFromYawPitchRoll((py,px,-pz),1.0,-yawd,pitchd,rolld,2)
+                VM=translateM(VM,0.20,0.00,0.0)#left camera 0.2 for left 
                 PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
                 width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
                     width=w, 
