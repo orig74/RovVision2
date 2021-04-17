@@ -147,7 +147,6 @@ while not done:
                 axes_vals.append(axis)
             if axes==6: #add hat to axes to maintain compatibility
                 axes_vals+=[float(hat[0]),float(hat[1])]
-
             axes_vals = []
             for i in range(axes):
                 axis = joystick.get_axis(i)
