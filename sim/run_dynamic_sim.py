@@ -17,6 +17,7 @@ import ue4_zmq_topics
 
 dill.settings['recurse'] = True
 lamb=dill.load(open('lambda.pkl','rb'))
+#lamb=dill.load(open('../notebooks/lambda.pkl','rb'))
 current_command=[0 for _ in range(8)] # 8 thrusters
 dt=1/60.0
 keep_running=True
