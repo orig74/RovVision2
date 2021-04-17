@@ -34,6 +34,7 @@ current_command=[0 for _ in range(8)] # 8 thrusters
 dt=1/60.0
 #pybullet init
 render = pb.DIRECT # pb.GUI
+#render = pb.GUI
 #physicsClient = pb.connect(pb.GUI)#or p.DIRECT for non-graphical version
 physicsClient = pb.connect(render)#or p.DIRECT for non-graphical version
 pb.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
@@ -45,14 +46,15 @@ import random
 robj=[]
 def set_random_objects():
     random.seed(0)
-    for _ in range(400):
+    for _ in range(16):
         urdf = "random_urdfs/{0:03d}/{0:03d}.urdf".format(random.randint(1,1000)) 
-        x = (random.random()-0.5)*5
-        y = (random.random()-0.5)*5
-        z = (random.random())*-10
-        obj = pb.loadURDF(urdf,basePosition=[x,y,z],globalScaling=3,baseOrientation=[random.random() for _ in range(4)])
-        robj.append(obj)
-        print('---loading--',urdf,x,y)
+        for _ in range(25):
+            x = (random.random()-0.5)*5
+            y = (random.random()-0.5)*5
+            z = (random.random())*-10
+            obj = pb.loadURDF(urdf,basePosition=[x,y,z],globalScaling=3,baseOrientation=[random.random() for _ in range(4)])
+            robj.append(obj)
+            print('---loading--',urdf,x,y)
         #pb.resetBasePositionAndOrientation(obj,(x,y,z),pb.getQuaternionFromEuler((0,0,0,)))
 
 set_random_objects()
@@ -95,7 +97,8 @@ def translateM(M,dx,dy,dz):
     #T[3,0]=dx
     #T[3,1]=dy
     #T[3,2]=dz
-    VM = T.T @ np.array(M).reshape((4,4))
+    #VM = T @ np.array(M).reshape((4,4))  
+    VM = np.array(M).reshape((4,4)) @ T 
     #VM =  np.array(M).reshape((4,4)) @ T.T
     VM = VM.flatten().tolist()
     return VM
@@ -132,7 +135,8 @@ def main():
         curr_q,curr_u=next_q,next_u
 
         ps={}
-        print('dsim {:4.2f} {:4.2f} {:4.2f} {:3.1f} {:3.1f} {:3.1f}'.format(*curr_q),current_command)
+        if cnt%10==0:
+            print('dsim {:4.2f} {:4.2f} {:4.2f} {:3.1f} {:3.1f} {:3.1f}'.format(*curr_q),current_command)
         ps['posx'],ps['posy'],ps['posz']=curr_q[:3]
         yaw,roll,pitch = curr_q[3:]
         ps['yaw'],ps['roll'],ps['pitch']=np.rad2deg(curr_q[3:])
@@ -145,35 +149,39 @@ def main():
         px,py,pz=ps['posx'],ps['posy'],ps['posz']
 
         if cnt%frame_ratio==0:
+            image_cycle = time.time()
             #print('====',yaw,pitch,roll)
             #first camera
             yawd,pitchd,rolld=ps['yaw'],ps['roll'],ps['pitch']
-            VM = pb.computeViewMatrixFromYawPitchRoll((py,px,-pz),1.0,-yawd+00,pitchd,rolld,2)
+            VM_center = pb.computeViewMatrixFromYawPitchRoll((py,px,-pz),1.0,-yawd+00,pitchd,rolld,2)
             #VM=translateM(VM,0.4,-0.1,0) 
-            VM=translateM(VM,0.2,-1.1,0.0)#left camera 0.2 for left 
-            PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
-            w = int(config.cam_res_rgbx*resize_fact)
-            h = int(config.cam_res_rgby*resize_fact)
-            width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
-                width=w, 
-                height=h,
-                viewMatrix=VM,
-                projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL)
-                    #get images from py bullet
-            imgl=resize(rgbImg[:,:,:3],1/resize_fact)#inly interested in rgb
-            #print('===',imgl.shape)
-
-            #second camera
-            if not mono:
-                VM = pb.computeViewMatrixFromYawPitchRoll((px,py,-pz),1.0,-yawd,pitchd,rolld,2)
-                VM=translateM(VM,-0.2,-1.1,0.0)#left camera 0.2 for left 
+            camfwd=-1.1
+            baseline=0.4
+            VM=translateM(VM_center,baseline/2,camfwd,0.0)#left camera 0.2 for left 
+            if 1:
                 PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
+                w = int(config.cam_res_rgbx*resize_fact)
+                h = int(config.cam_res_rgby*resize_fact)
                 width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
                     width=w, 
                     height=h,
                     viewMatrix=VM,
                     projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL)
-                imgr=resize(rgbImg[:,:,:3],1/resize_fact) #todo...
+                        #get images from py bullet
+                imgl=resize(rgbImg[:,:,:3],1/resize_fact)#inly interested in rgb
+                #print('===',imgl.shape)
+
+                #second camera
+                if not mono:
+                    #VM = pb.computeViewMatrixFromYawPitchRoll((px,py,-pz),1.0,-yawd,pitchd,rolld,2)
+                    VM=translateM(VM_center,-baseline/2,camfwd,0.0)#left camera 0.2 for left 
+                    PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
+                    width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
+                        width=w, 
+                        height=h,
+                        viewMatrix=VM,
+                        projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL)
+                    imgr=resize(rgbImg[:,:,:3],1/resize_fact) #todo...
                         
 
             if cvshow:
@@ -186,23 +194,25 @@ def main():
                 cv2.imshow('l',imgls)
                 cv2.imshow('r',imgrs)
                 cv2.waitKey(1)
-            if mono:
-                zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),imgl.tostring()])
-            else:
-                zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),imgl.tostring(),imgr.tostring()])
+            if 1:
+                if mono:
+                    zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),imgl.tostring()])
+                else:
+                    zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),imgl.tostring(),imgr.tostring()])
             time.sleep(0.001) 
             zmq_pub.send_multipart([zmq_topics.topic_stereo_camera_ts,pickle.dumps((frame_cnt,time.time()))]) #for sync
                 
             #get depth image
-            depthImg=depthImg[::4,::4]
-            min_range=depthImg.min() 
-            #import pdb;pdb.set_trace()
+            if 1:
+                depthImg=depthImg[::4,::4]
+                min_range=depthImg.min() 
+                #import pdb;pdb.set_trace()
 
-            img_show=(depthImg/10.0).clip(0,255).astype('uint8')
-            depthImg[depthImg>5000]=np.nan
-            max_range=np.nanmax(depthImg)
-            #print('sonar::',min_range,max_range)
-            pub_sonar.send_multipart([zmq_topics.topic_sonar,pickle.dumps([min_range,max_range])])
+                img_show=(depthImg/10.0).clip(0,255).astype('uint8')
+                depthImg[depthImg>5000]=np.nan
+                max_range=np.nanmax(depthImg)
+                #print('sonar::',min_range,max_range)
+                pub_sonar.send_multipart([zmq_topics.topic_sonar,pickle.dumps([min_range,max_range])])
 
             if cvshow:
                 cv2.imshow('depth',img_show)
@@ -228,6 +238,7 @@ def main():
                     u3*cos(q4)*cos(q5) - u4*sin(q5))
             pub_imu.send_multipart([zmq_topics.topic_imu,pickle.dumps(imu)])
             pub_depth.send_multipart([zmq_topics.topic_depth,pickle.dumps({'ts':tic,'depth':curr_q[2]})])
+            print('image cycle took',time.time()-image_cycle)
 
 
         time.sleep(0.010)
