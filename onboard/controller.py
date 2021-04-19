@@ -69,6 +69,8 @@ async def recv_and_process():
                         togle_mode('RZ_HOLD')
                     if jm.cam_calib_event():
                         togle_mode('CAM_CALIB')
+                    if jm.image_rect_event():
+                        togle_mode('RECT')
                     if jm.arm_event():
                         system_state['arm']=not system_state['arm']
                         if not system_state['arm']:

@@ -24,8 +24,10 @@ class Joy_map:
         _green = 0 #X /rkeys down
 
     if jtype=='xbox':
+        _left_stick_click=9
         _left_stick_fwd_bak=1
         _left_stick_right_left=0
+        _right_stick_click=10
         _right_stick_fwd_bak=4
         _right_stick_left_right=3
         _left_shift=4 #left shift
@@ -58,7 +60,7 @@ class Joy_map:
 
     def __test_togle(self,b):
         return self.buttons[b]==1 and self.prev_buttons[b]==0
-
+       
     def __left_shift(self):
         return self.buttons[self._left_shift]
     
@@ -93,7 +95,10 @@ class Joy_map:
         return self.__test_togle(self._blue) and self.__left_shift()
 
     def cam_calib_event(self):
-        return self.__test_togle(self._green) and self.__right_shift()
+        return self.__test_togle(self._right_stick_click) and self.__right_shift()
+
+    def image_rect_event(self):
+        return self.__test_togle(self._right_stick_click) and not self.__right_shift()
     
     def track_lock_event(self):
         return self.__test_togle(self._green) and self.__left_shift()

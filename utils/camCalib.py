@@ -78,13 +78,15 @@ class Calibrator():
         return mtx, dist, newcameramtx, roi, error
 
     def RunStereoCalibration(self, calIdxStep=1):
+        if len(self.objPnts) == 0:
+            return 0
         print("Calibrating on {} imgs...".format(len(self.imgPnts_l[::calIdxStep])))
         print("Left:")
         mtx_l, dist_l, newcameramtx_l, roi_l, err_l = self.CalibMono(self.imgPnts_l[::calIdxStep], self.objPnts[::calIdxStep])
         print("Right:")
         mtx_r, dist_r, newcameramtx_r, roi_r, err_r = self.CalibMono(self.imgPnts_r[::calIdxStep], self.objPnts[::calIdxStep])
 
-        # cv2.CALIB_RATIONAL_MODEL + cv2.CALIB_FIX_INTRINSIC + cv2.CALIB_TILTED_MODEL + 
+        # cv2.CALIB_RATIONAL_MODEL + cv2.CALIB_FIX_INTRINSIC + cv2.CALIB_TILTED_MODEL +
         flags = cv2.CALIB_FIX_K3 + cv2.CALIB_FIX_K4 + cv2.CALIB_FIX_K5 + cv2.CALIB_FIX_K6
         criteria_stereo = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
         retS, new_mtxL, distL, new_mtxR, distR, Rot, Trns, Emat, Fmat = cv2.stereoCalibrate(self.objPnts[::calIdxStep],
@@ -116,11 +118,15 @@ class Calibrator():
             np.save(CALIB_DIR + "Stereo_Rot", Rot)
             np.save(CALIB_DIR + "Q", Q)
             np.save(CALIB_DIR + "ProjMatLeft", proj_mat_l)
-            np.save(CALIB_DIR + "ProjMatRight", proj_mat_r)
+            np.save(CALIB_DIR + "DistL", distL)
+            np.save(CALIB_DIR + "RectL", rect_l)
             np.save(CALIB_DIR + "Left_Cam_Matrix", new_mtxL)
             np.save(CALIB_DIR + "Left_Stereo_Map_x", self.LeftStereoMapX)
             np.save(CALIB_DIR + "Left_Stereo_Map_y", self.LeftStereoMapY)
             np.save(CALIB_DIR + "RoiL", self.RoiL)
+            np.save(CALIB_DIR + "ProjMatRight", proj_mat_r)
+            np.save(CALIB_DIR + "DistR", distR)
+            np.save(CALIB_DIR + "RectR", rect_r)
             np.save(CALIB_DIR + "Right_Cam_Matrix", new_mtxR)
             np.save(CALIB_DIR + "Right_Stereo_Map_x", self.RightStereoMapX)
             np.save(CALIB_DIR + "Right_Stereo_Map_y", self.RightStereoMapY)

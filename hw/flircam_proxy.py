@@ -462,22 +462,24 @@ def run_single_camera(cams):
                         ts=min(ts_r,ts_l)
 
                         # Stereo calibration and rectification
-                        if 1:
-                            if frame_cntl % 2 == 0:
-                                if 'CAM_CALIB' in system_state['mode']:
-                                    if calibrating_cams:
+                        if not calib_thread.is_alive():
+                            if 'CAM_CALIB' in system_state['mode']:
+                                if calibrating_cams:
+                                    if frame_cntl % 2 == 0:
                                         imgl, imgr = calibrator.AddImgPnts(imgl, imgr, drawCHKBD=True)
-                                    else:
-                                        calibrator.ResetCalibration()
-                                        calibrating_cams = True
-                                elif calibrating_cams:
-                                    calib_thread.start()
-                                    #calibrator.RunStereoCalibration(calIdxStep=1)
-                                    calibrating_cams = False
-                                if calib_thread.is_alive():
-                                    print("Calibrating...")
-                            if calibrator.ValidCalib:
-                                imgl, imgr = calibrator.StereoRectify(imgl, imgr)
+                                else:
+                                    calibrator.ResetCalibration()
+                                    calibrating_cams = True
+                            elif calibrating_cams:
+                                calib_thread = threading.Thread(target=calibrator.RunStereoCalibration, args=(1,))
+                                calib_thread.start()
+                                #calibrator.RunStereoCalibration(calIdxStep=1)
+                                calibrating_cams = False
+                        else:
+                            print("Calibrating...")
+
+                        if 'RECT' in system_state['mode'] and calibrator.ValidCalib:
+                            imgl, imgr = calibrator.StereoRectify(imgl, imgr)
 
                         if frame_cntl!=frame_cntr:
                             print('Error somthing wrong frame_cntl!=frame_cntr',frame_cntl,frame_cntr)
