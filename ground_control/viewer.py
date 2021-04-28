@@ -24,6 +24,7 @@ import web_streamer
 parser = argparse.ArgumentParser()
 parser.add_argument("--data_path", help="path for data" , default='../../data')
 parser.add_argument("--pub_data", help="publish data", action='store_true')
+parser.add_argument("--depth", help="Display Depth", action='store_true')
 args = parser.parse_args()
 
 resize_viewer = 'RESIZE_VIEWER' in os.environ
@@ -53,6 +54,20 @@ subs_socks.append(utils.subscribe([zmq_topics.topic_att_hold_yaw_pid,
 if args.pub_data:
     socket_pub = utils.publisher(zmq_topics.topic_local_route_port,'0.0.0.0')
 pub_record_state = utils.publisher(zmq_topics.topic_record_state_port)
+
+DEPTH_THESH = 10
+CALIB_DIR = "/home/uav/Desktop/CalibParamsAir/"
+leftIntrinsics = np.load(CALIB_DIR + "Left_Cam_Matrix.npy")
+rightIntrinsics = np.load(CALIB_DIR + "Right_Cam_Matrix.npy")
+stereoTrns = np.load(CALIB_DIR + "Stereo_Trans.npy")
+STEREO_FOCAL_LENGTH = leftIntrinsics[0, 0]
+STEREO_BASELINE = np.linalg.norm(stereoTrns)
+num_disparity = 128
+left_matcher = cv2.StereoBM_create(numDisparities=num_disparity, blockSize=21)
+right_matcher = cv2.ximgproc.createRightMatcher(left_matcher)
+wls_filter = cv2.ximgproc.createDisparityWLSFilter(left_matcher)
+wls_filter.setLambda(3000)
+wls_filter.setSigmaColor(2)
 
 if __name__=='__main__':
     init_gst_reader(2)
@@ -129,6 +144,15 @@ if __name__=='__main__':
             if images[0] is not None and images[1] is not None:
                 fmt_cnt_l=image_enc_dec.decode(images[0])
                 fmt_cnt_r=image_enc_dec.decode(images[1])
+                if args.depth and fmt_cnt_l % 3 == 0:
+                    gray_l = cv2.cvtColor(images[0], cv2.COLOR_BGR2GRAY)
+                    gray_r = cv2.cvtColor(images[1], cv2.COLOR_BGR2GRAY)
+                    left_disp = left_matcher.compute(gray_l, gray_r)
+                    right_disp = right_matcher.compute(gray_r, gray_l)
+                    filtered_disp = wls_filter.filter(left_disp, gray_l, disparity_map_right=right_disp).astype(np.float32)
+                    depth_img = STEREO_BASELINE * STEREO_FOCAL_LENGTH / ((filtered_disp + 16.00001) / 16)
+                    depth_img = (depth_img < DEPTH_THESH) * depth_img
+                    cv2.imshow("Depth Image", depth_img / DEPTH_THESH)
                 draw_seperate(images[0],images[1],message_dict)
                 #join[:,0:sx,:]=images[0]
                 #join[:,sx:,:]=images[1]
