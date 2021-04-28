@@ -25,9 +25,9 @@ sonar_pid={
         'initial_i':0,
         'func_in_err':None}
 
-ys=0.06
+ys=0.04
 yaw_pid={
-        'P':5*ys,
+        'P':2*ys,
         'I':0.04*ys,
         'D':0.4*ys,
         'limit':0.5,
