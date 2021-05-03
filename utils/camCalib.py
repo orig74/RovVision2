@@ -1,13 +1,42 @@
 import numpy as np
 import cv2
 import time
+import pickle
 
 
 CHKBD_DIMS = (4, 11)
 CHKBD_SCALE = 0.03
 CALIB_DIR = "/home/stereo/CalibParams/"
-
+CALIB_PKL_FN = CALIB_DIR + "calibParams.pkl"
 ALPHA = 1
+
+
+class CalibParams():
+    def __init__(self):
+        self.Trns = None
+        self.Rot = None
+        self.Q = None
+        self.LeftStereoMapX = None
+        self.LeftStereoMapY = None
+        self.NewCamMtx_l = None
+        self.proj_mat_l = None
+        self.dist_l = None
+        self.rect_l = None
+        self.roi_l = None
+        self.err_l = None
+        self.RightStereoMapX = None
+        self.RightStereoMapY = None
+        self.NewCamMtx_r = None
+        self.proj_mat_r = None
+        self.dist_r = None
+        self.rect_r = None
+        self.roi_r = None
+        self.err_r = None
+
+    def Load(self, path):
+        with open(path, 'rb') as input_f:
+            temp_d = pickle.load(input_f)
+        self.__dict__.update(temp_d.__dict__)
 
 
 class Calibrator():
@@ -17,9 +46,11 @@ class Calibrator():
         self.objPnts = []
         self.imshape = None
         self.ValidCalib = False
+        self.CalibParams = CalibParams()
         self.LoadCalib()
         self.objp = np.zeros((CHKBD_DIMS[0] * CHKBD_DIMS[1], 3), np.float32)
         idx = 0
+        # For circles grid checkerboard
         for i in range(CHKBD_DIMS[1]):
             for j in range(CHKBD_DIMS[0]):
                 self.objp[idx, :] = ((i * CHKBD_SCALE, (2 * j + i % 2) * CHKBD_SCALE, 0))
@@ -27,18 +58,16 @@ class Calibrator():
         # plt.scatter(objp[:, 0], objp[:, 1], s=400, color='black')
         # plt.show()
 
-    def LoadCalib(self):
+    def LoadCalib(self, path=CALIB_PKL_FN):
         try:
-            self.LeftStereoMapX = np.load(CALIB_DIR + "Left_Stereo_Map_x.npy")
-            self.LeftStereoMapY = np.load(CALIB_DIR + "Left_Stereo_Map_y.npy")
-            self.RoiL = np.load(CALIB_DIR + "RoiL.npy")
-            self.RightStereoMapX = np.load(CALIB_DIR + "Right_Stereo_Map_x.npy")
-            self.RightStereoMapY = np.load(CALIB_DIR + "Right_Stereo_Map_y.npy")
-            self.RoiR = np.load(CALIB_DIR + "RoiR.npy")
+            self.CalibParams.Load(path)
             self.ValidCalib = True
         except:
             print("Unable to load Calib params!")
             self.ValidCalib = False
+
+    def GetParams(self):
+        return self.CalibParams
 
     def ResetCalibration(self):
         self.imgPnts_l = []
@@ -97,43 +126,41 @@ class Calibrator():
         print("Stereo Relative Rotation: {}".format(Rot))
         print("Stereo Relative Translation: {}".format(Trns))
         rectify_scale = 1
-        rect_l, rect_r, proj_mat_l, proj_mat_r, Q, self.RoiL, self.RoiR = cv2.stereoRectify(new_mtxL, distL, new_mtxR, distR, self.imshape[::-1], Rot, Trns, rectify_scale, (0, 0), alpha=ALPHA)
-        self.LeftStereoMapX, self.LeftStereoMapY = cv2.initUndistortRectifyMap(new_mtxL, distL, rect_l, proj_mat_l, self.imshape[::-1], cv2.CV_16SC2)
-        self.RightStereoMapX, self.RightStereoMapY = cv2.initUndistortRectifyMap(new_mtxR, distR, rect_r, proj_mat_r, self.imshape[::-1], cv2.CV_16SC2)
+        rect_l, rect_r, proj_mat_l, proj_mat_r, Q, RoiL, RoiR = cv2.stereoRectify(new_mtxL, distL, new_mtxR, distR, self.imshape[::-1], Rot, Trns, rectify_scale, (0, 0), alpha=ALPHA)
+        LeftStereoMapX, LeftStereoMapY = cv2.initUndistortRectifyMap(new_mtxL, distL, rect_l, proj_mat_l, self.imshape[::-1], cv2.CV_16SC2)
+        RightStereoMapX, RightStereoMapY = cv2.initUndistortRectifyMap(new_mtxR, distR, rect_r, proj_mat_r, self.imshape[::-1], cv2.CV_16SC2)
 
-        if self.RoiL[2] == 0 or self.RoiR[2] == 0 or self.RoiL[3] == 0 or self.RoiR[3] == 0:
+        if RoiL[2] == 0 or RoiR[2] == 0 or RoiL[3] == 0 or RoiR[3] == 0:
             print("Calib Failed!")
-            print(self.RoiL)
-            print(self.RoiR)
+            print(RoiL)
+            print(RoiR)
             self.LoadCalib()
         else:
             print("Saving parameters ......")
-            with open(CALIB_DIR + "calib_output.txt", 'w') as out_file:
-                out_file.write("Error Left: {}\n".format(err_l))
-                out_file.write("Stereo ROI Left: {}\n".format(self.RoiL))
-                out_file.write("Error Right: {}\n".format(err_r))
-                out_file.write("Stereo ROI Right: {}\n".format(self.RoiR))
-            out_file.close()
-            np.save(CALIB_DIR + "Stereo_Trans", Trns)
-            np.save(CALIB_DIR + "Stereo_Rot", Rot)
-            np.save(CALIB_DIR + "Q", Q)
-            np.save(CALIB_DIR + "ProjMatLeft", proj_mat_l)
-            np.save(CALIB_DIR + "DistL", distL)
-            np.save(CALIB_DIR + "RectL", rect_l)
-            np.save(CALIB_DIR + "Left_Cam_Matrix", new_mtxL)
-            np.save(CALIB_DIR + "Left_Stereo_Map_x", self.LeftStereoMapX)
-            np.save(CALIB_DIR + "Left_Stereo_Map_y", self.LeftStereoMapY)
-            np.save(CALIB_DIR + "RoiL", self.RoiL)
-            np.save(CALIB_DIR + "ProjMatRight", proj_mat_r)
-            np.save(CALIB_DIR + "DistR", distR)
-            np.save(CALIB_DIR + "RectR", rect_r)
-            np.save(CALIB_DIR + "Right_Cam_Matrix", new_mtxR)
-            np.save(CALIB_DIR + "Right_Stereo_Map_x", self.RightStereoMapX)
-            np.save(CALIB_DIR + "Right_Stereo_Map_y", self.RightStereoMapY)
-            np.save(CALIB_DIR + "RoiR", self.RoiR)
+            self.CalibParams.Trns = Trns
+            self.CalibParams.Rot = Rot
+            self.CalibParams.Q = Q
+            self.CalibParams.LeftStereoMapX = LeftStereoMapX
+            self.CalibParams.LeftStereoMapY = LeftStereoMapY
+            self.CalibParams.NewCamMtx_l = new_mtxL
+            self.CalibParams.proj_mat_l = proj_mat_l
+            self.CalibParams.dist_l = distL
+            self.CalibParams.rect_l = rect_l
+            self.CalibParams.roi_l = RoiL
+            self.CalibParams.err_l = err_l
+            self.CalibParams.RightStereoMapX = RightStereoMapX
+            self.CalibParams.RightStereoMapY = RightStereoMapY
+            self.CalibParams.NewCamMtx_r = new_mtxR
+            self.CalibParams.proj_mat_r = proj_mat_r
+            self.CalibParams.dist_r = distR
+            self.CalibParams.rect_r = rect_r
+            self.CalibParams.roi_r = RoiR
+            self.CalibParams.err_r = err_r
+            with open(CALIB_PKL_FN, 'wb') as output_f:
+                pickle.dump(self.CalibParams, output_f, pickle.HIGHEST_PROTOCOL)
             self.ValidCalib = True
 
     def StereoRectify(self, l_img, r_img):
-        l_img_sr = cv2.remap(l_img, self.LeftStereoMapX, self.LeftStereoMapY, cv2.INTER_LINEAR, cv2.BORDER_CONSTANT, 0)
-        r_img_sr = cv2.remap(r_img, self.RightStereoMapX, self.RightStereoMapY, cv2.INTER_LINEAR, cv2.BORDER_CONSTANT, 0)
+        l_img_sr = cv2.remap(l_img, self.CalibParams.LeftStereoMapX, self.CalibParams.LeftStereoMapY, cv2.INTER_LINEAR, cv2.BORDER_CONSTANT, 0)
+        r_img_sr = cv2.remap(r_img, self.CalibParams.RightStereoMapX, self.CalibParams.RightStereoMapY, cv2.INTER_LINEAR, cv2.BORDER_CONSTANT, 0)
         return l_img_sr, r_img_sr

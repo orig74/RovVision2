@@ -29,6 +29,7 @@ subs_socks.append( utils.subscribe([ zmq_topics.topic_record_state ],zmq_topics.
 subs_socks.append(utils.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
 
 socket_pub = utils.publisher(zmq_topics.topic_camera_port)
+socket_calib_pub = utils.publisher(zmq_topics.topic_camera_calib_port)
 
 calibrator = camCalib.Calibrator()
 
@@ -473,10 +474,12 @@ def run_single_camera(cams):
                             elif calibrating_cams:
                                 calib_thread = threading.Thread(target=calibrator.RunStereoCalibration, args=(1,))
                                 calib_thread.start()
-                                #calibrator.RunStereoCalibration(calIdxStep=1)
                                 calibrating_cams = False
                         else:
                             print("Calibrating...")
+
+                        if frame_cntl % 100 == 0:
+                            socket_calib_pub.send_multipart([zmq_topics.topic_stereo_camera_calib,pickle.dumps((calibrator.GetParams()))])
 
                         if 'RECT' in system_state['mode'] and calibrator.ValidCalib:
                             imgl, imgr = calibrator.StereoRectify(imgl, imgr)

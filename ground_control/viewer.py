@@ -20,6 +20,7 @@ from annotations import draw,draw_seperate,draw_mono
 import zmq_wrapper as utils
 import image_enc_dec
 import web_streamer
+import camCalib as CC
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--data_path", help="path for data" , default='../../data')
@@ -44,6 +45,7 @@ subs_socks.append(utils.subscribe([zmq_topics.topic_tracker], zmq_topics.topic_t
 subs_socks.append(utils.subscribe([zmq_topics.topic_volt], zmq_topics.topic_volt_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_hw_stats], zmq_topics.topic_hw_stats_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_gps], zmq_topics.topic_gps_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_stereo_camera_calib], zmq_topics.topic_camera_calib_port))
 
 subs_socks.append(utils.subscribe([zmq_topics.topic_pos_hold_pid_fmt%i for i in range(3)], zmq_topics.topic_pos_hold_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_att_hold_yaw_pid,
@@ -56,10 +58,12 @@ if args.pub_data:
 pub_record_state = utils.publisher(zmq_topics.topic_record_state_port)
 
 DEPTH_THESH = 10
-CALIB_DIR = "/home/uav/Desktop/CalibParamsAir/"
-leftIntrinsics = np.load(CALIB_DIR + "Left_Cam_Matrix.npy")
-rightIntrinsics = np.load(CALIB_DIR + "Right_Cam_Matrix.npy")
-stereoTrns = np.load(CALIB_DIR + "Stereo_Trans.npy")
+CALIB_PATH = "/home/uav/Desktop/CalibParams/calibParamsAir.pkl"
+rectifier = CC.CalibParams()
+rectifier.Load(CALIB_PATH)
+leftIntrinsics = rectifier.proj_mat_l # np.load(CALIB_DIR + "Left_Cam_Matrix.npy")
+rightIntrinsics = rectifier.proj_mat_r #np.load(CALIB_DIR + "Right_Cam_Matrix.npy")
+stereoTrns = rectifier.Trns #np.load(CALIB_DIR + "Stereo_Trans.npy")
 STEREO_FOCAL_LENGTH = leftIntrinsics[0, 0]
 STEREO_BASELINE = np.linalg.norm(stereoTrns)
 num_disparity = 128
