@@ -38,6 +38,10 @@ class CalibParams():
             temp_d = pickle.load(input_f)
         self.__dict__.update(temp_d.__dict__)
 
+    def Save(self, path):
+        with open(path, 'wb') as output_f:
+            pickle.dump(self, output_f, pickle.HIGHEST_PROTOCOL)
+
 
 class Calibrator():
     def __init__(self):
@@ -156,8 +160,7 @@ class Calibrator():
             self.CalibParams.rect_r = rect_r
             self.CalibParams.roi_r = RoiR
             self.CalibParams.err_r = err_r
-            with open(CALIB_PKL_FN, 'wb') as output_f:
-                pickle.dump(self.CalibParams, output_f, pickle.HIGHEST_PROTOCOL)
+            self.CalibParams.Save(CALIB_PKL_FN)
             self.ValidCalib = True
 
     def StereoRectify(self, l_img, r_img):
