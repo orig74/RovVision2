@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import time
 import pickle
-
+import config
 
 CHKBD_DIMS = (4, 11)
 CHKBD_SCALE = 0.03
@@ -16,16 +16,12 @@ class CalibParams():
         self.Trns = None
         self.Rot = None
         self.Q = None
-        self.LeftStereoMapX = None
-        self.LeftStereoMapY = None
         self.NewCamMtx_l = None
         self.proj_mat_l = None
         self.dist_l = None
         self.rect_l = None
         self.roi_l = None
         self.err_l = None
-        self.RightStereoMapX = None
-        self.RightStereoMapY = None
         self.NewCamMtx_r = None
         self.proj_mat_r = None
         self.dist_r = None
@@ -40,7 +36,7 @@ class CalibParams():
 
     def Save(self, path):
         with open(path, 'wb') as output_f:
-            pickle.dump(self, output_f, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self, output_f)
 
 
 class Calibrator():
@@ -48,9 +44,14 @@ class Calibrator():
         self.imgPnts_l = []
         self.imgPnts_r = []
         self.objPnts = []
-        self.imshape = None
+        self.imshape = (config.cam_res_rgby, config.cam_res_rgbx)
         self.ValidCalib = False
+        self.ParamsUpdateFlag = True
         self.CalibParams = CalibParams()
+        self.LeftStereoMapX = None
+        self.LeftStereoMapY = None
+        self.RightStereoMapX = None
+        self.RightStereoMapY = None
         self.LoadCalib()
         self.objp = np.zeros((CHKBD_DIMS[0] * CHKBD_DIMS[1], 3), np.float32)
         idx = 0
@@ -62,12 +63,18 @@ class Calibrator():
         # plt.scatter(objp[:, 0], objp[:, 1], s=400, color='black')
         # plt.show()
 
+    def CalcStereoMaps(self):
+        self.LeftStereoMapX, self.LeftStereoMapY = cv2.initUndistortRectifyMap(self.CalibParams.NewCamMtx_l, self.CalibParams.dist_l, self.CalibParams.rect_l, self.CalibParams.proj_mat_l, self.imshape[::-1], cv2.CV_16SC2)
+        self.RightStereoMapX, self.RightStereoMapY = cv2.initUndistortRectifyMap(self.CalibParams.NewCamMtx_r, self.CalibParams.dist_r, self.CalibParams.rect_r, self.CalibParams.proj_mat_r, self.imshape[::-1], cv2.CV_16SC2)
+
     def LoadCalib(self, path=CALIB_PKL_FN):
         try:
             self.CalibParams.Load(path)
+            self.CalcStereoMaps()
+            print("Calib params loaded successfully!")
             self.ValidCalib = True
         except:
-            print("Unable to load Calib params!")
+            print("Unable to load calib params!")
             self.ValidCalib = False
 
     def GetParams(self):
@@ -82,6 +89,7 @@ class Calibrator():
         gray_l = cv2.cvtColor(l_img, cv2.COLOR_BGR2GRAY)
         gray_r = cv2.cvtColor(r_img, cv2.COLOR_BGR2GRAY)
         self.imshape = gray_r.shape[:2]
+        print(self.imshape)
         ret_l, centers_l = cv2.findCirclesGrid(gray_l, CHKBD_DIMS, flags=cv2.CALIB_CB_ASYMMETRIC_GRID)
         ret_r, centers_r = cv2.findCirclesGrid(gray_r, CHKBD_DIMS, flags=cv2.CALIB_CB_ASYMMETRIC_GRID)
         if ret_l and ret_r:
@@ -131,8 +139,6 @@ class Calibrator():
         print("Stereo Relative Translation: {}".format(Trns))
         rectify_scale = 1
         rect_l, rect_r, proj_mat_l, proj_mat_r, Q, RoiL, RoiR = cv2.stereoRectify(new_mtxL, distL, new_mtxR, distR, self.imshape[::-1], Rot, Trns, rectify_scale, (0, 0), alpha=ALPHA)
-        LeftStereoMapX, LeftStereoMapY = cv2.initUndistortRectifyMap(new_mtxL, distL, rect_l, proj_mat_l, self.imshape[::-1], cv2.CV_16SC2)
-        RightStereoMapX, RightStereoMapY = cv2.initUndistortRectifyMap(new_mtxR, distR, rect_r, proj_mat_r, self.imshape[::-1], cv2.CV_16SC2)
 
         if RoiL[2] == 0 or RoiR[2] == 0 or RoiL[3] == 0 or RoiR[3] == 0:
             print("Calib Failed!")
@@ -144,16 +150,12 @@ class Calibrator():
             self.CalibParams.Trns = Trns
             self.CalibParams.Rot = Rot
             self.CalibParams.Q = Q
-            self.CalibParams.LeftStereoMapX = LeftStereoMapX
-            self.CalibParams.LeftStereoMapY = LeftStereoMapY
             self.CalibParams.NewCamMtx_l = new_mtxL
             self.CalibParams.proj_mat_l = proj_mat_l
             self.CalibParams.dist_l = distL
             self.CalibParams.rect_l = rect_l
             self.CalibParams.roi_l = RoiL
             self.CalibParams.err_l = err_l
-            self.CalibParams.RightStereoMapX = RightStereoMapX
-            self.CalibParams.RightStereoMapY = RightStereoMapY
             self.CalibParams.NewCamMtx_r = new_mtxR
             self.CalibParams.proj_mat_r = proj_mat_r
             self.CalibParams.dist_r = distR
@@ -161,9 +163,11 @@ class Calibrator():
             self.CalibParams.roi_r = RoiR
             self.CalibParams.err_r = err_r
             self.CalibParams.Save(CALIB_PKL_FN)
+            self.CalcStereoMaps()
             self.ValidCalib = True
+            self.ParamsUpdateFlag = True
 
     def StereoRectify(self, l_img, r_img):
-        l_img_sr = cv2.remap(l_img, self.CalibParams.LeftStereoMapX, self.CalibParams.LeftStereoMapY, cv2.INTER_LINEAR, cv2.BORDER_CONSTANT, 0)
-        r_img_sr = cv2.remap(r_img, self.CalibParams.RightStereoMapX, self.CalibParams.RightStereoMapY, cv2.INTER_LINEAR, cv2.BORDER_CONSTANT, 0)
+        l_img_sr = cv2.remap(l_img, self.LeftStereoMapX, self.LeftStereoMapY, cv2.INTER_LINEAR, cv2.BORDER_CONSTANT, 0)
+        r_img_sr = cv2.remap(r_img, self.RightStereoMapX, self.RightStereoMapY, cv2.INTER_LINEAR, cv2.BORDER_CONSTANT, 0)
         return l_img_sr, r_img_sr

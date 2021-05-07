@@ -478,8 +478,9 @@ def run_single_camera(cams):
                         else:
                             print("Calibrating...")
 
-                        if frame_cntl % 50 == 0:
+                        if record_state and calibrator.ParamsUpdateFlag:
                             socket_calib_pub.send_multipart([zmq_topics.topic_stereo_camera_calib,pickle.dumps(calibrator.GetParams().__dict__)])
+                            calibrator.ParamsUpdateFlag = False
 
                         if 'RECT' in system_state['mode'] and calibrator.ValidCalib:
                             imgl, imgr = calibrator.StereoRectify(imgl, imgr)
