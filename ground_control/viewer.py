@@ -58,20 +58,16 @@ if args.pub_data:
 pub_record_state = utils.publisher(zmq_topics.topic_record_state_port)
 
 DEPTH_THESH = 10
-CALIB_PATH = "/home/uav/Desktop/CalibParams/calibParamsAir.pkl"
-rectifier = CC.CalibParams()
-rectifier.Load(CALIB_PATH)
-leftIntrinsics = rectifier.proj_mat_l # np.load(CALIB_DIR + "Left_Cam_Matrix.npy")
-rightIntrinsics = rectifier.proj_mat_r #np.load(CALIB_DIR + "Right_Cam_Matrix.npy")
-stereoTrns = rectifier.Trns #np.load(CALIB_DIR + "Stereo_Trans.npy")
-STEREO_FOCAL_LENGTH = leftIntrinsics[0, 0]
-STEREO_BASELINE = np.linalg.norm(stereoTrns)
-num_disparity = 128
-left_matcher = cv2.StereoBM_create(numDisparities=num_disparity, blockSize=21)
-right_matcher = cv2.ximgproc.createRightMatcher(left_matcher)
-wls_filter = cv2.ximgproc.createDisparityWLSFilter(left_matcher)
-wls_filter.setLambda(3000)
-wls_filter.setSigmaColor(2)
+DEPTH_MODULO = 4
+valid_calib = False
+if args.depth:
+  rectifier = CC.CalibParams()
+  num_disparity = 256
+  left_matcher = cv2.StereoBM_create(numDisparities=num_disparity, blockSize=21)
+  right_matcher = cv2.ximgproc.createRightMatcher(left_matcher)
+  wls_filter = cv2.ximgproc.createDisparityWLSFilter(left_matcher)
+  wls_filter.setLambda(1500)
+  wls_filter.setSigmaColor(1.5)
 
 if __name__=='__main__':
     init_gst_reader(2)
@@ -114,6 +110,19 @@ if __name__=='__main__':
                     pub_record_state.send_multipart([zmq_topics.topic_record_state,pickle.dumps(record_state)])
                     message_dict[zmq_topics.topic_record_state]=record_state
                 
+                if args.depth and topic==zmq_topics.topic_stereo_camera_calib:
+                  print("Camera params recieved!")
+                  try:
+                    rectifier.__dict__.update(data)
+                    leftIntrinsics = rectifier.proj_mat_l
+                    rightIntrinsics = rectifier.proj_mat_r
+                    stereoTrns = rectifier.Trns
+                    STEREO_FOCAL_LENGTH = leftIntrinsics[0, 0]
+                    STEREO_BASELINE = np.linalg.norm(stereoTrns)
+                    valid_calib = True
+                  except:
+                    print("Failed to get camera calibration")
+
                 if args.pub_data:
                     socket_pub.send_multipart([ret[0],ret[1]])
 
@@ -148,7 +157,7 @@ if __name__=='__main__':
             if images[0] is not None and images[1] is not None:
                 fmt_cnt_l=image_enc_dec.decode(images[0])
                 fmt_cnt_r=image_enc_dec.decode(images[1])
-                if args.depth and fmt_cnt_l % 3 == 0:
+                if args.depth and fmt_cnt_l % DEPTH_MODULO == 0 and valid_calib:
                     gray_l = cv2.cvtColor(images[0], cv2.COLOR_BGR2GRAY)
                     gray_r = cv2.cvtColor(images[1], cv2.COLOR_BGR2GRAY)
                     left_disp = left_matcher.compute(gray_l, gray_r)

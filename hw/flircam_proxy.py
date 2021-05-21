@@ -501,6 +501,7 @@ def run_single_camera(cams):
                             if not record_state and new_record_state_str:
                                 #switch to recording
                                 os.mkdir('../../data/'+new_record_state_str)
+                                calibrator.ParamsUpdateFlag = True
                             record_state=new_record_state_str
                         if topic==zmq_topics.topic_system_state:
                             _,system_state=data
