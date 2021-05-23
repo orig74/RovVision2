@@ -27,10 +27,10 @@ sonar_pid={
 
 ys=0.04
 yaw_pid={
-        'P':0.3*ys,
-        'I':0.01*ys,
-        'D':0*ys,
-        'limit':0.2,
+        'P':2*ys,
+        'I':0.04*ys,
+        'D':0.4*ys,
+        'limit':0.5,
         'step_limit':0.05,
         'i_limit':0.1,
         'FF':0,
@@ -38,11 +38,11 @@ yaw_pid={
         'initial_i':0,
         'func_in_err':None}
 
-rs=0.001
+rs=0.01
 roll_pid={
-        'P':0.5*rs,
-        'I':0*rs,
-        'D':0*rs,
+        'P':1*rs,
+        'I':0.02*rs,
+        'D':0.2*rs,
         'limit':0.2,
         'step_limit':0.05,
         'i_limit':0.1,
@@ -51,7 +51,7 @@ roll_pid={
         'initial_i':0,
         'func_in_err':None}
 
-ps=0.003
+ps=0.006
 pitch_pid={
         'P':1*ps,
         'I':0.1*ps,

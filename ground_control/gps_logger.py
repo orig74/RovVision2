@@ -43,19 +43,26 @@ if __name__=='__main__':
     while 1:
         time.sleep(0.25)
 
-        socks = zmq.select(subs_socks, [], [], 0.005)[0]
-        for sock in socks:
-            ret = sock.recv_multipart()
-            topic, data = ret[0], pickle.loads(ret[1])
+        try:
+            socks = zmq.select(subs_socks, [], [], 0.005)[0]
+            for sock in socks:
+                ret = sock.recv_multipart()
+                topic, data = ret[0], pickle.loads(ret[1])
 
-            if topic == zmq_topics.topic_depth:
-                d_ts, depth = data['ts'], data['depth']
-                set_external(depth, 20)
-    
-        acoustic_data=get_data("{}/api/v1/position/acoustic/filtered".format(GPS_STATIC_URL))
-        global_data=get_data("{}/api/v1/position/global".format(GPS_STATIC_URL))
-        print(global_data)
+                if topic == zmq_topics.topic_depth:
+                    d_ts, depth, temp = data['ts'], data['depth'], data['temp']
+                    set_external(depth, temp)
+        
+            acoustic_filtered_data=get_data("{}/api/v1/position/acoustic/filtered".format(GPS_STATIC_URL))
+            acoustic_raw_data=get_data("{}/api/v1/position/acoustic/raw".format(GPS_STATIC_URL))
+            global_locator_data=get_data("{}/api/v1/position/global".format(GPS_STATIC_URL))
+            global_master_data=get_data("{}/api/v1/position/master".format(GPS_STATIC_URL))
+            print(global_locator_data)
 
-        if global_data != None and acoustic_data != None:
-            gps_pub_data = {'ts': time.time(), 'gps': global_data, 'acoustic': acoustic_data}
-            pub_sock.send_multipart([zmq_topics.topic_gps, pickle.dumps(gps_pub_data, -1)])
+            if acoustic_filtered_data != None and acoustic_raw_data != None and global_locator_data != None and global_master_data != None:
+                gps_pub_data = {'ts': time.time(), 'gps_master': global_master_data, 'gps_locator': global_locator_data,
+                                                   'acoustic_raw': acoustic_raw_data, 'acoustic_filtered': acoustic_filtered_data}
+                pub_sock.send_multipart([zmq_topics.topic_gps, pickle.dumps(gps_pub_data, -1)])
+        except:
+            print("Error...")
+            time.sleep(5)
