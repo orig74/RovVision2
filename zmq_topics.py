@@ -17,6 +17,9 @@ topic_stereo_camera=b'topic_stereo_camera'
 topic_stereo_camera_ts=b'topic_stereo_camera_ts'
 topic_camera_port=7789
 
+topic_stereo_camera_calib=b'topic_stereo_camera_calib'
+topic_camera_calib_port=8890
+
 topic_button = b'joy_button'
 topic_axes = b'joy_axes'
 topic_hat = b'joy_hat'

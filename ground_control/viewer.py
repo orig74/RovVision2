@@ -22,10 +22,12 @@ from annotations import draw,draw_seperate,draw_mono
 import zmq_wrapper as utils
 import image_enc_dec
 import web_streamer
+import camCalib as CC
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--data_path", help="path for data" , default='../../data')
 parser.add_argument("--pub_data", help="publish data", action='store_true')
+parser.add_argument("--depth", help="Display Depth", action='store_true')
 args = parser.parse_args()
 
 resize_viewer = 'RESIZE_VIEWER' in os.environ
@@ -46,6 +48,7 @@ subs_socks.append(utils.subscribe([zmq_topics.topic_tracker], zmq_topics.topic_t
 subs_socks.append(utils.subscribe([zmq_topics.topic_volt], zmq_topics.topic_volt_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_hw_stats], zmq_topics.topic_hw_stats_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_gps], zmq_topics.topic_gps_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_stereo_camera_calib], zmq_topics.topic_camera_calib_port))
 
 subs_socks.append(utils.subscribe([zmq_topics.topic_pos_hold_pid_fmt%i for i in range(3)], zmq_topics.topic_pos_hold_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_att_hold_yaw_pid,
@@ -57,6 +60,18 @@ sub_vid=utils.subscribe([zmq_topics.topic_stereo_camera], zmq_topics.topic_camer
 if args.pub_data:
     socket_pub = utils.publisher(zmq_topics.topic_local_route_port,'0.0.0.0')
 pub_record_state = utils.publisher(zmq_topics.topic_record_state_port)
+
+DEPTH_THESH = 10
+DEPTH_MODULO = 4
+valid_calib = False
+if args.depth:
+  rectifier = CC.CalibParams()
+  num_disparity = 256
+  left_matcher = cv2.StereoBM_create(numDisparities=num_disparity, blockSize=21)
+  right_matcher = cv2.ximgproc.createRightMatcher(left_matcher)
+  wls_filter = cv2.ximgproc.createDisparityWLSFilter(left_matcher)
+  wls_filter.setLambda(1500)
+  wls_filter.setSigmaColor(1.5)
 
 if __name__=='__main__':
     if not vid_zmq:
@@ -120,6 +135,19 @@ if __name__=='__main__':
                     pub_record_state.send_multipart([zmq_topics.topic_record_state,pickle.dumps(record_state)])
                     message_dict[zmq_topics.topic_record_state]=record_state
                 
+                if args.depth and topic==zmq_topics.topic_stereo_camera_calib:
+                  print("Camera params recieved!")
+                  try:
+                    rectifier.__dict__.update(data)
+                    leftIntrinsics = rectifier.proj_mat_l
+                    rightIntrinsics = rectifier.proj_mat_r
+                    stereoTrns = rectifier.Trns
+                    STEREO_FOCAL_LENGTH = leftIntrinsics[0, 0]
+                    STEREO_BASELINE = np.linalg.norm(stereoTrns)
+                    valid_calib = True
+                  except:
+                    print("Failed to get camera calibration")
+
                 if args.pub_data:
                     socket_pub.send_multipart([ret[0],ret[1]])
 
@@ -155,11 +183,20 @@ if __name__=='__main__':
             if images[0] is not None and images[1] is not None:
                 fmt_cnt_l=image_enc_dec.decode(images[0])
                 fmt_cnt_r=image_enc_dec.decode(images[1])
+                if args.depth and fmt_cnt_l % DEPTH_MODULO == 0 and valid_calib:
+                    gray_l = cv2.cvtColor(images[0], cv2.COLOR_BGR2GRAY)
+                    gray_r = cv2.cvtColor(images[1], cv2.COLOR_BGR2GRAY)
+                    left_disp = left_matcher.compute(gray_l, gray_r)
+                    right_disp = right_matcher.compute(gray_r, gray_l)
+                    filtered_disp = wls_filter.filter(left_disp, gray_l, disparity_map_right=right_disp).astype(np.float32)
+                    depth_img = STEREO_BASELINE * STEREO_FOCAL_LENGTH / ((filtered_disp + 16.00001) / 16)
+                    depth_img = (depth_img < DEPTH_THESH) * depth_img
+                    cv2.imshow("Depth Image", depth_img / DEPTH_THESH)
                 draw_seperate(images[0],images[1],message_dict)
                 #join[:,0:sx,:]=images[0]
                 #join[:,sx:,:]=images[1]
                 join[bmargy//2:-bmargy//2,bmargx:sx+bmargx,:]=images[0]
-                join[bmargy//2:-bmargy//2,sx+bmargx:,:]=images[1] # + 0.5*images[0]
+                join[bmargy//2:-bmargy//2,sx+bmargx:,:]= images[1] #+ 0.5*images[0]
                 images=[None,None]
                 draw(join,message_dict,fmt_cnt_l,fmt_cnt_r)
         else:
