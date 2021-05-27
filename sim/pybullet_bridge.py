@@ -145,16 +145,18 @@ def main():
             #print('====',yaw,pitch,roll)
             #first camera
             yawd,pitchd,rolld=ps['yaw'],ps['roll'],ps['pitch']
-            VM = pb.computeViewMatrixFromYawPitchRoll((py,px,-pz),1.0,-yawd,pitchd,rolld,2)
-            #if not mono:
-            #    VM=translateM(VM,-0.0,0,0.0)#left camera 0.2 for left 
+            VM = pb.computeViewMatrixFromYawPitchRoll((py,px,-pz),-0.1,-yawd,pitchd,rolld,2)
+            if not mono:
+                VML=translateM(VM,0.1,0,0.0)#left camera 0.2 for left 
+            else:
+                VML=VM
             PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
             w = int(config.cam_res_rgbx*resize_fact)
             h = int(config.cam_res_rgby*resize_fact)
             width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
                 width=w, 
                 height=h,
-                viewMatrix=VM,
+                viewMatrix=VML,
                 projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL)
                     #get images from py bullet
             imgl=resize(rgbImg[:,:,:3],1/resize_fact)#inly interested in rgb
@@ -162,13 +164,13 @@ def main():
 
             #second camera
             if not mono:
-                VM = pb.computeViewMatrixFromYawPitchRoll((py,px,-pz),1.0,-yawd,pitchd,rolld,2)
-                VM=translateM(VM,-0.20,0.00,0.0)#left camera 0.2 for left 
+                #VM = pb.computeViewMatrixFromYawPitchRoll((py,px,-pz),1.0,-yawd,pitchd,rolld,2)
+                VMR=translateM(VM,-0.10,0.00,0.0)#left camera 0.2 for left 
                 PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
                 width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
                     width=w, 
                     height=h,
-                    viewMatrix=VM,
+                    viewMatrix=VMR,
                     projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL)
                 imgr=resize(rgbImg[:,:,:3],1/resize_fact) #todo...
                         

@@ -146,7 +146,6 @@ while not done:
                 axes_vals.append(axis)
             if axes==6: #add hat to axes to maintain compatibility
                 axes_vals+=[float(hat[0]),float(hat[1])]
-
             axes_vals = []
             for i in range(axes):
                 axis = joystick.get_axis(i)
@@ -168,7 +167,6 @@ while not done:
     if cnt%100==0:
         print(cnt,'axes_vals=',','.join(['{:4.3f}'.format(i) for i in axes_vals]))
     #mixng axes
-    if len(axes_vals):
     if axes_vals:
         pub(zmq_topics.topic_axes,pickle.dumps(axes_vals,-1))
     #print('{:> 5} P {:> 5.3f} S {:> 5.3f} V {:> 5.3f}'.format(cnt,port,starboard,vertical),end='\r')
