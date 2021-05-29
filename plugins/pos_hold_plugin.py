@@ -58,6 +58,9 @@ async def recv_and_process():
                             ts=time.time()
                             debug_pid = {'P':pids[ind].p,'I':pids[ind].i,'D':pids[ind].d,'C':cmds[ind],'T':target_pos[ind],'N':x, 'R':v, 'TS':ts}
                             pub_sock.send_multipart([zmq_topics.topic_pos_hold_pid_fmt%ind, pickle.dumps(debug_pid,-1)])
+                        else: #rest pids if not tracked!
+                            pids[ind] = PID(**pos_pids[ind])
+                            target_pos[ind]=0 if ind==1 else x
                 
                 thruster_cmd = mixer.mix(cmds[2],cmds[1],cmds[0],0,0,0,0,0)
                 thrusters_source.send_pyobj(['pos',time.time(),thruster_cmd])
