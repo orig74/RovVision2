@@ -23,6 +23,35 @@
        orient="auto"
        refY="0"
        refX="0"
+       id="marker1316"
+       style="overflow:visible"
+       inkscape:isstock="true">
+      <path
+         id="path1314"
+         style="fill:#00b400;fill-opacity:1;fill-rule:evenodd;stroke:#00b400;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)" />
+    </marker>
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible"
+       id="marker1222"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:collect="always">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#00b400;fill-opacity:1;fill-rule:evenodd;stroke:#00b400;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path1220" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow2Lend"
+       orient="auto"
+       refY="0"
+       refX="0"
        id="marker8088"
        style="overflow:visible"
        inkscape:isstock="true">
@@ -58,7 +87,7 @@
        inkscape:collect="always">
       <path
          id="path7349"
-         style="fill:#00ff00;fill-opacity:1;fill-rule:evenodd;stroke:#00ff00;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         style="fill:#00b400;fill-opacity:1;fill-rule:evenodd;stroke:#00b400;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
          d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
          transform="matrix(-1.1,0,0,-1.1,-1.1,0)" />
     </marker>
@@ -434,7 +463,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.5018555"
-     inkscape:cx="771.34509"
+     inkscape:cx="627.85592"
      inkscape:cy="612.62241"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
@@ -614,16 +643,16 @@
          id="flowPara5199"
          style="font-size:40px;line-height:1.25"> </flowPara></flowRoot>    <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.85060024px;line-height:0%;font-family:cmr10;-inkscape-font-specification:'cmr10, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.07088006px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="94.10112"
-       y="116.8175"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16.57178497px;line-height:0%;font-family:cmr10;-inkscape-font-specification:'cmr10, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.38097787px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="91.125984"
+       y="117.34554"
        id="text8436"
-       transform="matrix(0.7697257,0.00549052,-0.00228554,1.2991478,0,0)"><tspan
+       transform="matrix(0.7734596,0.00546401,-0.00229663,1.2928761,0,0)"><tspan
          sodipodi:role="line"
          id="tspan9359"
-         x="94.10112"
-         y="116.8175"
-         style="font-size:3.32918px;line-height:1.25;stroke-width:1.07088006px">topic_stereo_camera</tspan></text>
+         x="91.125984"
+         y="117.34554"
+         style="font-size:4.29322004px;line-height:1.25;stroke-width:1.38097787px">topic_stereo_camera</tspan></text>
     <flowRoot
        xml:space="preserve"
        id="flowRoot12040"
@@ -735,6 +764,58 @@
            x="39.649227"
            id="tspan5091"
            sodipodi:role="line">flircam_proxy.py  </tspan></text>
+    </g>
+    <g
+       id="g8297"
+       transform="translate(-12.7)">
+      <use
+         height="100%"
+         width="100%"
+         y="0"
+         x="0"
+         xlink:href="#Process"
+         style="fill:#aaccee;stroke:#000000"
+         transform="matrix(1.1649043,0,0,0.45349449,293.67107,270.32148)"
+         id="use5065" />
+      <text
+         transform="scale(0.9782521,1.0222314)"
+         id="text5079"
+         y="275.03656"
+         x="308.94669"
+         style="font-style:normal;font-weight:normal;font-size:8.96172333px;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.15444411px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         xml:space="preserve"><tspan
+           style="font-size:6.17777157px;line-height:1.25;stroke-width:0.15444411px"
+           y="275.03656"
+           x="308.94669"
+           id="tspan5077"
+           sodipodi:role="line">joy_rov.py</tspan></text>
+      <use
+         height="100%"
+         width="100%"
+         y="0"
+         x="0"
+         transform="matrix(1.3220409,0,0,0.33608635,289.97415,291.1677)"
+         xlink:href="#AuxillaryOp"
+         style="fill:#c80000;fill-opacity:1;stroke:#000000"
+         id="use11508-6" />
+      <text
+         transform="scale(1.1477416,0.87127625)"
+         id="text8994-1"
+         y="344.07654"
+         x="266.08203"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.02606392px;line-height:0%;font-family:cmr10;-inkscape-font-specification:'cmr10, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.83550537px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         xml:space="preserve"><tspan
+           y="344.07654"
+           x="266.08203"
+           id="tspan12237"
+           sodipodi:role="line"
+           style="font-size:5.2656641px;line-height:1.25;stroke-width:0.83550537px">Joystick</tspan></text>
+      <path
+         inkscape:connector-curvature="0"
+         inkscape:connector-type="polyline"
+         id="path6563"
+         d="M 327.66,294.28 V 284.12"
+         style="fill:none;fill-rule:evenodd;stroke:#0000ff;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
     </g>
     <g
        id="g12048"
@@ -1332,7 +1413,7 @@
        inkscape:connector-curvature="0" />
     <path
        style="display:inline;fill:none;fill-rule:evenodd;stroke:#ff0000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 127,174.9 0,53.34"
+       d="m 127,174.9 v 53.34"
        id="path5010"
        inkscape:connector-type="polyline"
        inkscape:connector-curvature="0" />
@@ -1349,7 +1430,7 @@
        inkscape:connector-type="polyline"
        inkscape:connector-curvature="0" />
     <path
-       style="fill:none;fill-rule:evenodd;stroke:#00b400;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       style="fill:none;fill-rule:evenodd;stroke:#00b400;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#marker1316)"
        d="M 91.439999,213 H 170.18"
        id="path5470"
        inkscape:connector-type="polyline"
@@ -1367,63 +1448,11 @@
          y="-150.25789"
          style="stroke-width:0.09583504">Thrusters sink</tspan></text>
     <path
-       style="fill:none;fill-rule:evenodd;stroke:#00b400;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       style="fill:none;fill-rule:evenodd;stroke:#00b400;stroke-width:0.26499999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker1222)"
        d="M 68.579999,154.58 H 106.68"
        id="path5476"
        inkscape:connector-type="polyline"
        inkscape:connector-curvature="0" />
-    <g
-       id="g8297"
-       transform="translate(-12.7)">
-      <use
-         height="100%"
-         width="100%"
-         y="0"
-         x="0"
-         xlink:href="#Process"
-         style="fill:#aaccee;stroke:#000000"
-         transform="matrix(1.1649043,0,0,0.45349449,293.67107,270.32148)"
-         id="use5065" />
-      <text
-         transform="scale(0.9782521,1.0222314)"
-         id="text5079"
-         y="275.03656"
-         x="308.94669"
-         style="font-style:normal;font-weight:normal;font-size:8.96172333px;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.15444411px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         xml:space="preserve"><tspan
-           style="font-size:6.17777157px;line-height:1.25;stroke-width:0.15444411px"
-           y="275.03656"
-           x="308.94669"
-           id="tspan5077"
-           sodipodi:role="line">joy_rov.py</tspan></text>
-      <use
-         height="100%"
-         width="100%"
-         y="0"
-         x="0"
-         transform="matrix(1.3220409,0,0,0.33608635,289.97415,291.1677)"
-         xlink:href="#AuxillaryOp"
-         style="fill:#c80000;fill-opacity:1;stroke:#000000"
-         id="use11508-6" />
-      <text
-         transform="scale(1.1477416,0.87127625)"
-         id="text8994-1"
-         y="344.07654"
-         x="266.08203"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.02606392px;line-height:0%;font-family:cmr10;-inkscape-font-specification:'cmr10, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.83550537px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         xml:space="preserve"><tspan
-           y="344.07654"
-           x="266.08203"
-           id="tspan12237"
-           sodipodi:role="line"
-           style="font-size:5.2656641px;line-height:1.25;stroke-width:0.83550537px">Joystick</tspan></text>
-      <path
-         inkscape:connector-curvature="0"
-         inkscape:connector-type="polyline"
-         id="path6563"
-         d="M 327.66,294.28 V 284.12"
-         style="fill:none;fill-rule:evenodd;stroke:#0000ff;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
-    </g>
     <path
        style="display:inline;fill:none;fill-rule:evenodd;stroke:#006400;stroke-width:0.23406409px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="M 284.48,279.04 H 238.76"
@@ -1498,16 +1527,16 @@
        inkscape:connector-curvature="0" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:2.98769927px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.07469248"
-       x="-300.87302"
-       y="57.368935"
+       style="font-style:normal;font-weight:normal;font-size:4.07693672px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.10192341"
+       x="-324.99371"
+       y="52.244152"
        id="text7987"
-       transform="matrix(-0.01459666,-0.81122792,1.2323002,-0.02217313,0,0)"><tspan
+       transform="matrix(-0.0157795,-0.75041755,1.3321601,-0.02051101,0,0)"><tspan
          sodipodi:role="line"
          id="tspan7985"
-         x="-300.87302"
-         y="57.368935"
-         style="stroke-width:0.07469248">topic_thrusters_comand</tspan></text>
+         x="-324.99371"
+         y="52.244152"
+         style="stroke-width:0.10192341">topic_thrusters_comand</tspan></text>
     <g
        id="g12844-1-7"
        transform="matrix(1.0334045,0,0,0.41340466,-328.87352,226.59872)">
@@ -1607,6 +1636,24 @@
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 20.32,286.66 h 2.54"
        id="path8439"
+       inkscape:connector-type="polyline"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.6884594px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.09221148"
+       x="197.728"
+       y="222.74847"
+       id="text1146"
+       transform="scale(0.95855203,1.0432402)"><tspan
+         sodipodi:role="line"
+         id="tspan1144"
+         x="197.728"
+         y="222.74847"
+         style="stroke-width:0.09221148">compressed video stream</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 50.799999,291.74 v 2.54"
+       id="path1408"
        inkscape:connector-type="polyline"
        inkscape:connector-curvature="0" />
   </g>
