@@ -24,6 +24,7 @@ async def recv_and_process():
 
     jm=Joy_map()
     joy=None
+    lost_track=False
 
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.005)[0]
@@ -43,13 +44,16 @@ async def recv_and_process():
                     #mapping from track image coords to world coords
                     imap = ['dx_f','dy_f','dz_f'][ind]
                     pid_states=['RX_HOLD','RY_HOLD','RZ_HOLD']
+                    #if ind==0:
+                    #    print('----',lost_track,ind,target_pos[ind])
                     if pid_states[ind] not in system_state['mode'] \
-                            or pids[ind] is None:
+                            or pids[ind] is None or lost_track:
                         pids[ind] = PID(**pos_pids[ind])
                         if td['valid'] and imap in td:
                             x,_ = td[imap]
                             #we want it to return to 0 for the y lock
                             target_pos[ind]=0 if ind==1 else x
+                            lost_track=False
                     else:
                         if td['valid'] and imap in td:
                             x,v = td[imap]
@@ -58,9 +62,9 @@ async def recv_and_process():
                             ts=time.time()
                             debug_pid = {'P':pids[ind].p,'I':pids[ind].i,'D':pids[ind].d,'C':cmds[ind],'T':target_pos[ind],'N':x, 'R':v, 'TS':ts}
                             pub_sock.send_multipart([zmq_topics.topic_pos_hold_pid_fmt%ind, pickle.dumps(debug_pid,-1)])
+                            lost_track=False
                         else: #rest pids if not tracked!
-                            pids[ind] = PID(**pos_pids[ind])
-                            target_pos[ind]=0 if ind==1 else x
+                            lost_track=True
                 
                 thruster_cmd = mixer.mix(cmds[2],cmds[1],cmds[0],0,0,0,0,0)
                 thrusters_source.send_pyobj(['pos',time.time(),thruster_cmd])
