@@ -34,8 +34,8 @@ def listener():
             topic=data[0]
             frame_cnt,shape=pickle.loads(data[1])
             if topic==topic_stereo:
-                imgl=np.frombuffer(data[2],'uint8').reshape(shape)
-                imgr=np.frombuffer(data[3],'uint8').reshape(shape)
+                imgr=np.frombuffer(data[2],'uint8').reshape(shape)
+                imgl=np.frombuffer(data[3],'uint8').reshape(shape)
                     
                 ch,cw,cl = shape
                 ch = ch//2
