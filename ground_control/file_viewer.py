@@ -1,4 +1,4 @@
-# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
+# vim: tabstop=8 expandtoriab shiftwidth=4 softtabstop=4
 #
 # to copy data.pkl
 # sim:
@@ -47,6 +47,7 @@ if args.cc is not None:
 
 if args.pub_data:
     socket_pub = utils.publisher(topics.topic_local_route_port,'0.0.0.0')
+    socket_camera_pub = utils.publisher(topics.topic_camera_port,'0.0.0.0')
 
 
 base_name = os.path.basename(args.path)
@@ -146,7 +147,9 @@ if __name__=='__main__':
                 imgs_raw[i]=imgs_raw[i][:,:,::-1]
             
             if args.pub_camera:
-                socket_pub.send_multipart([b'topic_stereo_camera',pickle.dumps(images)])
+                #socket_camera_pub.send_multipart([topics.topic_stereo_camera,pickle.dumps(images)])
+                socket_camera_pub.send_multipart([topics.topic_stereo_camera,
+                    pickle.dumps([fcnt,images[0].shape]),images[0].tostring(),images[1].tostring()])
             
             draw_seperate(images[0],images[1],messages)
             #join[:,0:sx,:]=images[0]
@@ -184,6 +187,7 @@ if __name__=='__main__':
             fcnt+=1
         if k%258==ord('x'):
             cv2.imwrite('out{:08d}.png'.format(fcnt),join)
+            cv2.imwrite('l{:08d}.png'.format(fcnt),imgs_raw[0][:,:,::-1])
         if k%256==ord('s'):
             #import pdb;pdb.set_trace()
             save_sy,save_sx=join.shape[:2]
