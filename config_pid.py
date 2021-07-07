@@ -76,7 +76,7 @@ pos_pid_x={
         'step_limit':0.05,
         'i_limit':0.01,
         'FF':0,
-        'angle_deg_type':True,
+        'angle_deg_type':False,
         'initial_i':0,
         'func_in_err':None}
 sc=0.25
@@ -88,7 +88,7 @@ pos_pid_y={
         'step_limit':0.05,
         'i_limit':0.01,
         'FF':0,
-        'angle_deg_type':True,
+        'angle_deg_type':False,
         'initial_i':0,
         'func_in_err':None}
 
@@ -101,7 +101,7 @@ pos_pid_z={
         'step_limit':0.05,
         'i_limit':0.01,
         'FF':0,
-        'angle_deg_type':True,
+        'angle_deg_type':False,
         'initial_i':0,
         'func_in_err':None}
 
