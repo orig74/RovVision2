@@ -47,7 +47,7 @@ def listener():
                     imgr = imgr[ch-nh//2:ch+nh//2,cw-nw//2:cw+nw//2,:]
                     shape = imgl.shape
 
-                if 0 and cvshow:
+                if 1 and cvshow:
                     #if 'depth' in topic:
                     #    cv2.imshow(topic,img)
                     #else:

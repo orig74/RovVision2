@@ -5,17 +5,17 @@ import ue4_zmq_topics as config
 from Wrappers import phandlers as ph
 import numpy as np
 import cv2
+print('*'*500)
 
-drone_texture_names=['/Game/mycontent/bluerovstereo1','/Game/mycontent/bluerovstereo2' ]
+drone_texture_names=['/Game/mycontent/bluerovstereo2','/Game/mycontent/bluerovstereo1' ]
 #drone_texture_names=['bluerovstereo1','bluerovstereo2' ]
 
 drone_textures_depth_names=['/Game/mycontent/TextureRenderTarget2D_depth']
 #drone_textures_depth_names=['TextureRenderTarget2D_depth']
 #drone_textures_depth_names=[]
 #needed actors
-drone_actors_names=['BlueRov1']
-
-
+#drone_actors_names=['BlueRov1']
+drone_actors_names=['StaticMeshActor_1']
 context = zmq.Context()
 
 show_cv=False
@@ -89,7 +89,8 @@ def main_loop(gworld):
     print('---debug 1---')
     
     #change cameras angle
-    for cam_name in ['SceneCaptureBROV1left','SceneCaptureBROV1right']: 
+    #for cam_name in ['SceneCaptureBROV1left','SceneCaptureBROV1right']: 
+    for cam_name in ['SceneCapture2D_2','SceneCapture2D_3','SceneCapture2D_4']: 
         #ca=ph.FindActorByName(gworld,'SceneCaptureBROV1left')
         print('---debug 1.1---')
         ca=ph.FindActorByName(gworld,cam_name)

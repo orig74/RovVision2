@@ -10,8 +10,9 @@ else
 fi
 #GAME_PATH=/DroneLab/baked_games/Ocean1_packed/LinuxNoEditor/
 #GAME_PATH=/project_files/Ocean2_packed/LinuxNoEditor/
-GAME_PATH=/project_files/Ocean2_packed_2.24.3/LinuxNoEditor/
-PACKED_NAME=Ocean2
+#GAME_PATH=/project_files/Ocean2_packed_2.24.3/LinuxNoEditor/
+GAME_PATH=/project_files/Ocean3packed/Linux
+PACKED_NAME=Ocean3
 PROJECT_PATH=/home/host/projects/RovVision2
 DRONESIMLAB_PATH=../../DroneSimLab/
 SIM=
@@ -43,7 +44,7 @@ sleep 1
 
 ################## onboard part
 source run_onboard.sh
-sleep 2
+sleep 10
 
 ################## ground control part
 if [ ! -v HEADLESS ]; then

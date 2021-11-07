@@ -19,7 +19,7 @@ from rope_detect import rope_detect
 
 
 def generate_stereo_cameras():
-    return get_stereo_cameras(config.focal_length,(config.pixelwidthy,config.pixelwidthx),config.baseline,config.camera_pitch)
+    return get_stereo_cameras(config.focal_length,(config.pixelwidthx,config.pixelwidthy),config.baseline,config.camera_pitch)
 
 class StereoTrack():
     def __init__(self):
@@ -200,6 +200,7 @@ class StereoTrack():
         res['range_f']=-1
 
         t_pt = triangulate(self.proj_cams[0],self.proj_cams[1],pt_l_x,pt_l_y,pt_r_x,pt_r_y)
+        #import ipdb;ipdb.set_trace()
 
         res['range']=t_pt[0] # range in the x direction
         #res['range_z']=t_pt[2] # range in the z direction
@@ -211,7 +212,7 @@ class StereoTrack():
         dx = t_pt[0]
         dy = t_pt[1]
         dz = t_pt[2]
-        valid = valid and dx>0.1 and dx<5.0
+        valid = valid and dx>0.1 and dx<1.5
 
         if self.dx_filt is not None:
             valid = valid and abs(self.dx_filt.x-dx)<config.diff_range_valid
@@ -219,7 +220,7 @@ class StereoTrack():
             self.ref_point=(dx,dy,dz)
         
         if self.ref_point is not None:
-            dy-=self.ref_point[1]
+            #dy-=self.ref_point[1]
             dz-=self.ref_point[2]
 
         res['valid']=valid
@@ -324,7 +325,7 @@ if __name__=="__main__":
             iml,imr=images
             imls=iml.copy()
             imrs=imr.copy()
-            print(cnt,ret['dx'],ret['dy'],ret['dz']) 
+            print('====',cnt,ret['dx'],ret['dy'],ret['dz']) 
             draw_track_rects(ret,imls,imrs)
             cv2.imshow('left',imls)
             cv2.imshow('rigth',imrs)
