@@ -71,3 +71,7 @@ topic_volt_port=10102
 
 topic_hw_stats=b'topic_hw_stats'
 topic_hw_stats_port=10103
+
+topic_dvl_raw=b'topic_dvl_raw'
+topic_dvl_port=13295
+

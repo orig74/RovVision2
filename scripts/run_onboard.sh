@@ -40,5 +40,7 @@ run 1 hw flircam_proxy.py
 run 2 hw periph_gate.py
 run 3 hw vnav.py
 run 4 hw sonar.py
+run 5 hw dvl.py
+
 tmux att
 fi
