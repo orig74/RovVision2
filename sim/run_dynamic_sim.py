@@ -36,7 +36,8 @@ position_struct={}
 
 def get_next_state(curr_q,curr_u,control,dt,lamb):
     forces=control
-    u_dot_f=lamb(curr_q,curr_u,*forces).flatten()
+    currents_vector = [0,1.0,0]
+    u_dot_f=lamb(curr_q,curr_u,*forces,*currents_vector).flatten()
     next_q=curr_q+curr_u*dt
     next_u=curr_u+u_dot_f*dt
     return next_q,next_u
