@@ -135,7 +135,7 @@ def main_loop(gworld):
                 new_pos=drone_start_positions[drone_index]+np.array([position['posy'],position['posx'],-position['posz']])*100 #turn to cm
                 #print('-----',drone_index,position)
                 ph.SetActorLocation(drone_actor,new_pos)
-                ph.SetActorRotation(drone_actor,(position['roll'],position['pitch'],position['yaw']))
+                ph.SetActorRotation(drone_actor,(position['roll']+90,position['pitch'],position['yaw']))
                 positions[drone_index]=None
         #yield
         topics=[]
