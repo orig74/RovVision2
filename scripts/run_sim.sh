@@ -38,6 +38,7 @@ ENTRY_PATH=unreal_proxy/
 tmux send-keys "cd ${PROJECT_PATH}/sim" ENTER
 tmux send-keys "python3 $DRONESIMLAB_PATH/UE4PyhtonBridge/set_path.py --entry_point $ENTRY_POINT --entry_path $ENTRY_PATH --packed_game_name $PACKED_NAME --packed_game_path $GAME_PATH" ENTER
 tmux send-keys "cd ${GAME_PATH}" ENTER
+tmux send-keys "export CAMERA_RIG_PITCH=$CAMERA_RIG_PITCH" ENTER
 tmux send-keys "cd $GAME_PATH; ./run.sh" ENTER
 
 sleep 1
