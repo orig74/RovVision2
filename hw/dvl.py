@@ -41,7 +41,7 @@ def parse_line(line):
         #Velocity report
         ret={'type':'vel'}
         keys='time,vx,vy,vz,fom,alt,valid,status'.split(',')
-        for i in range(len(keys):
+        for i in range(len(keys)):
             ret[keys[i]]=float(data[i+1]) if i<=5 else data[i+1]
 
     if data[0]=='wrt':
@@ -51,7 +51,7 @@ def parse_line(line):
         
     if data[0]=='wrp':
         keys='time,x,y,z,pos_std,roll,pitch,yaw,status'
-        for i in range(len(keys):
+        for i in range(len(keys)):
             ret[keys[i]]=float(data[i+1]) if i<=7 else data[i+1]
     return ret
 
@@ -62,8 +62,10 @@ if __name__=='__main__':
         line=ser.readline()
         try:
             d=parse_line(line)
-        except Exception:
+        except Exception as e:
             print('-----------------------')
-            traceback.print_exc(file=sys.stdout)
-        pub_imu.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':time.time(),'dvl_raw':line})])
+            print(e)
+            break
+            #traceback.print_exc(file=sys.stdout)
+        pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':time.time(),'dvl_raw':line})])
 

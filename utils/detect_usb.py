@@ -11,7 +11,8 @@ if __name__=='__main__':
         
         if rov_type==1:
             if '1-7' in line:
-                dmap['SONAR_USB']=dev
+                #dmap['SONAR_USB']=dev
+                dmap['DVL_USB']=dev
             if '1-5' in line:
                 dmap['ESC_USB']=dev
             if '1-3' in line:
