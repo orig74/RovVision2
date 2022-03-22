@@ -87,17 +87,23 @@ def triangulate(prjl,prjr,xl,yl,xr,yr):
 
 
 if __name__=='__main__':
-    import sys
-    sys.path.append('../')
-    import config
-    f = config.focal_length
-    sz=(640,512)
-    Pl,Pr = get_stereo_cameras(f,sz,0.14,np.radians(45))
+    #import sys
+    #sys.path.append('../')
+    f = 815.3663482560033
+    sz=(960,600)
+    #sz=(600,960)
+    Pl,Pr = get_stereo_cameras(f,sz,0.1,np.radians(0))
 
     #x=cv2.triangulatePoints(Pl,Pr,np.array([sz[0]/2,sz[1]/2]),np.array([sz[0]/2+50.0,sz[1]/2]))
 
-    print(triangulate(Pl,Pr,320,256,320-40,256))
-    print(triangulate(Pl,Pr,320,256,320-140,256))
-    print(triangulate(Pl,Pr,320,256,320-240,256))
+    #print(triangulate(Pl,Pr,320,256,320-40,256))
+    #print(triangulate(Pl,Pr,320,256,320-140,256))
+    #print(triangulate(Pl,Pr,320,256,320-240,256))
     #print(triangulate(Pl,Pr,256,320,256,320-40))
-
+    pl=960/2+0
+    pr=pl+50
+    print(Pl)
+    print(Pr)
+    print(triangulate(Pl,Pr,pl,300,pr,300))
+    print(pl)
+    print(triangulate(Pl,Pr,490, 300, 375, 299.0))

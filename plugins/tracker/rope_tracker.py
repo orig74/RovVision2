@@ -212,7 +212,7 @@ class StereoTrack():
         dx = t_pt[0]
         dy = t_pt[1]
         dz = t_pt[2]
-        valid = valid and dx>0.1 and dx<1.5
+        valid = valid and dx>0.1 and dx<1.5*3
 
         if self.dx_filt is not None:
             valid = valid and abs(self.dx_filt.x-dx)<config.diff_range_valid

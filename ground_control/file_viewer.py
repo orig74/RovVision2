@@ -154,8 +154,14 @@ if __name__=='__main__':
             draw_seperate(images[0],images[1],messages)
             #join[:,0:sx,:]=images[0]
             #join[:,sx:,:]=images[1]
-            join[bmargy//2:-bmargy//2,bmargx:sx+bmargx,:]=images[0]
-            join[bmargy//2:-bmargy//2,sx+bmargx:,:]=images[1]
+            if 1:
+                join[bmargy//2:-bmargy//2,bmargx:sx+bmargx,:]=images[0]
+                join[bmargy//2:-bmargy//2,sx+bmargx:,:]=images[1]
+            else:
+                offy=-2
+                offx=-45
+                join[bmargy//2+offy:-bmargy//2+offy,bmargx+offx:sx+bmargx+offx,2:]=images[0][:,:,2:]
+                join[bmargy//2:-bmargy//2,bmargx-offx:sx+bmargx-offx,0:2]=images[1][:,:,0:2]
             draw(join,messages,fcnt,fcnt)
             if explore.is_data_file(args.path,fcnt):
                 cv2.circle(join,(0,0), 15, (0,0,255), -1)

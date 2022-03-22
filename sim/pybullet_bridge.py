@@ -78,13 +78,32 @@ def getrov():
                           useMaximalCoordinates=True)
     return boxId
 
-def get_next_state(curr_q,curr_u,control,dt,lamb):
+def _get_next_state(curr_q,curr_u,control,dt,lamb):
     forces=control
     #print('forces = ',forces)
     u_dot_f=lamb(curr_q,curr_u,*forces).flatten()
     next_q=curr_q+curr_u*dt
     next_u=curr_u+u_dot_f*dt
     return next_q,next_u
+
+from scipy.interpolate import interp1d
+pts_16v_t200 = [(1100,-4.07) , (1184, -2.94), (1308, -1.35) , (1472,0) , (1528,0), 
+                (1624,0.87) , (1728,2.22), (1840,4.25), (1864,4.71), (1900,5.25)]
+pwm,thrust = zip(*pts_16v_t200)
+thrust=np.array(thrust)/0.101972 #kgf to newton
+pwm_to_thrust=interp1d(pwm, thrust)
+def scale_thrust(control):
+    return np.array([pwm_to_thrust(c*400+1500)/10 for c in control])
+
+def get_next_state(curr_q,curr_u,control,dt,lamb):
+    control = np.clip(control,-1,1)
+    forces=scale_thrust(control)
+    currents_vector = [0,0.1,0]
+    u_dot_f=lamb(curr_q,curr_u,*forces,*currents_vector).flatten()
+    next_q=curr_q+curr_u*dt
+    next_u=curr_u+u_dot_f*dt
+    return next_q,next_u
+
 
 def translateM(M,dx,dy,dz):
     T = np.zeros((4,4),dtype=float)

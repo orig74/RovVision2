@@ -27,8 +27,8 @@ gst_bitrate=1024*3
 gst_speed_preset=1
 
 #tracker type
-tracker = 'local'
-#tracker = 'rope'
+#tracker = 'local'
+tracker = 'rope'
 
 joy_deadband=0.00
 
