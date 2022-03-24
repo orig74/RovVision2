@@ -62,22 +62,71 @@ def parse_line(line):
     return ret
 
 if __name__=='__main__':
-    ser = init_serial()
-    pub_dvl = utils.publisher(zmq_topics.topic_dvl_port)
-    cnt=0
-    while 1:
-        line=ser.readline()
-        #print(line)
-        try:
-            d=parse_line(line)
-            if cnt%101==0:
-                print('parsed ',cnt,'msgs')
-                print('d=',d)
-            cnt+=1
-        except Exception as e:
-            print('-----------------------')
-            traceback.print_exc(file=sys.stdout)
-            print(e)
-            #traceback.print_exc(file=sys.stdout)
-        pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':time.time(),'dvl_raw':line})])
+    if len(sys.argv)==1:
+        ser = init_serial()
+        pub_dvl = utils.publisher(zmq_topics.topic_dvl_port)
+        cnt=0
+        while 1:
+            line=ser.readline()
+            #print(line)
+            try:
+                d=parse_line(line)
+                if cnt%101==0:
+                    print('parsed ',cnt,'msgs')
+                    print('d=',d)
+                cnt+=1
+            except Exception as e:
+                print('-----------------------')
+                traceback.print_exc(file=sys.stdout)
+                print(e)
+                #traceback.print_exc(file=sys.stdout)
+            pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':time.time(),'dvl_raw':line})])
+    else:
+        fl = sys.argv[1]
+        #fl = '../../data//220322-123731/viewer_data.pkl'
+        drs=[]
+        trs=[]
+        vels=[]
+        with open(fl,'rb') as fd:
+            while 1:
+                try:
+                    data=pickle.load(fd)
+                except EOFError:
+                    break
+                if data[0]==zmq_topics.topic_dvl_raw:
+                    #line=pickle.loads(data[1])#['dvl_raw']
+                    d = parse_line(data[1]['dvl_raw'])
+                    if d is not None and d['type']=='deadreacon':
+                        drs.append(d)
+                    if d is not None and d['type']=='transducer':
+                        trs.append(d)
+                    if d is not None and d['type']=='vel':
+                        vels.append(d)
+                    print(data[1]['ts'],parse_line(data[1]['dvl_raw']))
+                    #print(parse_line(line))
+        ga = lambda x:[d[x] for d in drs]
+        gt = lambda x:[d[x] for d in trs]
+        gv = lambda x:[d[x] for d in vels]
+        import numpy as np
+        un = lambda x:np.rad2deg(np.unwrap(np.deg2rad(x)))
+        import matplotlib.pyplot as plt
+        plt.figure('deadreacon')
+        plt.subplot(2,1,1)
+        plt.plot(ga('time'),ga('x'))
+        plt.plot(ga('time'),ga('y'))
+        plt.plot(ga('time'),ga('z'))
+        plt.legend(['x','y','z'])
+        plt.subplot(2,1,2)
+        plt.plot(ga('time'),un(ga('yaw')))
+        plt.plot(ga('time'),ga('pitch'))
+        plt.plot(ga('time'),ga('roll'))
+        plt.legend(['yaw','pitch','roll'])
+
+        plt.figure('transducer')
+        plt.subplot(1,1,1)
+        for i in range(4):                                                                                           
+            d=[j['dist'][i] for j in trs]
+            plt.plot(d,alpha=0.6)  
+        plt.show()
+
 
