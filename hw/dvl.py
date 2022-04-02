@@ -66,11 +66,14 @@ if __name__=='__main__':
         ser = init_serial()
         pub_dvl = utils.publisher(zmq_topics.topic_dvl_port)
         cnt=0
+        last_time=None
         while 1:
             line=ser.readline()
             #print(line)
             try:
                 d=parse_line(line)
+                if d and d['type']=='deadreacon':
+                    last_time = d['time']
                 if cnt%101==0:
                     print('parsed ',cnt,'msgs')
                     print('d=',d)
@@ -106,7 +109,7 @@ if __name__=='__main__':
                     #print(parse_line(line))
         ga = lambda x:[d[x] for d in drs]
         gt = lambda x:[d[x] for d in trs]
-        gv = lambda x:[d[x] for d in vels]
+        gv = lambda x:[d[x] for d in vels if d['valid']==b'y']
         import numpy as np
         un = lambda x:np.rad2deg(np.unwrap(np.deg2rad(x)))
         import matplotlib.pyplot as plt
@@ -127,6 +130,18 @@ if __name__=='__main__':
         for i in range(4):                                                                                           
             d=[j['dist'][i] for j in trs]
             plt.plot(d,alpha=0.6)  
+
+        plt.figure('vels')
+        ax=plt.subplot(2,1,1)
+        tt=range(len(gv('time'))) #fix me add time to each frame
+        plt.plot(tt,gv('vx'))
+        plt.plot(tt,gv('vy'))
+        plt.plot(tt,gv('vz'))
+        plt.legend(['vx','vy','vz'])
+        plt.subplot(2,1,2,sharex=ax)
+        plt.plot(tt,gv('alt'),'.-')
+        plt.legend(['alt'])
+        
         plt.show()
 
 
