@@ -28,6 +28,7 @@ vn_acc_disturbance_0 = b'$VNKAD,0,0*XX'
 vn_setoutput=b'$VNWRG,06,14*XX' 
 ##### 
 vn_setfreq20hz=b'$VNWRG,07,20*XX'
+vn_setfreq50hz=b'$VNWRG,07,50*XX'
 
 ### VPE control
 # Offsets: Enable 01, HeadingMode 012, FilteringMode 01, TuningMode 01
@@ -96,7 +97,8 @@ def init_serial(dev=None):
     #set freq and output
     write(ser,vn_pause)
     write(ser,vn_setoutput)
-    write(ser,vn_setfreq20hz)
+    #write(ser,vn_setfreq20hz)
+    write(ser,vn_setfreq50hz)
     write(ser,vn_hsi_off)
     write(ser, vn_heading_mode)
     write(ser,vn_acc_disturbance_0)
