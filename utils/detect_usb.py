@@ -30,6 +30,17 @@ if __name__=='__main__':
             if '1-5.3' in line:
                 dmap['ESC_USB']=dev
 
+        if rov_type==4:
+            if '1-7' in line:
+                #dmap['SONAR_USB']=dev
+                dmap['DVL_USB']=dev
+            if '1-5' in line:
+                dmap['ESC_USB']=dev
+            if '1-3' in line:
+                dmap['VNAV_USB']=dev
+            if '1-1' in line:
+                dmap['PERI_USB']=dev
+ 
     with open('/tmp/devusbmap.pkl','wb') as fp:
         #print(dmap)
         pickle.dump(dmap,fp)

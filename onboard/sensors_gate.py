@@ -37,6 +37,7 @@ async def recv_and_process():
                         imgr=np.frombuffer(ret[3],'uint8').reshape(shape).copy()
                         image_enc_dec.encode(imgr,frame_cnt)
                         togst.append(imgr)
+                    #print('hhhh,,senfing to gst',frame_cnt)
                     gst.send_gst(togst)
 
         await asyncio.sleep(0.001)

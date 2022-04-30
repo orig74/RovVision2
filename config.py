@@ -1,21 +1,27 @@
 #cameras info
 import os
-rov_type = int(os.environ.get('ROV_TYPE',1))
+rov_type = int(os.environ.get('ROV_TYPE',4))
 is_sim = 'SIM' in os.environ
 sim_type = os.environ.get('SIM','')
 camera_setup='stereo' #'mono'
 
 if rov_type==1:
     cam_resx,cam_resy=1920,1200
+    cam_res_rgbx,cam_res_rgby=cam_resx//2,cam_resy//2
     reverse_camera_order=True
 if rov_type==2:
     cam_resx,cam_resy=1280,1024
+    cam_res_rgbx,cam_res_rgby=cam_resx//2,cam_resy//2
     reverse_camera_order=False
 if rov_type==3:
     cam_resx,cam_resy=1920,1200#1080 todo change to 1080 for bluerobotics cameras
+    cam_res_rgbx,cam_res_rgby=cam_resx//2,cam_resy//2
     camera_setup='mono' #'mono'
+if rov_type==4:
+    #cam_resx,cam_resy=1280,1024
+    cam_resx,cam_resy=616*2,514*2
+    cam_res_rgbx,cam_res_rgby=616,514
 
-cam_res_rgbx,cam_res_rgby=cam_resx//2,cam_resy//2
 fps=10
 send_modulo=1 # Sends frames through gstreamer every x frames at above fps
 save_modulo=5 # saves img every x frames at above fps

@@ -1,4 +1,4 @@
 #!/bin/bash
 printf '\033]2;STEREO\033\\'
-ssh -p 2222 stereo@localhost -t "cd RovVision2/scripts && ./kill.sh"  
+ssh stereo@stereo.local -t "cd RovVision2/scripts && ./kill.sh"  
 
