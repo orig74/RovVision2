@@ -19,9 +19,13 @@ cfps = 0
 if config.rov_type==2:
     sy = lambda n: int(n*1280/1920)
     sx = lambda n: int(n*1024/1200)
+elif config.rov_type==4:
+    sy = lambda n: int(n*1280/1920)
+    sx = lambda n: int(n*1024/1200)
 else:
     sx = lambda x:x
     sy = lambda y:y
+
 
 def draw_seperate(imgl,imgr,message_dict):
     if zmq_topics.topic_tracker in message_dict:
