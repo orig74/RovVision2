@@ -7,7 +7,8 @@
 #define STATUS_LED_PIN 2
 #define LIGHTS_PIN 16
 #define CAM_SERVO_PIN 17
-int thruster_pins[8] = {13, 12, 14, 27, 26, 25, 33, 32};
+int thruster_pins[8] = {12, 13, 14, 27, 25, 26, 33, 32};
+int thruster_dirs[8] = {-1, -1, 1, 1, -1, 1, 1, -1};
 #define CURRENT_ADC_PIN 15
 #define VOLTAGE_ADC_PIN 4
 #define MOISTURE_SENSE_PIN 5
@@ -55,7 +56,7 @@ bool CheckSerialMsgCHKSM(byte* c_buff)
 {
   uint16_t msg_chksum = unpack_16bit(c_buff, N_SERIAL_RX_BYTES - 2);
   uint16_t chksm_calc = CalcChksm(c_buff, N_SERIAL_RX_BYTES - 2);
-  return chksm_calc == msg_chksum;
+  return chksm_calc == msg_chksum && msg_chksum;
 }
 
 int ScaleUint16(uint16_t in_val, int out_min, int out_max) {
@@ -124,7 +125,7 @@ void loop() {
       for (int thrstr_idx=0; thrstr_idx < 8; thrstr_idx++) {
         uint16_t thrst_16b = unpack_16bit(msg_buff, 2 * thrstr_idx);
         int thrst_int = ScaleUint16(thrst_16b, -PWM_RANGE_H, PWM_RANGE_H);
-        int thrst_us = thrst_int + PWM_MIDPOINT;
+        int thrst_us = thruster_dirs[thrstr_idx] * thrst_int + PWM_MIDPOINT;
         thrusters[thrstr_idx].writeMicroseconds(thrst_us);
       }
       

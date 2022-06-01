@@ -31,6 +31,11 @@ run 2 onboard hw_stats.py
 #only hw from here
 if [ ! -v SIM ]
 then 
+
+tmux select-pane -t 3
+tmux send-keys "gst-launch-1.0 v4l2src ! videoflip method=vertical-flip ! video/x-raw,width=640 ! videoconvert ! x264enc tune=zerolatency bitrate=500 speed-preset=superfast ! rtph264pay ! udpsink host=169.254.0.2 port=17893" ENTER
+#tmux send-keys "gst-launch-1.0 -v -e udpsrc port=17893 ! application/x-rtp, media=video, clock-rate=90000, encoding-name=H264, payload=96 ! rtph264depay ! tee name=t ! queue ! decodebin ! videoconvert ! autovideosink t. ! queue ! h264parse ! qtmux ! filesink location=/home/uav/records_main_cam/$(date '+%y%m%d-%H%M%S').mov sync=false" ENTER
+
 tmux new-window
 new_6_win
 run 0 utils detect_usb.py

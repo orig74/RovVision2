@@ -19,8 +19,8 @@ N_SERIAL_RX_BYTES = 11
 BATT_AMP_OFFSET = 0.330
 BATT_AMP_PERVOLT = 37.8788
 BATT_VOLTAGE_MUL = 11
-ADC_VOLTAGE_MUL = 0.000788
-ADC_VOLTAGE_OFFSET = 0.15
+ADC_VOLTAGE_MUL = 0.000805
+ADC_VOLTAGE_OFFSET = 0.122
 
 current_command=[0 for _ in range(8)] # 8 thrusters
 keep_running=True
@@ -68,6 +68,8 @@ async def send_serial_command_50hz():
         else:
             lights = lights_pw  # 0.0-1.0 0%-100%
         servo = 0.0  # -1.0 -> 1.0, or use 0-255 without scale_val function (mapped to 45->135 degrees camera angle)
+
+        #m[6] = 0.1
 
         tx_ints = [scale_val(thr, -1.0, 1.0, 16) for thr in m]
         tx_ints.append(scale_val(lights, 0.0, 1.0, 8))
