@@ -29,8 +29,7 @@ rec_state=False
 serial_rx_bytes=b''
 
 pub_depth = zmq_wrapper.publisher(zmq_topics.topic_depth_port)
-pub_volt = zmq_wrapper.publisher(zmq_topics.topic_volt_port)
-
+pub_telem = zmq_wrapper.publisher(zmq_topics.topic_telem_port)
 subs_socks=[]
 subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_thrusters_comand],zmq_topics.topic_thrusters_comand_port))
 subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_lights],zmq_topics.topic_controller_port))
@@ -61,7 +60,6 @@ async def send_serial_command_50hz():
 
         # TODO: lights flash with trigger on RECORD
         # TODO: camera servo angle
-        # TODO: Publish leak signal (pub_volt -> pub_hw_status?)
 
         if rec_state:
             lights = 0.2
@@ -97,10 +95,8 @@ async def send_serial_command_50hz():
                 adc_voltage_I = msg_data[3] * ADC_VOLTAGE_MUL + ADC_VOLTAGE_OFFSET
                 batt_V = round(adc_voltage_V * BATT_VOLTAGE_MUL, 2)
                 batt_I = round((adc_voltage_I - BATT_AMP_OFFSET) * BATT_AMP_PERVOLT, 2)
-
                 leak = msg_data[4]
-
-                pub_volt.send_multipart([zmq_topics.topic_volt, pickle.dumps({'ts': tic, 'V': batt_V, 'I': batt_I})])
+                pub_telem.send_multipart([zmq_topics.topic_telem, pickle.dumps({'ts': tic, 'V': batt_V, 'I': batt_I, 'leak': leak})])
                 print('< ', ["%.1f" % i for i in m], end='')
                 print(' Lights: {}, CamServo: {}'.format(lights, servo))
                 print("> Batt V: {}, "\

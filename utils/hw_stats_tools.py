@@ -6,7 +6,7 @@ def get_cpu_temp():
         return -1
 
 def get_disk_usage():
-    return int(os.popen('df -h / | tail -n 1').readline().strip().split()[-2][:-1])
+    return int(os.popen('df -h /media/data | tail -n 1').readline().strip().split()[-2][:-1])
 
 def get_cpu_usage():
     try:

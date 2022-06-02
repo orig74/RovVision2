@@ -65,9 +65,8 @@ topic_pos_hold_port=10053
 topic_tracker=b'topic_tracker'
 topic_tracker_port=10101
 
-topic_volt=b'topic_volt'
-topic_volt_port=10102
-
+topic_telem=b'topic_hw_telem'
+topic_telem_port=10102
 
 topic_hw_stats=b'topic_hw_stats'
 topic_hw_stats_port=10103

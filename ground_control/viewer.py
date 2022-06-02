@@ -46,7 +46,7 @@ subs_socks.append(utils.subscribe([zmq_topics.topic_sonar_hold_pid], zmq_topics.
 subs_socks.append(utils.subscribe([zmq_topics.topic_stereo_camera_ts], zmq_topics.topic_camera_port)) #for sync perposes
 #subs_socks.append(utils.subscribe([zmq_topics.topic_stereo_camera], zmq_topics.topic_camera_port)) #for sync perposes
 subs_socks.append(utils.subscribe([zmq_topics.topic_tracker], zmq_topics.topic_tracker_port))
-subs_socks.append(utils.subscribe([zmq_topics.topic_volt], zmq_topics.topic_volt_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_telem], zmq_topics.topic_telem_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_hw_stats], zmq_topics.topic_hw_stats_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_gps], zmq_topics.topic_gps_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_stereo_camera_calib], zmq_topics.topic_camera_calib_port))

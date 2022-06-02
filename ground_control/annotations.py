@@ -50,9 +50,9 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
             cfps = (fmt_cnt_l - prev_frame_cnt) / (time.time() - prev_fps_time)
             prev_frame_cnt = fmt_cnt_l
             prev_fps_time = time.time()
-        line+=' {:>.2f}Cfps, {:>.2f}Rfps'.format(cfps, cfps / config.save_modulo)
+        line+=' {:>.2f}Cfps'.format(cfps)
         print('fpsline',line)
-        cv2.putText(img,line,(sy(10),sx(560+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+        cv2.putText(img,line,(sy(10),sx(575+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
     if zmq_topics.topic_imu in message_dict:
         m=message_dict[zmq_topics.topic_imu]
         yaw,pitch,roll=m['yaw'],m['pitch'],m['roll']
@@ -66,28 +66,33 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
         cv2.putText(img,line,(sy(450),sx(560+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
     if zmq_topics.topic_record_state in message_dict:
         if message_dict[zmq_topics.topic_record_state]:
-            cv2.putText(img,'REC',(sy(10),sx(20)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+            cv2.putText(img,'REC',(sy(25),sx(20)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
     if zmq_topics.topic_system_state in message_dict:
         ss = message_dict[zmq_topics.topic_system_state][1]
         cv2.putText(img,'ARM' if ss['arm'] else 'DISARM' \
-                ,(sy(50),sx(20)), font, 0.7,(0,0,255) if ss['arm'] else (0,255,0),2,cv2.LINE_AA)
+                ,(sy(100),sx(20)), font, 0.7,(0,0,255) if ss['arm'] else (0,255,0),2,cv2.LINE_AA)
         modes = sorted(ss['mode'])
         if len(modes)==0:
             modes_str='MANUAL'
         else:
             modes_str=' '.join(modes)
         cv2.putText(img, modes_str\
-                ,(sy(140),sx(20)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+                ,(sy(240),sx(20)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
     if zmq_topics.topic_tracker in message_dict:
         rng  = message_dict[zmq_topics.topic_tracker].get('range_f',-1.0)
         line='{:>.2f} TRng'.format(rng)
-        cv2.putText(img,line,(sy(350),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+        cv2.putText(img,line,(sy(360),sx(600+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
 
-    if zmq_topics.topic_volt in message_dict:
-        v=message_dict[zmq_topics.topic_volt]['V']
-        i=message_dict[zmq_topics.topic_volt]['I']
+    if zmq_topics.topic_telem in message_dict:
+        v=message_dict[zmq_topics.topic_telem]['V']
+        i=message_dict[zmq_topics.topic_telem]['I']
+        leak=message_dict[zmq_topics.topic_telem]['leak']
+        if leak:
+            pos=(90, 90)
+            cv2.circle(img, pos, 52, (0, 0, 255), -1)
+            cv2.putText(img,"LEAK!",(pos[0]-42, pos[1]+10), font, 1.0,(255,255,255),3,cv2.LINE_AA)
         line='{:>.2f}V {:>.2f}I'.format(v,i)
-        cv2.putText(img,line,(sy(50),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+        cv2.putText(img,line,(sy(50),sx(600+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
 
     if zmq_topics.topic_hw_stats in message_dict:
         line=hw_stats_tools.get_hw_str(message_dict[zmq_topics.topic_hw_stats][1])

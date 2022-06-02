@@ -10,6 +10,7 @@ print('done import')
 import time,sys
 import traceback
 import os,zmq
+import math
 sys.path.append('..')
 sys.path.append('../utils')
 import zmq_wrapper as utils
@@ -65,6 +66,7 @@ if __name__=='__main__':
     if len(sys.argv)==1:
         ser = init_serial()
         pub_dvl = utils.publisher(zmq_topics.topic_dvl_port)
+        pub_srange = utils.publisher(zmq_topics.topic_sonar_port)
         cnt=0
         last_time=None
         while 1:
@@ -83,7 +85,16 @@ if __name__=='__main__':
                 traceback.print_exc(file=sys.stdout)
                 print(e)
                 #traceback.print_exc(file=sys.stdout)
-            pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':time.time(),'dvl_raw':line})])
+            tic = time.time()
+            pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':line})])
+            if "Distances" in line:
+                d_sum = 0
+                for d in line["Distances"]:
+                    d_sum += math.cosd(32.5) * d
+                d_avg = d_sum / len(line["Distances"])
+                if d_avg > 100.0:
+                    d_avg = 0.0
+                pub_srange.send_multipart([zmq_topics.topic_sonar,pickle.dumps({'ts':tic, 'sonar':[d_avg, 1.0]})])
     else:
         fl = sys.argv[1]
         #fl = '../../data//220322-123731/viewer_data.pkl'

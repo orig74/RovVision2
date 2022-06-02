@@ -473,7 +473,6 @@ if __name__ == '__main__':
                     os.mkdir('/media/data/'+new_record_state_str)
                     #calibrator.ParamsUpdateFlag = True
                 record_state=('/media/data/'+new_record_state_str+'/') if new_record_state_str else None
-                print(record_state)
             if topic==zmq_topics.topic_system_state:
                 _,system_state=data
             time.sleep(0.001)
