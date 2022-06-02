@@ -17,7 +17,7 @@ import zmq
 import zmq_topics
 import zmq_wrapper as utils
 subs_socks=[]
-subs_socks.append( utils.subscribe([ zmq_topics.topic_record_state ],zmq_topics.topic_record_state_port))
+subs_socks.append(utils.subscribe([ zmq_topics.topic_record_state ],zmq_topics.topic_record_state_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
 socket_pub = utils.publisher(zmq_topics.topic_camera_port)
 
@@ -26,7 +26,6 @@ if YAPPI:
     import yappi
     yappi.start()
 
-RECORD = False
 DEBUG = False
 ZMQ_PUB = True
 
@@ -44,10 +43,12 @@ MAX_BANDWIDTH_BYTES_P_S = 110e6
 FRAME_TRANSFER_TIME = NUM_CAMS * BINDEC_IMG_SIZE / MAX_BANDWIDTH_BYTES_P_S
 MASTER_CAM_ID = 'DEV_000F315DB084'
 
-FRAME_QUEUE_SIZE = 7
+FRAME_QUEUE_SIZE = 11
 
 # Min exposure time: 32us
-CAM_EXPOSURE_US = 10000
+CAM_EXPOSURE_US = None #10000
+CAM_EXPOSURE_MAX = 20000    # us
+CAM_EXPOSURE_MIN = 32
 
 
 ACTION_DEV_KEY = 1
@@ -55,9 +56,9 @@ ACTION_GROUP_KEY = 1
 ACTION_GROUP_MASK = 1
 
 def fast_bayer_shrink(dest,img):
-    dest[:,:,1]=np.squeeze(img[::2,::2])
-    dest[:,:,0]=np.squeeze(img[1::2,0::2])
-    dest[:,:,2]=np.squeeze(img[1::2,1::2])
+    dest[:,:,2]=np.squeeze(img[::2,::2])
+    dest[:,:,1]=np.squeeze(img[1::2,0::2])
+    dest[:,:,0]=np.squeeze(img[1::2,1::2])
 
 # --------------------------------------- Alvium Multicam Driver ---------------------------------------------
 
@@ -134,7 +135,7 @@ class AlviumMultiCam(threading.Thread):
                     imshow_keys = []
                     loop_cnt = 0
                     current_frames = dict(zip(cam_ids, [0, 0, 0]))
-                    current_frame_ts = dict(zip(cam_ids, [0, 0, 0]))
+                    current_frame_ts = dict(zip(cam_ids, [0, 1, 2]))
                     prev_syncd_trig_ts = time.time()
 
                     total_syncd_frames = 0
@@ -207,11 +208,10 @@ class AlviumMultiCam(threading.Thread):
                                                 frame_bgr_rs = cv2.resize(frame_bgr, (frame_bgr.shape[1]//RS_DIV, frame_bgr.shape[0]//RS_DIV))
                                                 cv2.imshow(c_id, frame_bgr_rs)
                                             imshow_updated = True
-                                        if RECORD and record_state is not None:
+                                        if record_state is not None:
+                                            cur_rec_state = record_state
                                             for cam_key, cam_frame in current_frames.items():
-                                                prefix='/media/data/Frames'
-                                                prefix=record_state+'/'
-                                                cv2.imwrite(prefix + str(total_syncd_frames)
+                                                cv2.imwrite(cur_rec_state + str(total_syncd_frames)
                                                             + '_' + cam_key + '.pgm', cam_frame)
                                     else:
                                         print("Duplicate frame detected!")
@@ -343,7 +343,7 @@ class TriggerThread(threading.Thread):
                     self.prev_trigger_ts[3] = self.prev_trigger_ts[2]
                     self.prev_trigger_ts[2] = self.prev_trigger_ts[1]
                     self.prev_trigger_ts[1] = self.prev_trigger_ts[0]
-                    self.prev_trigger_ts[0] = time.time() + 1e-6 * CAM_EXPOSURE_US / 2
+                    self.prev_trigger_ts[0] = time.time()
                     sender.ActionCommand.run()
                     self.total_num_trigs += 1
                 time.sleep(0.002)
@@ -390,21 +390,18 @@ class FrameProducer(threading.Thread):
             print("WARNING! Requested FPS exceeds data transfer speeds")
         self.cam.get_feature_by_name('StreamBytesPerSecond').set(MAX_BANDWIDTH_BYTES_P_S // NUM_CAMS)
 
-        # if (self.cam_id == 'asfgd'):#MASTER_CAM_ID):
-        #     self.cam.get_feature_by_name('ExposureAuto').set('Continuous')
-        #     self.cam.get_feature_by_name('GainAuto').set('Continuous')
-        #     self.cam.get_feature_by_name('BalanceWhiteAuto').set('Continuous')
-        # else:
-        #     self.cam.get_feature_by_name('ExposureAuto').set('Off')
-        #     self.cam.get_feature_by_name('GainAuto').set('Off')
-        #     self.cam.get_feature_by_name('BalanceWhiteAuto').set('Off')
-
         self.cam.get_feature_by_name('BinningHorizontal').set(BIN_HORIZONTAL)
         self.cam.get_feature_by_name('DecimationHorizontal').set(DEC_HORIZONTAL)
         self.cam.get_feature_by_name('DecimationVertical').set(DEC_VERTICAL)
-
-        self.cam.get_feature_by_name('ExposureAuto').set('Off')
-        self.cam.get_feature_by_name('ExposureTimeAbs').set(CAM_EXPOSURE_US)
+        
+        if CAM_EXPOSURE_US:
+            self.cam.get_feature_by_name('ExposureAuto').set('Off')
+            self.cam.get_feature_by_name('ExposureTimeAbs').set(CAM_EXPOSURE_US)
+        
+        else:
+            self.cam.get_feature_by_name('ExposureAuto').set('Continuous')
+            self.cam.get_feature_by_name('ExposureAutoMax').set(CAM_EXPOSURE_MAX)
+            self.cam.get_feature_by_name('ExposureAutoMin').set(CAM_EXPOSURE_MIN)
         self.cam.get_feature_by_name('GainAuto').set('Continuous')
         self.cam.get_feature_by_name('BalanceWhiteAuto').set('Continuous')
 
@@ -473,12 +470,13 @@ if __name__ == '__main__':
                 new_record_state_str=data
                 if not record_state and new_record_state_str:
                     #switch to recording
-                    os.mkdir('../../data/'+new_record_state_str)
+                    os.mkdir('/media/data/'+new_record_state_str)
                     #calibrator.ParamsUpdateFlag = True
-                record_state='../../data/'+new_record_state_str
+                record_state=('/media/data/'+new_record_state_str+'/') if new_record_state_str else None
+                print(record_state)
             if topic==zmq_topics.topic_system_state:
                 _,system_state=data
-            sleep(0.001)
+            time.sleep(0.001)
     print('done running thread exited')
  
     multicam_handler_thread.join()

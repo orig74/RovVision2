@@ -42,7 +42,7 @@ def scale_val(value, val_min, val_max, n_bits):
     scaled_range = 2 ** n_bits
     val_norm = float(value - val_min) / (val_max - val_min)
     val_scaled = int(val_norm * (scaled_range - 1))
-    assert -1 < val_scaled < scaled_range
+    assert -1 <= val_scaled <= scaled_range
     return val_scaled
 
 def CalcChksm(bytes):
@@ -72,7 +72,7 @@ async def send_serial_command_50hz():
         #m[6] = 0.1
 
         tx_ints = [scale_val(thr, -1.0, 1.0, 16) for thr in m]
-        tx_ints.append(scale_val(lights, 0.0, 1.0, 8))
+        tx_ints.append(scale_val(lights, 0, 6, 8))
         tx_ints.append(scale_val(servo, -1.0, 1.0, 8))
         tx_data = struct.pack('>HHHHHHHHBB', *tx_ints)
         tx_data += struct.pack('>H', CalcChksm(tx_data))

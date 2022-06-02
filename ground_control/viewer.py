@@ -208,7 +208,7 @@ if __name__=='__main__':
                 join=images[0]
         if join is not None:
             if resize_viewer:
-                scale=resize_width/config.cam_resx 
+                scale=resize_width/config.cam_resx
                 sp0,sp1,_ = join.shape
                 sp0=int(sp0*scale)
                 sp1=int(sp1*scale)
