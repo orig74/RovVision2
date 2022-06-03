@@ -5,7 +5,7 @@ if __name__=='__main__':
     dmap = {}
 
     rov_type = int(os.environ.get('ROV_TYPE','1'))
-    for dev in ['/dev/ttyUSB%d'%i for i in [0,1,2, 3]]:
+    for dev in ['/dev/ttyUSB%d'%i for i in [0,1,2,3]]:
         cmd = 'udevadm info '+dev
         try:
             line=os.popen(cmd).readline()

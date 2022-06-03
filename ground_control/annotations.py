@@ -96,7 +96,7 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
 
     if zmq_topics.topic_hw_stats in message_dict:
         line=hw_stats_tools.get_hw_str(message_dict[zmq_topics.topic_hw_stats][1])
-        cv2.putText(img,line,(sy(670+500),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+        cv2.putText(img,line,(sy(670+530),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
 
 def draw_mono(img,message_dict,fmt_cnt_l):
     global prev_fps_time, prev_frame_cnt, cfps

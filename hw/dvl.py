@@ -41,12 +41,17 @@ def parse_line(line):
     #sys.exit(0)
     data=line.split(b'*')[0].split(b',')
     ret=None
-    if data[0]==b'wrx':
+    if data[0]==b'wrz':
         #Velocity report
         ret={'type':'vel'}
-        keys='time,vx,vy,vz,fom,alt,valid,status'.split(',')
+        keys='vx,vy,vz,valid,alt,fom,cov,tov,tot,time,status'.split(',')  
         for i in range(len(keys)):
-            ret[keys[i]]=float(data[i+1]) if i<=5 else data[i+1]
+            if i == 3:
+                ret[keys[i]]=data[i+1]
+            elif i == 6:
+                ret[keys[i]]=[float(v) for v in data[i+1].split(b';')]
+            else:
+                ret[keys[i]]=float(data[i+1])
 
     if data[0]==b'wrt':
         #Transducer report
@@ -76,10 +81,14 @@ if __name__=='__main__':
                 d=parse_line(line)
                 if d and d['type']=='deadreacon':
                     last_time = d['time']
-                if cnt%101==0:
+                if d and cnt%51==0:
                     print('parsed ',cnt,'msgs')
                     print('d=',d)
                 cnt+=1
+                # Mock downward facing SONAR output
+                if d and d['type']=='vel':
+                    to_send=pickle.dumps({'ts':tic, 'sonar':[d['alt'], 1 if d['valid']==b'y' else 0]})
+                    pub_srange.send_multipart([zmq_topics.topic_sonar,to_send])
             except Exception as e:
                 print('-----------------------')
                 traceback.print_exc(file=sys.stdout)
@@ -87,14 +96,6 @@ if __name__=='__main__':
                 #traceback.print_exc(file=sys.stdout)
             tic = time.time()
             pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':line})])
-            if "Distances" in line:
-                d_sum = 0
-                for d in line["Distances"]:
-                    d_sum += math.cosd(32.5) * d
-                d_avg = d_sum / len(line["Distances"])
-                if d_avg > 100.0:
-                    d_avg = 0.0
-                pub_srange.send_multipart([zmq_topics.topic_sonar,pickle.dumps({'ts':tic, 'sonar':[d_avg, 1.0]})])
     else:
         fl = sys.argv[1]
         #fl = '../../data//220322-123731/viewer_data.pkl'
