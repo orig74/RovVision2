@@ -58,19 +58,15 @@ async def send_serial_command_50hz():
         m = current_command
         m = np.clip(m, -THRSTR_LIMIT, THRSTR_LIMIT)
 
-        # TODO: lights flash with trigger on RECORD
+        # TODO: lights flash on RECORD
         # TODO: camera servo angle
 
-        if rec_state:
-            lights = 0.2
-        else:
-            lights = lights_pw  # 0.0-1.0 0%-100%
         servo = 0.0  # -1.0 -> 1.0, or use 0-255 without scale_val function (mapped to 45->135 degrees camera angle)
 
         #m[6] = 0.1
 
         tx_ints = [scale_val(thr, -1.0, 1.0, 16) for thr in m]
-        tx_ints.append(scale_val(lights, 0, 6, 8))
+        tx_ints.append(scale_val(lights_pw, 0, 6, 8))
         tx_ints.append(scale_val(servo, -1.0, 1.0, 8))
         tx_data = struct.pack('>HHHHHHHHBB', *tx_ints)
         tx_data += struct.pack('>H', CalcChksm(tx_data))
