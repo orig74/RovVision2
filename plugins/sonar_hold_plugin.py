@@ -33,19 +33,19 @@ async def recv_and_process():
             topic,data=ret[0],pickle.loads(ret[1])
 
             if topic==zmq_topics.topic_sonar:
-                new_sonar_ts, range=data['ts'],data['sonar'][0]/1000    # Convert to m
+                new_sonar_ts, s_range=data['ts'],data['sonar'][0]/1000    # Convert to m
                 if ab is None:
-                    ab=ab_filt([range,0])
+                    ab=ab_filt([s_range,0])
                 else:
-                    depth,rate=ab(range,new_sonar_ts-sonar_ts)
+                    s_range,rate=ab(s_range,new_sonar_ts-sonar_ts)
                 sonar_ts=new_sonar_ts
 
                 if 'SONAR_HOLD' in system_state['mode']:
                     if pid is None:
                         pid=PID(**sonar_pid)
                     else:
-                        ud_command = -pid(range,target_range,rate,0)
-                        debug_pid = {'P':pid.p,'I':pid.i,'D':pid.d,'C':ud_command,'T':target_range,'N':range,'TS':new_sonar_ts}
+                        ud_command = -pid(s_range,target_range,rate,0)
+                        debug_pid = {'P':pid.p,'I':pid.i,'D':pid.d,'C':ud_command,'T':target_range,'N':s_range,'TS':new_sonar_ts}
                         pub_sock.send_multipart([zmq_topics.topic_sonar_hold_pid, pickle.dumps(debug_pid,-1)])
                         thruster_cmd = mixer.mix(ud_command,0,0,0,0,0,pitch,roll)
                         thrusters_source.send_pyobj(['sonar',time.time(),thruster_cmd])
@@ -53,12 +53,12 @@ async def recv_and_process():
                     if pid is not None:
                         pid.reset()
                     thrusters_source.send_pyobj(['sonar',time.time(),mixer.zero_cmd()])
-                    target_range=range
-
+                    target_range=s_range
 
             if topic==zmq_topics.topic_axes:
                 jm.update_axis(data)
-                target_range+=-jm.joy_mix()['ud']/25.0
+                if jm.joy_mix()['ud'] != 0:
+                    target_range=s_range
 
             if topic==zmq_topics.topic_imu:
                 pitch,roll=data['pitch'],data['roll']

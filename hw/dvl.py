@@ -42,7 +42,7 @@ def parse_line(line):
     data=line.split(b'*')[0].split(b',')
     ret=None
     if data[0]==b'wrz':
-        #Velocity report
+        # Velocity report
         ret={'type':'vel'}
         keys='vx,vy,vz,valid,alt,fom,cov,tov,tot,time,status'.split(',')  
         for i in range(len(keys)):
@@ -53,18 +53,26 @@ def parse_line(line):
             else:
                 ret[keys[i]]=float(data[i+1])
 
-    if data[0]==b'wrt':
-        #Transducer report
+    if data[0]==b'wru':
+        # Transducer report
         ret={'type':'transducer'}
-        ret['dist']=[float(data[i+1]) for i in range(4)]
+        keys='id,velocity,distance,rssi,nsd'.split(',')
+        for i in range(len(keys)):
+            ret[keys[i]]=float(data[i+1])
         
     if data[0]==b'wrp':
+        # Deadreckoning report
         keys='time,x,y,z,pos_std,roll,pitch,yaw,status'.split(',')
         ret={'type':'deadreacon'}
-        #print(data)
         for i in range(len(keys)):
             #print(keys[i],data[i+1])
             ret[keys[i]]=float(data[i+1]) if i<=8 else data[i+1]
+
+    if data[0]==b'wrn' or data[0]==b'wra':
+        # DR reset reply
+        ret={'type':'Reset DR reply'}
+        ret['res']=str(data[0])
+
     return ret
 
 if __name__=='__main__':

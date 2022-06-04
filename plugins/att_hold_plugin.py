@@ -89,15 +89,12 @@ async def recv_and_process():
                     target_att=[yaw,0,0]
                     thrusters_source.send_pyobj(['att',time.time(),mixer.zero_cmd()])
 
-
             if topic==zmq_topics.topic_axes:
                 jm.update_axis(data)
-
 
             if topic==zmq_topics.topic_button:
                 jm.update_buttons(data)
                 #target_depth+=data[jm.ud]
-
 
             if topic==zmq_topics.topic_system_state:
                 _,system_state=data

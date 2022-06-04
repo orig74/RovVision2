@@ -21,7 +21,6 @@ if not vid_zmq:
 from annotations import draw,draw_seperate,draw_mono
 import zmq_wrapper as utils
 import image_enc_dec
-import web_streamer
 import camCalib as CC
 
 parser = argparse.ArgumentParser()
@@ -35,7 +34,7 @@ if resize_viewer:
     resize_width=int(os.environ['RESIZE_VIEWER'])
 
 subs_socks=[]
-subs_socks.append(utils.subscribe([zmq_topics.topic_thrusters_comand,zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_thrusters_comand,zmq_topics.topic_system_state, zmq_topics.topic_lights],zmq_topics.topic_controller_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_button, zmq_topics.topic_hat], zmq_topics.topic_joy_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_imu], zmq_topics.topic_imu_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_dvl_raw], zmq_topics.topic_dvl_port))
@@ -85,8 +84,6 @@ if __name__=='__main__':
     record_state=False
     jm=Joy_map()
     bmargx,bmargy=config.viewer_blacks
-    buffer = web_streamer.Broadcast()
-    server, server_thread = web_streamer.run_server(buffer)
 
     while 1:
         #join=np.zeros((sy,sx*2,3),'uint8')
@@ -221,16 +218,9 @@ if __name__=='__main__':
             #cv2.imshow('left',images[0])
             #cv2.imshow('right',images[1])
 
-        # Send frame to web server buffer
-        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 60]
-        _, jpg = cv2.imencode(".jpg", join, encode_param)
-        buffer.put(jpg.data)
-
         k=cv2.waitKey(10)
         if k==ord('q'):
             #for p in gst_pipes:
             #    p.terminate()
             #    p.poll()
             break
-
-    server.shutdown()

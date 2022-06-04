@@ -22,8 +22,11 @@ BATT_VOLTAGE_MUL = 11
 ADC_VOLTAGE_MUL = 0.000805
 ADC_VOLTAGE_OFFSET = 0.122
 
+CMND_TIMEOUT = 1.0
+
 current_command=[0 for _ in range(8)] # 8 thrusters
 keep_running=True
+last_thrstcmnd_ts=0
 lights_pw=0.0
 rec_state=False
 serial_rx_bytes=b''
@@ -54,8 +57,11 @@ async def send_serial_command_50hz():
     global serial_rx_bytes
     while keep_running:
         await asyncio.sleep(1/100.0)
-
-        m = current_command
+        
+        if (time.time() - last_thrstcmnd_ts) < CMND_TIMEOUT:
+            m = current_command
+        else:
+            m = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         m = np.clip(m, -THRSTR_LIMIT, THRSTR_LIMIT)
 
         # TODO: lights flash on RECORD
@@ -94,7 +100,7 @@ async def send_serial_command_50hz():
                 leak = msg_data[4]
                 pub_telem.send_multipart([zmq_topics.topic_telem, pickle.dumps({'ts': tic, 'V': batt_V, 'I': batt_I, 'leak': leak})])
                 print('< ', ["%.1f" % i for i in m], end='')
-                print(' Lights: {}, CamServo: {}'.format(lights, servo))
+                print(' Lights: {}, CamServo: {}'.format(lights_pw, servo))
                 print("> Batt V: {}, "\
                       "Batt I: {}, "\
                       "Depth: {}, "\
@@ -105,14 +111,14 @@ async def send_serial_command_50hz():
 
 
 async def recv_and_process():
-    global current_command, rec_state, lights_pw
+    global current_command, rec_state, lights_pw, last_thrstcmnd_ts
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.000)[0]
         for sock in socks:
             ret=sock.recv_multipart()
             topic, data = ret[0], pickle.loads(ret[1])
             if topic==zmq_topics.topic_thrusters_comand:
-                _,current_command=data
+                last_thrstcmnd_ts,current_command=data
             if topic == zmq_topics.topic_record_state:
                 rec_state=data
             if topic == zmq_topics.topic_lights:

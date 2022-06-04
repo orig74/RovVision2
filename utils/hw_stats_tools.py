@@ -21,7 +21,7 @@ def get_hw_stats():
     return (get_cpu_temp(),get_disk_usage(),get_cpu_usage(), get_cpu_freq())
 
 def get_hw_str(info):
-    return 'CPU {:.1f} HD {} TEMP {:.1f} FREQ {:.1f}'.format(*info)
+    return 'CPU {:.1f} HD {}% TEMP {:.1f} FREQ {:.1f}'.format(*info)
 
 if __name__=='__main__':
     print('cpu temp',get_cpu_temp())
