@@ -55,7 +55,7 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
     if zmq_topics.topic_imu in message_dict:
         m=message_dict[zmq_topics.topic_imu]
         yaw,pitch,roll=m['yaw'],m['pitch'],m['roll']
-        draw_compass(img,sy(1000+160),sx(438+voff),yaw,pitch,roll)
+        draw_compass(img,sy(1000+155),sx(438+voff),yaw,pitch,roll)
     if zmq_topics.topic_depth in message_dict:
         target_depth = message_dict.get(zmq_topics.topic_depth_hold_pid,{}).get('T',0)
         draw_depth(img,0,0,message_dict[zmq_topics.topic_depth]['depth'],target_depth)
@@ -206,9 +206,9 @@ def draw_compass(img,x,y,heading,pitch,roll,rr=50.0):
     cv2.line(img,
         (int(xx-cs*(r-mt)),int(yy-si*(r-mt))),
         (int(xx-cs*r),int(yy-si*r)),(0,255,255),5)
-    cv2.putText(img,'Y:'+str(int(heading)),(x+int(rr)+5,y-15), font, 0.6,(0,0,0),5,cv2.LINE_AA)
-    cv2.putText(img,'P:'+str(int(pitch)),(x+int(rr)+5,y+5), font, 0.6,(0,0,0),5,cv2.LINE_AA)
-    cv2.putText(img,'R:'+str(int(roll)),(x+int(rr)+5,y+25), font, 0.6,(0,0,0),5,cv2.LINE_AA)
+    cv2.putText(img,'Y:'+str(int(heading)),(x+int(rr)+5,y-15), font, 0.6,(0,0,0),6,cv2.LINE_AA)
+    cv2.putText(img,'P:'+str(int(pitch)),(x+int(rr)+5,y+5), font, 0.6,(0,0,0),6,cv2.LINE_AA)
+    cv2.putText(img,'R:'+str(int(roll)),(x+int(rr)+5,y+25), font, 0.6,(0,0,0),6,cv2.LINE_AA)
     cv2.putText(img,'Y:'+str(int(heading)),(x+int(rr)+5,y-15), font, 0.6,(255,255,255),2,cv2.LINE_AA)
     cv2.putText(img,'P:'+str(int(pitch)),(x+int(rr)+5,y+5), font, 0.6,(255,255,255),2,cv2.LINE_AA)
     cv2.putText(img,'R:'+str(int(roll)),(x+int(rr)+5,y+25), font, 0.6,(255,255,255),2,cv2.LINE_AA)
@@ -237,7 +237,7 @@ def draw_thrusters(img, pos, thrst_cmnds):
         comm_str = ' ' + comm_str if len(comm_str) == 3 else comm_str
         c_x = int((DISP_S-U_W) // 2 + U_W * ((t_i % 2) if t_i < 2 else (t_i % 2 == 0)))
         c_y = int((DISP_S-U_H) // 2 + U_H * (t_i > 1))
-        cv2.circle(s_img, (c_x, c_y), 21, t_cols[t_i][0].tolist(), -1)
+        cv2.circle(s_img, (c_x, c_y), 20, t_cols[t_i][0].tolist(), -1)
         if t_commands[t_i] > 0:
             cv2.putText(s_img, 'x', (c_x - 14, c_y + 11), cv2.FONT_HERSHEY_SIMPLEX, 1.6, (1, 1, 1), 10)
         else:
