@@ -6,7 +6,7 @@ def get_cpu_temp():
         return -1
 
 def get_disk_usage():
-    return int(os.popen('df -h / | tail -n 1').readline().strip().split()[-2][:-1])
+    return int(os.popen('df -h /media/data | tail -n 1').readline().strip().split()[-2][:-1])
 
 def get_cpu_usage():
     try:
@@ -21,7 +21,7 @@ def get_hw_stats():
     return (get_cpu_temp(),get_disk_usage(),get_cpu_usage(), get_cpu_freq())
 
 def get_hw_str(info):
-    return 'CPU {:.1f} HD {} TEMP {:.1f} FREQ {:.1f}'.format(*info)
+    return 'CPU {:.1f} HD {}% TEMP {:.1f} FREQ {:.1f}'.format(*info)
 
 if __name__=='__main__':
     print('cpu temp',get_cpu_temp())

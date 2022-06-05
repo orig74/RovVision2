@@ -7,7 +7,10 @@ if __name__=='__main__':
     rov_type = int(os.environ.get('ROV_TYPE','1'))
     for dev in ['/dev/ttyUSB%d'%i for i in [0,1,2,3]]:
         cmd = 'udevadm info '+dev
-        line=os.popen(cmd).readline()
+        try:
+            line=os.popen(cmd).readline()
+        except:
+            break
         
         if rov_type==1:
             if '1-7' in line:
@@ -32,14 +35,11 @@ if __name__=='__main__':
 
         if rov_type==4:
             if '1-7' in line:
-                #dmap['SONAR_USB']=dev
                 dmap['DVL_USB']=dev
-            if '1-5' in line:
-                dmap['ESC_USB']=dev
             if '1-3' in line:
                 dmap['VNAV_USB']=dev
-            if '1-1' in line:
-                dmap['PERI_USB']=dev
+            if '1-5' in line:
+                dmap['ESP_USB']=dev
  
     with open('/tmp/devusbmap.pkl','wb') as fp:
         #print(dmap)

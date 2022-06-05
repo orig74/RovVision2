@@ -10,6 +10,7 @@ print('done import')
 import time,sys
 import traceback
 import os,zmq
+import math
 sys.path.append('..')
 sys.path.append('../utils')
 import zmq_wrapper as utils
@@ -40,31 +41,45 @@ def parse_line(line):
     #sys.exit(0)
     data=line.split(b'*')[0].split(b',')
     ret=None
-    if data[0]==b'wrx':
-        #Velocity report
+    if data[0]==b'wrz':
+        # Velocity report
         ret={'type':'vel'}
-        keys='time,vx,vy,vz,fom,alt,valid,status'.split(',')
+        keys='vx,vy,vz,valid,alt,fom,cov,tov,tot,time,status'.split(',')  
         for i in range(len(keys)):
-            ret[keys[i]]=float(data[i+1]) if i<=5 else data[i+1]
+            if i == 3:
+                ret[keys[i]]=data[i+1]
+            elif i == 6:
+                ret[keys[i]]=[float(v) for v in data[i+1].split(b';')]
+            else:
+                ret[keys[i]]=float(data[i+1])
 
-    if data[0]==b'wrt':
-        #Transducer report
+    if data[0]==b'wru':
+        # Transducer report
         ret={'type':'transducer'}
-        ret['dist']=[float(data[i+1]) for i in range(4)]
+        keys='id,velocity,distance,rssi,nsd'.split(',')
+        for i in range(len(keys)):
+            ret[keys[i]]=float(data[i+1])
         
     if data[0]==b'wrp':
+        # Deadreckoning report
         keys='time,x,y,z,pos_std,roll,pitch,yaw,status'.split(',')
         ret={'type':'deadreacon'}
-        #print(data)
         for i in range(len(keys)):
             #print(keys[i],data[i+1])
             ret[keys[i]]=float(data[i+1]) if i<=8 else data[i+1]
+
+    if data[0]==b'wrn' or data[0]==b'wra':
+        # DR reset reply
+        ret={'type':'Reset DR reply'}
+        ret['res']=str(data[0])
+
     return ret
 
 if __name__=='__main__':
     if len(sys.argv)==1:
         ser = init_serial()
         pub_dvl = utils.publisher(zmq_topics.topic_dvl_port)
+        pub_srange = utils.publisher(zmq_topics.topic_sonar_port)
         cnt=0
         last_time=None
         while 1:
@@ -74,16 +89,21 @@ if __name__=='__main__':
                 d=parse_line(line)
                 if d and d['type']=='deadreacon':
                     last_time = d['time']
-                if cnt%101==0:
+                if d and cnt%51==0:
                     print('parsed ',cnt,'msgs')
                     print('d=',d)
                 cnt+=1
+                # Mock downward facing SONAR output
+                if d and d['type']=='vel':
+                    to_send=pickle.dumps({'ts':tic, 'sonar':[d['alt'], 1 if d['valid']==b'y' else 0]})
+                    pub_srange.send_multipart([zmq_topics.topic_sonar,to_send])
             except Exception as e:
                 print('-----------------------')
                 traceback.print_exc(file=sys.stdout)
                 print(e)
                 #traceback.print_exc(file=sys.stdout)
-            pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':time.time(),'dvl_raw':line})])
+            tic = time.time()
+            pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':line})])
     else:
         fl = sys.argv[1]
         #fl = '../../data//220322-123731/viewer_data.pkl'

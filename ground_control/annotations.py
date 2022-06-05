@@ -19,9 +19,13 @@ cfps = 0
 if config.rov_type==2:
     sy = lambda n: int(n*1280/1920)
     sx = lambda n: int(n*1024/1200)
+elif config.rov_type==4:
+    sy = lambda n: int(n*1280/1920)
+    sx = lambda n: int(n*1024/1200)
 else:
     sx = lambda x:x
     sy = lambda y:y
+
 
 def draw_seperate(imgl,imgr,message_dict):
     if zmq_topics.topic_tracker in message_dict:
@@ -46,48 +50,56 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
             cfps = (fmt_cnt_l - prev_frame_cnt) / (time.time() - prev_fps_time)
             prev_frame_cnt = fmt_cnt_l
             prev_fps_time = time.time()
-        line+=' {:>.2f}Cfps, {:>.2f}Rfps'.format(cfps, cfps / config.save_modulo)
-        print('fpsline',line)
-        cv2.putText(img,line,(sy(10),sx(560+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+        line+=' {:>.2f}Cfps'.format(cfps)
+        cv2.putText(img,line,(sy(10),sx(575+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
     if zmq_topics.topic_imu in message_dict:
         m=message_dict[zmq_topics.topic_imu]
         yaw,pitch,roll=m['yaw'],m['pitch'],m['roll']
-        draw_compass(img,sy(1000+100),sx(485+voff),yaw,pitch,roll)
+        draw_compass(img,sy(1000+155),sx(438+voff),yaw,pitch,roll)
     if zmq_topics.topic_depth in message_dict:
         target_depth = message_dict.get(zmq_topics.topic_depth_hold_pid,{}).get('T',0)
         draw_depth(img,0,0,message_dict[zmq_topics.topic_depth]['depth'],target_depth)
     if zmq_topics.topic_sonar in message_dict and 'sonar' in message_dict[zmq_topics.topic_sonar]:
         sonar_rng = message_dict[zmq_topics.topic_sonar]['sonar']
         line=' {:>.2f},{:>.2f} SRng'.format(*sonar_rng)
-        cv2.putText(img,line,(sy(450),sx(560+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+        cv2.putText(img,line,(sy(450),sx(575+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
     if zmq_topics.topic_record_state in message_dict:
         if message_dict[zmq_topics.topic_record_state]:
-            cv2.putText(img,'REC',(sy(10),sx(20)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+            cv2.putText(img,'REC',(sy(25),sx(20)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
     if zmq_topics.topic_system_state in message_dict:
         ss = message_dict[zmq_topics.topic_system_state][1]
         cv2.putText(img,'ARM' if ss['arm'] else 'DISARM' \
-                ,(sy(50),sx(20)), font, 0.7,(0,0,255) if ss['arm'] else (0,255,0),2,cv2.LINE_AA)
+                ,(sy(100),sx(20)), font, 0.7,(0,0,255) if ss['arm'] else (0,255,0),2,cv2.LINE_AA)
         modes = sorted(ss['mode'])
         if len(modes)==0:
             modes_str='MANUAL'
         else:
             modes_str=' '.join(modes)
         cv2.putText(img, modes_str\
-                ,(sy(140),sx(20)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+                ,(sy(240),sx(20)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
     if zmq_topics.topic_tracker in message_dict:
         rng  = message_dict[zmq_topics.topic_tracker].get('range_f',-1.0)
         line='{:>.2f} TRng'.format(rng)
-        cv2.putText(img,line,(sy(350),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
-
-    if zmq_topics.topic_volt in message_dict:
-        v=message_dict[zmq_topics.topic_volt]['V']
-        i=message_dict[zmq_topics.topic_volt]['I']
+        cv2.putText(img,line,(sy(400),sx(600+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+    if zmq_topics.topic_telem in message_dict:
+        v=message_dict[zmq_topics.topic_telem]['V']
+        i=message_dict[zmq_topics.topic_telem]['I']
+        leak=message_dict[zmq_topics.topic_telem]['leak']
+        if leak:
+            pos=(90, 90)
+            cv2.circle(img, pos, 52, (0, 0, 255), -1)
+            cv2.putText(img,"LEAK!",(pos[0]-42, pos[1]+10), font, 1.0,(255,255,255),3,cv2.LINE_AA)
         line='{:>.2f}V {:>.2f}I'.format(v,i)
-        cv2.putText(img,line,(sy(50),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
-
+        cv2.putText(img,line,(sy(50),sx(600+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
     if zmq_topics.topic_hw_stats in message_dict:
         line=hw_stats_tools.get_hw_str(message_dict[zmq_topics.topic_hw_stats][1])
         cv2.putText(img,line,(sy(670+500),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+    if zmq_topics.topic_thrusters_comand in message_dict:
+        thrst_cmnd = message_dict[zmq_topics.topic_thrusters_comand][1]
+        draw_thrusters(img, (650, 350), thrst_cmnd)
+    if zmq_topics.topic_lights in message_dict:
+        lights=message_dict[zmq_topics.topic_lights]
+        cv2.putText(img,'L'+str(lights),(sy(670+360),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
 
 def draw_mono(img,message_dict,fmt_cnt_l):
     global prev_fps_time, prev_frame_cnt, cfps
@@ -154,9 +166,10 @@ def draw_mono(img,message_dict,fmt_cnt_l):
 from math import cos,sin,pi
 def draw_compass(img,x,y,heading,pitch,roll,rr=50.0):
     font = cv2.FONT_HERSHEY_SIMPLEX
-    cv2.putText(img,str(int(heading%360)),(x,y+30), font, 0.6,(0,000,255),1,cv2.LINE_AA)
+    cv2.putText(img,str(int(heading%360)),(x-12,y+26), font, 0.5,(0,000,255),2,cv2.LINE_AA)
 
     cv2.circle(img, (x,y), int(rr), (0,0,255), 2)
+    cv2.putText(img,'N',(x-5,y-54), font, 0.5,(0,000,255),2,cv2.LINE_AA)
     for i in range(36):
         t=i*10/180.0*pi
         if i%9==0:
@@ -194,11 +207,81 @@ def draw_compass(img,x,y,heading,pitch,roll,rr=50.0):
     cv2.line(img,
         (int(xx-cs*(r-mt)),int(yy-si*(r-mt))),
         (int(xx-cs*r),int(yy-si*r)),(0,255,255),5)
-    cv2.putText(img,'Y:'+str(int(heading)),(x-3,y+int(rr)+16), font, 0.6,(255,255,255),2,cv2.LINE_AA)
-    cv2.putText(img,'P:'+str(int(pitch)),(x-3,y+int(rr)+32), font, 0.6,(255,255,255),2,cv2.LINE_AA)
-    cv2.putText(img,'R:'+str(int(roll)),(x-3,y+int(rr)+48), font, 0.6,(255,255,255),2,cv2.LINE_AA)
+    cv2.putText(img,'Y:'+str(int(heading)),(x+int(rr)+5,y-15), font, 0.6,(0,0,0),6,cv2.LINE_AA)
+    cv2.putText(img,'P:'+str(int(pitch)),(x+int(rr)+5,y+5), font, 0.6,(0,0,0),6,cv2.LINE_AA)
+    cv2.putText(img,'R:'+str(int(roll)),(x+int(rr)+5,y+25), font, 0.6,(0,0,0),6,cv2.LINE_AA)
+    cv2.putText(img,'Y:'+str(int(heading)),(x+int(rr)+5,y-15), font, 0.6,(255,255,255),2,cv2.LINE_AA)
+    cv2.putText(img,'P:'+str(int(pitch)),(x+int(rr)+5,y+5), font, 0.6,(255,255,255),2,cv2.LINE_AA)
+    cv2.putText(img,'R:'+str(int(roll)),(x+int(rr)+5,y+25), font, 0.6,(255,255,255),2,cv2.LINE_AA)
 
 
+from math import radians
+import numpy as np
+cosd = lambda d: cos(radians(d))
+sind = lambda d: sin(radians(d))
+rot = lambda ang: np.array([[cosd(ang), sind(ang)],
+                            [-sind(ang), cosd(ang)]])
+def draw_thrusters(img, pos, thrst_cmnds):
+    t_commands = np.array(thrst_cmnds)
+    DS = 1.0
+    DISP_S = 240
+    s_img = np.zeros((DISP_S, DISP_S, 3), dtype=np.uint8)
+
+    t_commands_uint8 = (20 + 215 * abs(t_commands)).astype(np.uint8)
+    t_cols = cv2.applyColorMap(t_commands_uint8, cv2.COLORMAP_TURBO).astype(int)
+    
+    # Draw vertical thrusters
+    U_H = 100
+    U_W = 160
+    for t_i in range(4):
+        comm_str = str(round(t_commands[t_i], 1))
+        comm_str = ' ' + comm_str if len(comm_str) == 3 else comm_str
+        c_x = int((DISP_S-U_W) // 2 + U_W * ((t_i % 2) if t_i < 2 else (t_i % 2 == 0)))
+        c_y = int((DISP_S-U_H) // 2 + U_H * (t_i > 1))
+        cv2.circle(s_img, (c_x, c_y), 20, t_cols[t_i][0].tolist(), -1)
+        if t_commands[t_i] > 0:
+            cv2.putText(s_img, 'x', (c_x - 14, c_y + 11), cv2.FONT_HERSHEY_SIMPLEX, 1.6, (1, 1, 1), 10)
+        else:
+            cv2.circle(s_img, (c_x, c_y), 15, (1, 1, 1), -1)
+        cv2.putText(s_img, comm_str, (c_x - 18, c_y + 4), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 6)
+        cv2.putText(s_img, comm_str, (c_x - 18, c_y + 4), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (1, 1, 1), 2)
+
+    # Draw horizontal thrusters
+    L_H = 140
+    L_W = 60
+    T_ANGLES = [60, -240, -300, 120]
+    for t_i in range(4):
+        comm_str = str(round(t_commands[t_i+4], 1))
+        comm_str = ' ' + comm_str if len(comm_str) == 3 else comm_str
+        c_x = int((DISP_S-L_W) // 2 + L_W * ((t_i % 2) if t_i < 2 else (t_i % 2 == 0)))
+        c_y = int((DISP_S-L_H) // 2 + L_H * (t_i > 1))
+        M, m = (20, 13)
+        contours = np.array([[-m, -M], [m, -M],
+                             [m, M], [-m, M]])
+        arrow_p = np.array([[0, -8],
+                            [25 * abs(t_commands[t_i + 4]), -8],
+                            [25 * abs(t_commands[t_i + 4]), -13],
+                            [40 * abs(t_commands[t_i + 4]), 0],
+                            [25 * abs(t_commands[t_i + 4]), 13],
+                            [25 * abs(t_commands[t_i + 4]), 8],
+                            [0, 8]])
+        arrow_p[:, 0] += m
+        arrow_p[:, 0] *= np.sign(t_commands[t_i + 4])
+        contours = np.matmul(rot(T_ANGLES[t_i]), contours.T).T.astype(int)
+        arrow = np.matmul(rot(T_ANGLES[t_i]), arrow_p.T).T.astype(int)
+        contours[:, 0] += c_x
+        arrow[:, 0] += c_x
+        contours[:, 1] += c_y
+        arrow[:, 1] += c_y
+        cv2.fillPoly(s_img, [contours], t_cols[t_i+4][0].tolist())
+        cv2.fillPoly(s_img, [arrow], t_cols[t_i+4][0].tolist())
+        cv2.putText(s_img, comm_str, (c_x - 18, c_y + 4), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 6)
+        cv2.putText(s_img, comm_str, (c_x - 18, c_y + 4), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (1, 1, 1), 2)
+
+    img_ds = cv2.resize(s_img, (int(DISP_S/DS), int(DISP_S//DS)))
+    img_ds_mask = np.sum(img_ds, axis=-1) > 0
+    s_img = img[pos[1]:pos[1]+img_ds.shape[1], pos[0]:pos[0]+img_ds.shape[0]]
+    s_img[img_ds_mask] = img_ds[img_ds_mask]
 
 
 def draw_depth(img,x,y,depth,tdepth):

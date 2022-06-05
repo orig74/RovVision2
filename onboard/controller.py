@@ -104,6 +104,7 @@ async def recv_and_process():
             else:
                 for k in thrusters_dict:
                     thruster_cmd += thrusters_dict[k]
+            #thruster_cmd = 8*[0.043]
             pub_sock.send_multipart([zmq_topics.topic_thrusters_comand,pickle.dumps((tic,list(thruster_cmd)))])
             thruster_cmd = np.zeros(8)
 

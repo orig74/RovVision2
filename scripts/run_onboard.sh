@@ -9,9 +9,9 @@ PROJECT_PATH=../
 else
 #PROJECT_PATH=/home/host/projects/RovVision2/
 PROJECT_PATH="${PROJECT_PATH:-/home/host/projects/RovVision2/}"
-#PYTHON=/miniconda/bin/python 
+#PYTHON=/miniconda/bin/python
 tmux new-window
-fi 
+fi
 
 #common for sim and hw
 new_6_win
@@ -30,15 +30,20 @@ run 2 onboard hw_stats.py
 
 #only hw from here
 if [ ! -v SIM ]
-then 
+then
+
+tmux select-pane -t 3
+tmux send-keys "gst-launch-1.0 v4l2src device=/dev/video4 ! video/x-raw,width=640 ! videoconvert ! videoflip method=rotate-180 ! x264enc tune=zerolatency bitrate=500 speed-preset=superfast ! rtph264pay ! udpsink host=169.254.0.2 port=17893" ENTER
+#tmux send-keys "gst-launch-1.0 -v -e udpsrc port=17893 ! videoflip method=vertical-flip ! application/x-rtp, media=video, clock-rate=90000, encoding-name=H264, payload=96 ! rtph264depay ! tee name=t ! queue ! decodebin ! videoconvert ! autovideosink t. ! queue ! h264parse ! qtmux ! filesink location=/home/uav/records_main_cam/$(date '+%y%m%d-%H%M%S').mov sync=false" ENTER
+
 tmux new-window
 new_6_win
 run 0 utils detect_usb.py
-sleep 3 
-run 0 hw hw_gate.py
+sleep 3
+run 0 hw ESP32_gate.py
 #run 1 hw flircam_proxy.py
 run 1 hw alvium_proxy.py
-run 2 hw periph_gate.py
+#run 2 hw periph_gate.py
 run 3 hw vnav.py
 run 4 hw sonar.py
 run 5 hw dvl.py
