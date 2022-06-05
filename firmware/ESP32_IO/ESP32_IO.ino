@@ -31,7 +31,7 @@ byte msg_buff[N_SERIAL_RX_BYTES];
 byte serial_count;
 
 Servo thrusters[8];
-#define PWM_MIDPOINT 1490
+#define PWM_MIDPOINT 1488
 #define PWM_RANGE_H 500
 Servo lights;
 Servo cam_servo;

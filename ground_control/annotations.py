@@ -169,6 +169,7 @@ def draw_compass(img,x,y,heading,pitch,roll,rr=50.0):
     cv2.putText(img,str(int(heading%360)),(x-12,y+26), font, 0.5,(0,000,255),2,cv2.LINE_AA)
 
     cv2.circle(img, (x,y), int(rr), (0,0,255), 2)
+    cv2.putText(img,'N',(x-5,y-54), font, 0.5,(0,000,255),2,cv2.LINE_AA)
     for i in range(36):
         t=i*10/180.0*pi
         if i%9==0:
