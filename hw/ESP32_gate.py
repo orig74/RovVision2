@@ -14,11 +14,14 @@ import zmq_topics
 import config
 
 THRSTR_LIMIT = 1.0  # config.thruster_limit
-N_SERIAL_RX_BYTES = 11
+N_SERIAL_RX_BYTES = 15
+N_SERIAL_TX_BYTES = 20
 
 BATT_AMP_OFFSET = 0.330
 BATT_AMP_PERVOLT = 37.8788
 BATT_VOLTAGE_MUL = 11
+ESC_AMP_OFFSET = 0.122
+ESC_AMP_PERVOLT = 38.0
 ADC_VOLTAGE_MUL = 0.000805
 ADC_VOLTAGE_OFFSET = 0.122
 
@@ -76,6 +79,7 @@ async def send_serial_command_50hz():
         tx_ints.append(scale_val(servo, -1.0, 1.0, 8))
         tx_data = struct.pack('>HHHHHHHHBB', *tx_ints)
         tx_data += struct.pack('>H', CalcChksm(tx_data))
+        assert len(tx_data) == N_SERIAL_TX_BYTES 
         ser.write(tx_data)
 
         while ser.inWaiting():
@@ -83,7 +87,7 @@ async def send_serial_command_50hz():
 
         if len(serial_rx_bytes) > N_SERIAL_RX_BYTES-1:
             buff_msg = serial_rx_bytes[-N_SERIAL_RX_BYTES:]
-            msg_data = struct.unpack('<HHhhBH', buff_msg)
+            msg_data = struct.unpack('<HHhhhhBH', buff_msg)
             if CalcChksm(buff_msg[:-2]) == msg_data[-1]:
                 serial_rx_bytes = b''
                 #print('> ', msg_data)
@@ -97,15 +101,27 @@ async def send_serial_command_50hz():
                 adc_voltage_I = msg_data[3] * ADC_VOLTAGE_MUL + ADC_VOLTAGE_OFFSET
                 batt_V = round(adc_voltage_V * BATT_VOLTAGE_MUL, 2)
                 batt_I = round((adc_voltage_I - BATT_AMP_OFFSET) * BATT_AMP_PERVOLT, 2)
-                leak = msg_data[4]
-                pub_telem.send_multipart([zmq_topics.topic_telem, pickle.dumps({'ts': tic, 'V': batt_V, 'I': batt_I, 'leak': leak})])
+
+                adc_voltage_esc1 = msg_data[4] * ADC_VOLTAGE_MUL + ADC_VOLTAGE_OFFSET
+                adc_voltage_esc2 = msg_data[5] * ADC_VOLTAGE_MUL + ADC_VOLTAGE_OFFSET
+                esc1_I = round((adc_voltage_esc1 - ESC_AMP_OFFSET) * ESC_AMP_PERVOLT, 2)
+                esc2_I = round((adc_voltage_esc2 - ESC_AMP_OFFSET) * ESC_AMP_PERVOLT, 2)
+
+                leak = msg_data[6]
+
+                tosend=pickle.dumps({'ts': tic, 'V': batt_V, 'I': batt_I, 'ESC1_I': esc1_I, 
+                                     'ESC2_I': esc2_I, 'leak': leak})
+                pub_telem.send_multipart([zmq_topics.topic_telem, tosend])
+
                 print('< ', ["%.1f" % i for i in m], end='')
                 print(' Lights: {}, CamServo: {}'.format(lights_pw, servo))
                 print("> Batt V: {}, "\
                       "Batt I: {}, "\
+                      "ESC1 I: {}, "\
+                      "ESC2 I: {}, "\
                       "Depth: {}, "\
                       "W Temp: {}, "\
-                      "Leak: {}".format(batt_V, batt_I, bar_D, temp_C, leak))
+                      "Leak: {}".format(batt_V, batt_I, esc1_I, esc1_I, bar_D, temp_C, leak))
             else:
                 print("INVALID RX CHKSM")
 

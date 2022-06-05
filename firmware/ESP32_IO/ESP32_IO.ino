@@ -3,6 +3,10 @@
 #include <Wire.h>
 #include <driver/adc.h>
 #include "MS5837.h"
+#include <esp_task_wdt.h>
+
+#define WDT_TIMEOUT 3 // seconds
+#define NODATA_TIMEOUT_LOOPS 100
 
 #define STATUS_LED_PIN 2
 #define LIGHTS_PIN 16
@@ -15,13 +19,13 @@ int thruster_dirs[8] = {-1, -1, 1, 1, -1, 1, 1, -1};
 #define THRUSTERS_CURRENT_PIN_1 35
 #define THRUSTERS_CURRENT_PIN_2 34
 
-#define SENSOR_UPDATE_FPS 3
+#define SENSOR_UPDATE_FPS 5
 #define SENSOR_EVENT_MICROS (1000000/SENSOR_UPDATE_FPS)
 
 #define SERIAL_BAUDRATE 500000
-#define MAINLOOP_PERIOD_US 10
+#define MAINLOOP_PERIOD_US 1000
 
-#define N_SERIAL_TX_BYTES 11
+#define N_SERIAL_TX_BYTES 15
 #define N_SERIAL_RX_BYTES 20
 byte msg_buff[N_SERIAL_RX_BYTES];
 byte serial_count;
@@ -38,6 +42,7 @@ unsigned long prev_loop_us;
 unsigned long no_data_cnt;
 
 MS5837 DepthSensor;
+bool depth_sensor_ok=false;
 
 
 uint16_t unpack_16bit(byte* byte_buff, int byte_idx) {
@@ -63,6 +68,12 @@ int ScaleUint16(uint16_t in_val, int out_min, int out_max) {
   return out_min + (int) ((float) (out_max - out_min) * (float) in_val / 65535);
 }
 
+int sample_adc(int PIN, int num_s) {
+  long adc_val=0;
+  for (int s=0; s<num_s; s++) adc_val += (long) analogRead(PIN);
+  return (int) (adc_val / num_s);
+}
+
 
 void setup() {
   pinMode(STATUS_LED_PIN, OUTPUT);
@@ -83,25 +94,30 @@ void setup() {
   cam_servo.write(90);
   
   Serial.begin(SERIAL_BAUDRATE);
-
   Wire.begin();
-  while (!DepthSensor.init()) {
-    //Serial.println("Init failed!");
-    //Serial.println("Are SDA/SCL connected correctly?");
-    //Serial.println("Blue Robotics Bar30: White=SDA, Green=SCL");
-    delay(500);
-  }
-  DepthSensor.setModel(MS5837::MS5837_30BA);
-  DepthSensor.setFluidDensity(1029); // kg/m^3 (997 for freshwater, 1029 for seawater)
 
+  esp_task_wdt_init(WDT_TIMEOUT, true); //enable panic so ESP32 restarts
+  esp_task_wdt_add(NULL); //add current thread to WDT watch
+  
   digitalWrite(STATUS_LED_PIN, HIGH);
 }
 
+unsigned long loop_itt=0;
 void loop() {
-  // ArduinoOTA.handle();
+  esp_task_wdt_reset();
+
+  // INIT Depth sensor if not already
+  if (!depth_sensor_ok and loop_itt%500==0) {
+    if (DepthSensor.init()) {
+      depth_sensor_ok = true;
+      DepthSensor.setModel(MS5837::MS5837_30BA);
+      DepthSensor.setFluidDensity(1029); // kg/m^3 (997 for freshwater, 1029 for seawater)
+    }
+  }
 
   while (micros() < prev_loop_us + MAINLOOP_PERIOD_US) {}
   prev_loop_us = micros();
+  loop_itt++;
 
   // Serial RX
   while (Serial.available()) {
@@ -147,7 +163,7 @@ void loop() {
   } else no_data_cnt++;
 
   // If no serial messages for N loops write outputs to OFF
-  if (no_data_cnt > 10000) {
+  if (no_data_cnt > NODATA_TIMEOUT_LOOPS) {
     no_data_cnt = 0;
     for (int thrstr_idx=0; thrstr_idx < 8; thrstr_idx++) {
         thrusters[thrstr_idx].writeMicroseconds(PWM_MIDPOINT);
@@ -156,22 +172,33 @@ void loop() {
     digitalWrite(STATUS_LED_PIN, LOW);
   }
 
-  // Sensor read task
+  // Sensors read task
   if((micros() - prev_sensor_event_us) > SENSOR_EVENT_MICROS) {
     prev_sensor_event_us = micros();
 
-    DepthSensor.read();
-    float depth_m = DepthSensor.depth();
-    float temp_c = DepthSensor.temperature();
+    // Read depth sensor if available
+    float depth_m = -1;
+    float temp_c = -1;
+    if (depth_sensor_ok) {
+      DepthSensor.read();
+      depth_m = DepthSensor.depth();
+      temp_c = DepthSensor.temperature();
+    }
     uint16_t depth_u16 = (uint16_t) min(max((int) round(depth_m*200), 0), 65536);
     uint16_t temp_u16 = (uint16_t) min(max((int) round(temp_c*200), 0), 65536);
-    int adc_volt = analogRead(VOLTAGE_ADC_PIN);
-    int adc_amps = analogRead(CURRENT_ADC_PIN);
+    int adc_volt = sample_adc(VOLTAGE_ADC_PIN, 5);
+    int adc_amps = sample_adc(CURRENT_ADC_PIN, 5);
+    int adc_amps_esc1 = sample_adc(THRUSTERS_CURRENT_PIN_1, 5);
+    int adc_amps_esc2 = sample_adc(THRUSTERS_CURRENT_PIN_2, 5);
     bool leaking_now = digitalRead(MOISTURE_SENSE_PIN);
+
     byte message[N_SERIAL_TX_BYTES] = {lowByte(depth_u16), highByte(depth_u16),
-                       lowByte(temp_u16), highByte(temp_u16),
-                       lowByte(adc_volt), highByte(adc_volt),
-                       lowByte(adc_amps), highByte(adc_amps), (byte) leaking_now, 0, 0};
+                                       lowByte(temp_u16), highByte(temp_u16),
+                                       lowByte(adc_volt), highByte(adc_volt),
+                                       lowByte(adc_amps), highByte(adc_amps), 
+                                       lowByte(adc_amps_esc1), highByte(adc_amps_esc1),
+                                       lowByte(adc_amps_esc2), highByte(adc_amps_esc2), 
+                                       (byte) leaking_now, 0, 0};
     uint16_t chksm = CalcChksm(message, N_SERIAL_TX_BYTES-2);
     message[N_SERIAL_TX_BYTES-2] = chksm & 0xFF;
     message[N_SERIAL_TX_BYTES-1] = chksm >> 8;

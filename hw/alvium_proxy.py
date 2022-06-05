@@ -21,16 +21,20 @@ subs_socks.append(utils.subscribe([ zmq_topics.topic_record_state ],zmq_topics.t
 subs_socks.append(utils.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
 socket_pub = utils.publisher(zmq_topics.topic_camera_port)
 
-YAPPI = False
-if YAPPI:
-    import yappi
-    yappi.start()
+parser = argparse.ArgumentParser()
+parser.add_argument("--debug", help="Show frames with opencv", action='store_true')
+args = parser.parse_args()
 
-DEBUG = False
-ZMQ_PUB = True
+CAM_FPS = 5
+CAM_IDS = ['DEV_000F315DAB37', 'DEV_000F315DB084', 'DEV_000F315DAB68']
+MASTER_CAM_ID = CAM_IDS[0]
+NUM_CAMS = len(CAM_IDS)
 
-CAM_FPS = 6
-NUM_CAMS = 3
+# Min exposure time: 32us
+CAM_EXPOSURE_US = None #10000
+CAM_EXPOSURE_MAX = 20000    # us
+CAM_EXPOSURE_MIN = 32
+
 IMG_SIZE_BYTES = 5065984
 
 # If changing need to power cycle cameras, no vertical binning, cannot change while streaming
@@ -41,15 +45,8 @@ BINDEC_IMG_SIZE = IMG_SIZE_BYTES / (BIN_HORIZONTAL * DEC_HORIZONTAL * DEC_VERTIC
 
 MAX_BANDWIDTH_BYTES_P_S = 110e6
 FRAME_TRANSFER_TIME = NUM_CAMS * BINDEC_IMG_SIZE / MAX_BANDWIDTH_BYTES_P_S
-MASTER_CAM_ID = 'DEV_000F315DB084'
 
 FRAME_QUEUE_SIZE = 11
-
-# Min exposure time: 32us
-CAM_EXPOSURE_US = None #10000
-CAM_EXPOSURE_MAX = 20000    # us
-CAM_EXPOSURE_MIN = 32
-
 
 ACTION_DEV_KEY = 1
 ACTION_GROUP_KEY = 1
@@ -70,6 +67,7 @@ class AlviumMultiCam(threading.Thread):
         self.frame_queue = queue.Queue(maxsize=FRAME_QUEUE_SIZE)
         self.producers_lock = threading.Lock()
         self.cached_images=None
+        self.debug_cam_idx=0
 
     def __call__(self, cam: Camera, event: CameraEvent):
         # An existing camera was disconnected, stop associated FrameProducer.
@@ -87,6 +85,13 @@ class AlviumMultiCam(threading.Thread):
     def run(self):
         system_state = 'INIT'
         frame = None
+
+        if args.debug:
+            def on_change(val):
+                self.debug_cam_idx = val
+            cv2.namedWindow("DEBUG WINDOW", cv2.WINDOW_GUI_NORMAL)
+            cv2.createTrackbar("Cam IDX", "DEBUG WINDOW", 0, 2, on_change)
+
         while system_state != 'STOP':
             vimba_ctx = Vimba.get_instance()
             with vimba_ctx:
@@ -101,8 +106,6 @@ class AlviumMultiCam(threading.Thread):
 
                 # Start and respond to state changes
                 vimba_ctx.register_camera_change_handler(self)
-
-                cam_ids = ['DEV_000F315DB084', 'DEV_000F315DAB68', 'DEV_000F315DAB37']
 
                 # start trigger thread only once all cameras are setup
                 start_ts = time.time()
@@ -132,24 +135,15 @@ class AlviumMultiCam(threading.Thread):
                     max_proc_delay = 0
 
                     prev_loop_time = time.time()
-                    imshow_keys = []
                     loop_cnt = 0
-                    current_frames = dict(zip(cam_ids, [0, 0, 0]))
-                    current_frame_ts = dict(zip(cam_ids, [0, 1, 2]))
+                    blank_img = np.zeros((200, 200, 3), dtype=np.uint8)
+                    current_frames = dict(zip(CAM_IDS, NUM_CAMS*[blank_img]))
+                    current_frame_ts = dict(zip(CAM_IDS, [i for i in range(NUM_CAMS)]))
                     prev_syncd_trig_ts = time.time()
 
                     total_syncd_frames = 0
                     total_frames_through_buff = 0
-                    imshow_updated = False
                     while system_state == 'RUN':
-                        if imshow_updated:
-                            key = cv2.waitKey(1)
-                            if key == ord('q'):
-                                trigger_thread.alive = False
-                                system_state = 'STOP'
-                                time.sleep(1.0)
-                        imshow_updated = False
-
                         frames_left = self.frame_queue.qsize()
                         total_frames_through_buff += frames_left
                         assert frames_left < FRAME_QUEUE_SIZE
@@ -182,32 +176,30 @@ class AlviumMultiCam(threading.Thread):
                                         #print(ts_vals[0] - prev_syncd_trig_ts)
                                         prev_syncd_trig_ts = ts_vals[0]
                                         total_syncd_frames += 1
-                                        if ZMQ_PUB:
-                                            imgl,imgr = [frm for c_id, frm in current_frames.items()][:2]
-                                            if self.cached_images is None:
-                                                self.cached_images = \
-                                                    [np.zeros((imgl.shape[0]//2,imgl.shape[1]//2,3),dtype='uint8') for _ in [0,1]]
-                                            rgbl,rgbr = self.cached_images
-                                            fast_bayer_shrink(rgbl,imgl)
-                                            fast_bayer_shrink(rgbr,imgr)
-                                            RS_DIV = 4
-                                            rgbl_rs = cv2.resize(rgbl, (imgl.shape[1]//RS_DIV, imgl.shape[0]//RS_DIV))
-                                            rgbr_rs = cv2.resize(rgbr, (imgl.shape[1]//RS_DIV, imgl.shape[0]//RS_DIV))
-                                            #print('shape sent is..:',rgbl_rs.shape) 
-                                            socket_pub.send_multipart([zmq_topics.topic_stereo_camera,
-                                                pickle.dumps((total_syncd_frames,rgbl_rs.shape)),rgbl_rs.tobytes(),rgbr_rs.tobytes()])
-                                            socket_pub.send_multipart([zmq_topics.topic_stereo_camera_ts,
-                                                pickle.dumps((total_syncd_frames,prev_syncd_trig_ts))])
-                                        if DEBUG:
-                                            for c_id, frm in current_frames.items():
-                                                if not c_id in imshow_keys:
-                                                    cv2.namedWindow(c_id, cv2.WINDOW_GUI_NORMAL)
-                                                    imshow_keys.append(c_id)
-                                                frame_bgr = cv2.cvtColor(frm, cv2.COLOR_BayerBG2BGR)
-                                                RS_DIV = 4
-                                                frame_bgr_rs = cv2.resize(frame_bgr, (frame_bgr.shape[1]//RS_DIV, frame_bgr.shape[0]//RS_DIV))
-                                                cv2.imshow(c_id, frame_bgr_rs)
-                                            imshow_updated = True
+                                        imgl,imgr = [frm for c_id, frm in current_frames.items()][:2]
+                                        if self.cached_images is None:
+                                            self.cached_images = \
+                                                [np.zeros((imgl.shape[0]//2,imgl.shape[1]//2,3),dtype='uint8') for _ in [0,1]]
+                                        rgbl,rgbr = self.cached_images
+                                        fast_bayer_shrink(rgbl,imgl)
+                                        fast_bayer_shrink(rgbr,imgr)
+                                        RS_DIV = 4
+                                        rgbl_rs = cv2.resize(rgbl, (imgl.shape[1]//RS_DIV, imgl.shape[0]//RS_DIV))
+                                        rgbr_rs = cv2.resize(rgbr, (imgl.shape[1]//RS_DIV, imgl.shape[0]//RS_DIV))
+                                        #print('shape sent is..:',rgbl_rs.shape) 
+                                        socket_pub.send_multipart([zmq_topics.topic_stereo_camera,
+                                            pickle.dumps((total_syncd_frames,rgbl_rs.shape)),rgbl_rs.tobytes(),rgbr_rs.tobytes()])
+                                        socket_pub.send_multipart([zmq_topics.topic_stereo_camera_ts,
+                                            pickle.dumps((total_syncd_frames,prev_syncd_trig_ts))])
+                                        if args.debug and total_syncd_frames%1==0:
+                                            debug_cam_key = CAM_IDS[min(self.debug_cam_idx, NUM_CAMS-1)]
+                                            frame_bgr = cv2.cvtColor(current_frames[debug_cam_key], cv2.COLOR_BayerBG2BGR)
+                                            cv2.imshow("DEBUG WINDOW", frame_bgr)
+                                            if cv2.waitKey(1) == ord('q'):
+                                                trigger_thread.alive = False
+                                                system_state = 'STOP'
+                                                time.sleep(1.0)
+                                                cv2.destroyAllWindows()
                                         if record_state is not None:
                                             cur_rec_state = record_state
                                             for cam_key, cam_frame in current_frames.items():
@@ -259,8 +251,8 @@ class AlviumMultiCam(threading.Thread):
                     print("AVG processing delay: {}".format(proc_delay_sum / num_frames))
                     print("MAX processing delay: {}".format(max_proc_delay))
                     print("Total frames recieved: {}".format(total_frames_through_buff))
-                    print("Total synced frames: {}".format(total_syncd_frames*3))
-                    print("Total trigger signals: {}".format(trigger_thread.total_num_trigs * 3))
+                    print("Total synced frames: {}".format(total_syncd_frames * NUM_CAMS))
+                    print("Total trigger signals: {}".format(trigger_thread.total_num_trigs * NUM_CAMS))
 
                     trigger_thread.alive = False
                     trigger_thread.join()
@@ -277,16 +269,6 @@ class AlviumMultiCam(threading.Thread):
 
             del vimba_ctx
             gc.collect()
-	
-        if YAPPI:
-            yappi.stop()
-            threads = yappi.get_thread_stats()
-            for thread in threads:
-                print("Function stats for (%s) (%d)" % (thread.name, thread.id))
-                yappi.get_func_stats(ctx_id=thread.id).print_all()
-        # for k, cap in caps.items():
-        #     cap.release()
-        #cap.release()
 
 
 class TriggerThread(threading.Thread):
