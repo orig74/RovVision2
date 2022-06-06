@@ -8,6 +8,7 @@ import sys,os,time
 from datetime import datetime
 sys.path.append('../')
 sys.path.append('../utils')
+sys.path.append('../hw')
 sys.path.append('../onboard')
 import zmq
 import pickle
@@ -18,6 +19,8 @@ import sys,os,time
 import zmq_topics
 import zmq_wrapper as utils
 import config
+import dvl
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--ip",help="main ground control ip addr", default='127.0.0.1')
 parser.add_argument("--scale",help="map size deafult 20", default=20.0, type=float)
@@ -28,6 +31,7 @@ subs_socks=[]
 subs_socks.append(utils.subscribe([zmq_topics.topic_tracker], zmq_topics.topic_tracker_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_imu], zmq_topics.topic_imu_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_sonar], zmq_topics.topic_sonar_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_dvl_raw], zmq_topics.topic_dvl_port))
 subs_socks.append(utils.subscribe([b''], zmq_topics.topic_local_route_port))
 
 
@@ -110,12 +114,12 @@ class Tracer(object):
         #T=np.linalg.inv(M) @ pix2 * zrange - get_rot(*ypr)@loc1
         #DC=(-R@T).flatten()
         DC=(loc2-loc1).flatten()
-        if (DC[0]**2+DC[1]**2)>1.0**2:
-            print('Error big jump!')
-            DC=np.array([0,0])
+        if 0:
+            if (DC[0]**2+DC[1]**2)>1.0**2:
+                print('Error big jump!')
+                DC=np.array([0,0])
         self.last_rel_loc=DC[:2]
         return self.current_loc+DC[:2]
-
 
 
 ################### end move to utils #########################
@@ -181,7 +185,7 @@ def update_graph(axes):
                 topic , data = ret
                 #print('--- topic ---',topic)
                 data=pickle.loads(ret[1])
-                if topic==zmq_topics.topic_tracker:
+                if 0 and topic==zmq_topics.topic_tracker:
                     #new_data=True
                     new_ref=False
                     keys=['valid','pt_l','pt_r','range','ref_cnt'] 
@@ -191,11 +195,11 @@ def update_graph(axes):
                         tin_data[k]=data[k]
                     pickle.dump(tin_data,fd)
                     #print(tin_data) 
-                    new_data=True
                     ypr=(tin_data['yaw'],tin_data['pitch'],tin_data['roll'])
                     ch=np.cos(np.radians(tin_data['yaw']-90))
                     sh=np.sin(np.radians(tin_data['yaw']-90))
                     xy=tin_data['pt_l']
+                    new_data=True
                     ret=tracer.feed(-tin_data['range'],new_ref,ypr,xy[0],xy[1])
                     ret=(ret[0],ret[1])
                     gdata.pos_hist.add(ret)
@@ -204,11 +208,32 @@ def update_graph(axes):
                     gdata.heading_rot=tin_data['yaw']
                     print('---',ret,tin_data['pt_l'],tin_data['range'])
 
+                if topic==zmq_topics.topic_dvl_raw:
+                    ldata = dvl.parse_line(data['dvl_raw'])
+                    print('==',ldata)
+                    if ldata is not None and ldata['type']=='deadreacon':
+                        #import pdb;pdb.set_trace()
+                        new_data=True
+                        ret=(ldata['x'],ldata['y'])
+                        gdata.pos_hist.add(ret)
+                        print('===',ret)
+                        gdata.trace_hist.add(ret)
+                        gdata.curr_pos=ret
+                        if 'yaw' in tin_data:
+                            gdata.heading_rot=tin_data['yaw']
+                        else:
+                            gdata.heading_rot=0
+                    if ldata is not None and ldata['type']=='transducer':
+                        if 'dist' in ldata:
+                            gdata.range_arr.add(ldata['dist'])
+                        else:
+                            print('bad transducer data')
+
                 if topic==zmq_topics.topic_imu:
                     for k in ['yaw','pitch','roll']:
                         tin_data[k]=data[k]
-                if topic==zmq_topics.topic_sonar:
-                    tin_data['sonar']=(data['sonar'][0],data['sonar'][1]/100.0)
+                if 0 and topic==zmq_topics.topic_sonar:
+                    tin_data['sonar']=(data['sonar'][0]/1000.0,data['sonar'][1]/100.0)
                     gdata.range_arr.add(tin_data['sonar'][0]-0.2) #Sonar is 20cm above camera downward facing
                     #toprint=['valid','pt_l','pt_r','range']
                     #print('--imu--',data)
@@ -216,6 +241,7 @@ def update_graph(axes):
     if not pause_satus and new_data:
         xs = np.arange(len(gdata.trace_hist))
         pos_arr = gdata.pos_hist()
+        pos_arr=pos_arr-pos_arr[0,:]
         hdl_pos[0].set_ydata(pos_arr[:,1])
         hdl_pos[0].set_xdata(pos_arr[:,0])
         #hdl_last_pos
@@ -232,11 +258,14 @@ def update_graph(axes):
         ax1.set_ylim(-rad+cy,rad+cy)
 
         xs = np.arange(len(gdata.range_arr))
-        hdl_range[0][0].set_xdata(xs)
-        #print(pos_arr[:,2][-3:])
-        hdl_range[0][0].set_ydata(gdata.range_arr.buf)
-        ax3.set_xlim(len(xs)-100,len(xs))
-        ax3.set_ylim(0,2)
+        if len(gdata.range_arr)>0:
+            rarr = np.array(gdata.range_arr.buf)
+            for i in range(4):
+                hdl_range[i][0].set_xdata(xs)
+                hdl_range[i][0].set_ydata(rarr[:,i])
+
+            ax3.set_xlim(len(xs)-100,len(xs))
+            ax3.set_ylim(0,30)
 
         #import pdb;pdb.set_trace()
         #axes.figure.canvas.draw()
@@ -283,7 +312,7 @@ hdl_trace = [ax2.plot([1],'-r'),ax2.plot([1],'-g'),ax2.plot([1],'-b')]
 
 ax3=plt.subplot2grid((3,2), (2,0))
 plt.title('ground range')
-hdl_range  = [ax3.plot([1],'-')]
+hdl_range  = [ax3.plot([1],[1],'-') for _ in range(4) ]
 plt.xlabel('[frame]')
 plt.ylabel('[m]')
 plt.grid('on')
