@@ -9,6 +9,7 @@ import numpy as np
 sys.path.append('..')
 sys.path.append('../utils')
 sys.path.append('../onboard')
+import config
 import mixer
 import zmq_wrapper
 import zmq_topics
@@ -57,14 +58,14 @@ async def recv_and_process():
                         pid_r=PID(**roll_pid)
                     else:
                         #if joy and joy['inertial'] and abs(joy['yaw'])<0.05:
-                        if joy and abs(joy['yaw']) < 0.03:
+                        if joy and abs(joy['yaw']) < config.joy_dtarget_min:
                             yaw_cmd = pid_y(yaw,target_att[0],0,0)
                         else:
                             target_att[0]=yaw
                             yaw_cmd=0
                         #print('R{:06.3f} Y{:06.3f} YT{:06.3f} C{:06.3f}'.format(yawr,yaw,target_att[0],yaw_cmd))
 
-                        if joy and abs(joy['pitch'])<0.1:
+                        if joy and abs(joy['pitch'])<config.joy_dtarget_min:
                             pitch_cmd = pid_p(pitch,target_att[1],0,0)
                         else:
                             target_att[1]=pitch

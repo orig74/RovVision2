@@ -8,6 +8,7 @@ import pickle
 sys.path.append('..')
 sys.path.append('../utils')
 sys.path.append('../onboard')
+import config
 import mixer
 import zmq_wrapper
 import zmq_topics
@@ -59,7 +60,7 @@ async def recv_and_process():
 
             if topic==zmq_topics.topic_axes:
                 jm.update_axis(data)
-                if abs(jm.joy_mix()['ud']) > 0.03:
+                if abs(jm.joy_mix()['ud']) > config.joy_dtarget_min:
                     target_depth=depth
 
             if topic==zmq_topics.topic_imu:

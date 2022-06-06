@@ -36,6 +36,7 @@ gst_speed_preset=1
 tracker = 'rope'
 
 joy_deadband=0.00
+joy_dtarget_min=0.05
 
 manual_control_limit=0.85
 thruster_limit=1.0

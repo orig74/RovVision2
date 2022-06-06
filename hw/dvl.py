@@ -84,6 +84,8 @@ if __name__=='__main__':
         last_time=None
         while 1:
             line=ser.readline()
+            if len(line) < 4:
+                continue
             #print(line)
             try:
                 d=parse_line(line)

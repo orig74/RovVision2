@@ -13,7 +13,7 @@ depth_pid={
         'func_in_err':None}
 sonar_pid=depth_pid
 
-ys=0.04
+ys=0.02
 yaw_pid={
         'P':2*ys,
         'I':0.04*ys,
