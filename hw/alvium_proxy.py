@@ -1,6 +1,7 @@
 import argparse,sys,os,time,pickle
 sys.path.append('../')
 sys.path.append('../utils')
+import config
 import copy
 import threading
 import queue
@@ -25,8 +26,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--debug", help="Show frames with opencv", action='store_true')
 args = parser.parse_args()
 
-CAM_FPS = 5
-CAM_IDS = ['DEV_000F315DAB37', 'DEV_000F315DB084', 'DEV_000F315DAB68']
+CAM_IDS = ['DEV_000F315DAB37', 'DEV_000F315DB084', 'DEV_000F315DAB68'] # 
 MASTER_CAM_ID = CAM_IDS[0]
 NUM_CAMS = len(CAM_IDS)
 
@@ -123,7 +123,7 @@ class AlviumMultiCam(threading.Thread):
                         system_state = 'STOP'
 
                 if system_state == 'RUN':
-                    trigger_thread = TriggerThread(fps=CAM_FPS)
+                    trigger_thread = TriggerThread(fps=config.cam_fps)
                     trigger_thread.start()
                     print()
 
@@ -368,7 +368,7 @@ class FrameProducer(threading.Thread):
         self.killswitch.set()
 
     def setup_camera(self):
-        if (CAM_FPS > 1 / FRAME_TRANSFER_TIME):
+        if (config.cam_fps > 1 / FRAME_TRANSFER_TIME):
             print("WARNING! Requested FPS exceeds data transfer speeds")
         self.cam.get_feature_by_name('StreamBytesPerSecond').set(MAX_BANDWIDTH_BYTES_P_S // NUM_CAMS)
 

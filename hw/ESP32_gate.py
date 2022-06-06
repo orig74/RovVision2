@@ -13,7 +13,7 @@ from utils import zmq_wrapper
 import zmq_topics
 import config
 
-THRSTR_LIMIT = 1.0  # config.thruster_limit
+THRSTR_LIMIT = config.thruster_limit
 N_SERIAL_RX_BYTES = 15
 N_SERIAL_TX_BYTES = 20
 
@@ -71,8 +71,9 @@ async def send_serial_command_50hz():
         # TODO: camera servo angle
 
         servo = 0.0  # -1.0 -> 1.0, or use 0-255 without scale_val function (mapped to 45->135 degrees camera angle)
-
-        #m[6] = 0.1
+        
+        #print('< ', ["%.1f" % i for i in m], end='')
+        #m = 8*[0.0]
 
         tx_ints = [scale_val(thr, -1.0, 1.0, 16) for thr in m]
         tx_ints.append(scale_val(lights_pw, 0, 6, 8))

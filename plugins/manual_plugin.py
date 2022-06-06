@@ -44,8 +44,9 @@ async def recv_and_process():
                 #    thruster_joy_cmd = mixer.mix(joy['ud'],joy['lr'],joy['fb'],0, 0, 0,pitch_copensate,roll_copensate)
                 #else:
                 thruster_joy_cmd = mixer.mix(joy['ud'],joy['lr'],joy['fb'],joy['roll'],joy['pitch'],joy['yaw'],pitch_copensate,roll_copensate)
+                thruster_joy_cmd_clipped = np.clip(thruster_joy_cmd, -config.manual_control_limit, config.manual_control_limit)
+                thrusters_source.send_pyobj(['joy',time.time(),thruster_joy_cmd_clipped])
 
-                thrusters_source.send_pyobj(['joy',time.time(),thruster_joy_cmd])
             if topic==zmq_topics.topic_button:
                 jm.update_buttons(data)
             if topic==zmq_topics.topic_imu:

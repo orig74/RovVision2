@@ -1,8 +1,8 @@
 ### PIDS
-ds=0.1
+ds=0.15
 depth_pid={
         'P':2.5*ds,
-        'I':0.002*ds,
+        'I':0.05*ds,
         'D':0*ds,
         'limit':0.2,
         'step_limit':0.05,
@@ -11,19 +11,7 @@ depth_pid={
         'angle_deg_type':False,
         'initial_i':0,
         'func_in_err':None}
-
-ss=0.1
-sonar_pid={
-        'P':2.5*ss,
-        'I':0.05*ss,
-        'D':0*ss,
-        'limit':0.2,
-        'step_limit':0.05,
-        'i_limit':0.01,
-        'FF':0,
-        'angle_deg_type':False,
-        'initial_i':0,
-        'func_in_err':None}
+sonar_pid=depth_pid
 
 ys=0.04
 yaw_pid={

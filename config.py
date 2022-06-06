@@ -22,9 +22,8 @@ if rov_type==4:
     cam_resx,cam_resy=616*2,514*2
     cam_res_rgbx,cam_res_rgby=616,514
 
-fps=10
-send_modulo=1 # Sends frames through gstreamer every x frames at above fps
-save_modulo=5 # saves img every x frames at above fps
+cam_fps=5
+send_modulo=1
 
 #gstreamer
 gst_ports=[6760,6761]
@@ -38,7 +37,8 @@ tracker = 'rope'
 
 joy_deadband=0.00
 
-thruster_limit=0.7
+manual_control_limit=0.85
+thruster_limit=1.0
 
 viewer_blacks=(50,100)
 
