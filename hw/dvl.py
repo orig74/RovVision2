@@ -55,11 +55,16 @@ def parse_line(line):
 
     if data[0]==b'wru':
         # Transducer report
-        ret={'type':'transducer'}
+        ret={'type':'transducer2'}
         keys='id,velocity,distance,rssi,nsd'.split(',')
         for i in range(len(keys)):
             ret[keys[i]]=float(data[i+1])
-        
+
+    if data[0]==b'wrt':
+        #Transducer report
+        ret={'type':'transducer'}
+        ret['dist']=[float(data[i+1]) for i in range(4)]
+    
     if data[0]==b'wrp':
         # Deadreckoning report
         keys='time,x,y,z,pos_std,roll,pitch,yaw,status'.split(',')
@@ -84,6 +89,8 @@ if __name__=='__main__':
         last_time=None
         while 1:
             line=ser.readline()
+            if len(line) < 4:
+                continue
             #print(line)
             try:
                 d=parse_line(line)
@@ -135,9 +142,15 @@ if __name__=='__main__':
         import matplotlib.pyplot as plt
         plt.figure('deadreacon')
         plt.subplot(2,1,1)
-        plt.plot(ga('time'),ga('x'))
-        plt.plot(ga('time'),ga('y'))
-        plt.plot(ga('time'),ga('z'))
+        xx=np.array(ga('x'))
+        xx-=xx[0]
+        yy=np.array(ga('y'))
+        yy-=yy[0]
+        zz=np.array(ga('z'))
+        zz-=zz[0]
+        plt.plot(ga('time'),xx)
+        plt.plot(ga('time'),yy)
+        plt.plot(ga('time'),zz)
         plt.legend(['x','y','z'])
         plt.subplot(2,1,2)
         plt.plot(ga('time'),un(ga('yaw')))
@@ -161,6 +174,9 @@ if __name__=='__main__':
         plt.subplot(2,1,2,sharex=ax)
         plt.plot(tt,gv('alt'),'.-')
         plt.legend(['alt'])
+
+        plt.figure('xy')
+        plt.plot(ga('x'),ga('y'))
         
         plt.show()
 

@@ -8,6 +8,7 @@ import pickle
 sys.path.append('..')
 sys.path.append('../utils')
 sys.path.append('../onboard')
+import config
 import mixer
 import zmq_wrapper
 import zmq_topics
@@ -33,7 +34,7 @@ async def recv_and_process():
             topic,data=ret[0],pickle.loads(ret[1])
 
             if topic==zmq_topics.topic_sonar:
-                new_sonar_ts, s_range=data['ts'],data['sonar'][0]/1000    # Convert to m
+                new_sonar_ts, s_range=data['ts'],data['sonar'][0]
                 if ab is None:
                     ab=ab_filt([s_range,0])
                 else:
@@ -44,7 +45,7 @@ async def recv_and_process():
                     if pid is None:
                         pid=PID(**sonar_pid)
                     else:
-                        ud_command = -pid(s_range,target_range,rate,0)
+                        ud_command = pid(-s_range,-target_range,-rate,0)
                         debug_pid = {'P':pid.p,'I':pid.i,'D':pid.d,'C':ud_command,'T':target_range,'N':s_range,'TS':new_sonar_ts}
                         pub_sock.send_multipart([zmq_topics.topic_sonar_hold_pid, pickle.dumps(debug_pid,-1)])
                         thruster_cmd = mixer.mix(ud_command,0,0,0,0,0,pitch,roll)
@@ -57,7 +58,7 @@ async def recv_and_process():
 
             if topic==zmq_topics.topic_axes:
                 jm.update_axis(data)
-                if jm.joy_mix()['ud'] != 0:
+                if abs(jm.joy_mix()['ud']) > config.joy_dtarget_min:
                     target_range=s_range
 
             if topic==zmq_topics.topic_imu:

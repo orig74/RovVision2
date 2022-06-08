@@ -9,6 +9,7 @@ import numpy as np
 sys.path.append('..')
 sys.path.append('../utils')
 sys.path.append('../onboard')
+import config
 import mixer
 import zmq_wrapper 
 import zmq_topics
