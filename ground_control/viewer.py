@@ -1,5 +1,6 @@
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 import sys,os,time
+time.sleep(3)
 from datetime import datetime
 sys.path.append('../')
 sys.path.append('../utils')
@@ -165,9 +166,11 @@ if __name__=='__main__':
                             set_files_fds(fds)
                             data_file_fd=open(save_path+'/viewer_data.pkl','wb')
                             pickle.dump([b'start_time',time.time()],data_file_fd,-1)
+                            os.system("gst-launch-1.0 -v -e udpsrc port=17894  ! application/x-rtp, media=video, clock-rate=90000, encoding-name=H264, payload=96 ! rtph264depay ! h264parse ! qtmux ! filesink location=%s sync=false & "%(save_path+'/main_cam.mov'))
                     else:
                         if get_files_fds()[0] is not None:
                             print('done recording...')
+                            os.system('pkill -2 -f "gst-launch-1.0 -v -e udpsrc port=17894"')
                             set_files_fds([None,None])
                             data_file_fd=None
 
