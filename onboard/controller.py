@@ -25,7 +25,7 @@ async def recv_and_process():
     thruster_cmd=np.zeros(8)
     timer10hz=time.time()+1/10.0
     timer20hz=time.time()+1/20.0
-    system_state={'arm':False,'mode':[], 'lights':0} #lights 0-5
+    system_state={'arm':False,'mode':[], 'lights':0, 'main_camera_servo':0 } #lights 0-5
     thrusters_dict={}
     last_axes_joy_message_time = 0 #keep alive time
     jm=Joy_map()
@@ -87,6 +87,13 @@ async def recv_and_process():
                         system_state['lights']=max(0,system_state['lights']-1)
                         pub_sock.send_multipart([zmq_topics.topic_lights,pickle.dumps(system_state['lights'])])
                         print('lights set to',system_state['lights'])
+                    if jm.main_camera_down_event() or jm.main_camera_up_event():
+                        system_state['main_camera_servo']=np.clip(system_state['main_camera_servo'] 
+                                + (.01  if jm.main_camera_down_event() else -0.01 ) ,-1,1)
+                        print('main camera servo',system_state['main_camera_servo'])
+                        pub_sock.send_multipart([zmq_topics.topic_camera_servo,pickle.dumps(system_state['main_camera_servo'])])
+
+
 
 
 

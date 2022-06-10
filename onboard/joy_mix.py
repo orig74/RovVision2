@@ -99,7 +99,14 @@ class Joy_map:
 
     def image_rect_event(self):
         return self.__test_togle(self._right_stick_click) and not self.__right_shift()
-    
+
+    def main_camera_up_event(self):
+        return self.__test_togle(self._yelow) and self.__right_shift()
+
+    def main_camera_down_event(self):
+        return self.__test_togle(self._green) and self.__right_shift()
+
+
     def track_lock_event(self):
         return self.__test_togle(self._green) and self.__left_shift()
 

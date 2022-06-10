@@ -103,15 +103,14 @@ async def pubposition():
 
         if cnt%5==0:
             #simulate dvl messgaes
-            vel_msg=b'wrz,%f,%f,%f,y,1.99,0.006,3.65e-05;3.39e-06;7.22e-06;3.39e-06;2.46e-06;-8.5608e-07;7.223e-06;-8.560e-07;3.2363e-06,1550139816188624,1550139816447957,188.80,0*a1\r\n'.format(*curr_u[:3])
+            vel_msg='wrz,{},{},%{},y,1.99,0.006,3.65e-05;3.39e-06;7.22e-06;3.39e-06;2.46e-06;-8.5608e-07;7.223e-06;-8.560e-07;3.2363e-06,1550139816188624,1550139816447957,188.80,0*a1\r\n'.format(*curr_u[:3]).encode()
 
 
             pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':vel_msg})])
 
         if cnt%5==1:
-            pos_msg=b'wrp,1550139816.178,%f,%f,%f,%f,2.5,-3.7,-62.5,0*3c\r\n'%(*curr_q[:3],100)
-            pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':pos_msg
-                })])
+            pos_msg='wrp,1550139816.178,{},{},{},{},2.5,-3.7,-62.5,0*3c\r\n'.format(*curr_q[:3],100).encode()
+            pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':pos_msg})])
 
 
         cnt+=1
