@@ -190,7 +190,7 @@ class AlviumMultiCam(threading.Thread):
                                         socket_pub.send_multipart([zmq_topics.topic_stereo_camera,
                                             pickle.dumps((total_syncd_frames,rgbl_rs.shape)),rgbl_rs.tobytes(),rgbr_rs.tobytes()])
                                         socket_pub.send_multipart([zmq_topics.topic_stereo_camera_ts,
-                                            pickle.dumps((total_syncd_frames,prev_syncd_trig_ts))])
+                                            pickle.dumps((total_syncd_frames,prev_syncd_trig_ts,time.time()))])
                                         if args.debug and total_syncd_frames%1==0:
                                             debug_cam_key = CAM_IDS[min(self.debug_cam_idx, NUM_CAMS-1)]
                                             frame_bgr = cv2.cvtColor(current_frames[debug_cam_key], cv2.COLOR_BayerBG2BGR)
