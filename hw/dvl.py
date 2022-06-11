@@ -87,6 +87,10 @@ if __name__=='__main__':
         pub_srange = utils.publisher(zmq_topics.topic_sonar_port)
         cnt=0
         last_time=None
+
+        #send reset for Deadreckoning
+        ser.write(b'wcr\n')
+
         while 1:
             line=ser.readline()
             if len(line) < 4:
