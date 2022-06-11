@@ -228,7 +228,11 @@ def draw_thrusters(img, pos, thrst_cmnds):
     s_img = np.zeros((DISP_S, DISP_S, 3), dtype=np.uint8)
 
     t_commands_uint8 = (20 + 215 * abs(t_commands)).astype(np.uint8)
-    t_cols = cv2.applyColorMap(t_commands_uint8, cv2.COLORMAP_TURBO).astype(int)
+    try:    
+        t_cols = cv2.applyColorMap(t_commands_uint8, cv2.COLORMAP_TURBO).astype(int)
+    except:
+        t_cols = cv2.applyColorMap(t_commands_uint8, cv2.COLORMAP_JET).astype(int)
+
     
     # Draw vertical thrusters
     U_H = 100
