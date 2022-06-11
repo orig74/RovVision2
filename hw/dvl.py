@@ -22,7 +22,7 @@ import crcmod
 crc = crcmod.predefined.mkPredefinedCrcFun("crc-8")
 def check_crc(line):
     data, checksum = line.split(b'*')
-    return crc(bytes(data)) == int(checksum, 16)
+    return checksum.strip()==b'XX' or crc(bytes(data)) == int(checksum, 16) #the XX is for sim
 
 
 def init_serial(dev=None):

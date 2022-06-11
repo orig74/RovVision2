@@ -7,7 +7,8 @@ import numpy as np
 import cv2
 print('*'*500)
 
-drone_texture_names=['/Game/mycontent/bluerovstereo2','/Game/mycontent/bluerovstereo1' ]
+drone_texture_names=['/Game/mycontent/bluerovstereo2','/Game/mycontent/bluerovstereo1',
+        '/Game/mycontent/bluerovstereo3']
 #drone_texture_names=['bluerovstereo1','bluerovstereo2' ]
 
 drone_textures_depth_names=['/Game/mycontent/TextureRenderTarget2D_depth']
@@ -103,6 +104,10 @@ def main_loop(gworld):
         print('camera ' +cam_name + ' rotation ---',ph.GetActorRotation(ca))
         print('---debug 1.4---')
 
+    cam_name = 'SceneCapture2D_0'
+    ca=ph.FindActorByName(gworld,cam_name)
+    ph.SetActorRotation(ca,(1,-20,89))
+    yield
     #print('--- ',caml)
     print('---debug 2---')
 
@@ -156,6 +161,8 @@ def main_loop(gworld):
                 cv2.imshow('drone camera %d'%drone_index,imgl)
                 cv2.waitKey(1)
 
+            cv2.imshow('main camera',ph.GetTextureData(drone_textures[2]))
+            cv2.waitKey(1)
             frame_cnt += 1
 
 def kill():
