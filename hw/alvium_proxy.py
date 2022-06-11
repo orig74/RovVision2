@@ -21,6 +21,7 @@ subs_socks=[]
 subs_socks.append(utils.subscribe([ zmq_topics.topic_record_state ],zmq_topics.topic_record_state_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
 socket_pub = utils.publisher(zmq_topics.topic_camera_port)
+socket_pub_ts = utils.publisher(zmq_topics.topic_camera_ts_port)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--debug", help="Show frames with opencv", action='store_true')
@@ -189,7 +190,7 @@ class AlviumMultiCam(threading.Thread):
                                         #print('shape sent is..:',rgbl_rs.shape) 
                                         socket_pub.send_multipart([zmq_topics.topic_stereo_camera,
                                             pickle.dumps((total_syncd_frames,rgbl_rs.shape)),rgbl_rs.tobytes(),rgbr_rs.tobytes()])
-                                        socket_pub.send_multipart([zmq_topics.topic_stereo_camera_ts,
+                                        socket_pub_ts.send_multipart([zmq_topics.topic_stereo_camera_ts,
                                             pickle.dumps((total_syncd_frames,prev_syncd_trig_ts,time.time()))])
                                         if args.debug and total_syncd_frames%1==0:
                                             debug_cam_key = CAM_IDS[min(self.debug_cam_idx, NUM_CAMS-1)]
