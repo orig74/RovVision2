@@ -29,7 +29,7 @@ tmux select-pane -t 4
 
 #tmux send-keys "gst-launch-1.0 -v -e udpsrc port=17893 ! application/x-rtp, media=video, clock-rate=90000, encoding-name=H264, payload=96 ! rtph264depay ! tee name=t ! queue ! decodebin ! videoconvert ! autovideosink t. ! queue ! h264parse ! qtmux ! filesink location=/home/uav/records_main_cam/$(date '+%y%m%d-%H%M%S').mov sync=false" ENTER
 
-tmux send-keys "gst-launch-1.0 -v -e udpsrc port=17893 ! tee name=t ! queue !  application/x-rtp, media=video, clock-rate=90000, encoding-name=H264, payload=96 ! rtph264depay ! decodebin ! videoconvert ! autovideosink sync=true t. ! queue ! udpsink host=127.0.0.1 port=17894 sync=false" ENTER
+tmux send-keys "gst-launch-1.0 -v -e udpsrc address=169.254.0.2 port=17893 ! tee name=t ! queue !  application/x-rtp, media=video, clock-rate=90000, encoding-name=H264, payload=96 ! rtph264depay ! decodebin ! videoconvert ! autovideosink sync=false t. ! queue ! udpsink host=127.0.0.1 port=17894 sync=false" ENTER
 
 #tmux send-keys "gst-launch-1.0 -v -e udpsrc port=17893 !  application/x-rtp, media=video, clock-rate=90000, encoding-name=H264, payload=96 ! rtph264depay ! decodebin ! videoconvert ! autovideosink " ENTER 
 tmux att
