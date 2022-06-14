@@ -106,6 +106,10 @@ class Joy_map:
     def main_camera_down_event(self):
         return self.__test_togle(self._green) and self.__right_shift()
 
+    def dvl_reset_event(self):
+        return self.__test_togle(self._blue) and self.__right_shift()
+
+
 
     def track_lock_event(self):
         return self.__test_togle(self._green) and self.__left_shift()

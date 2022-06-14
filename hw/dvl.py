@@ -98,8 +98,8 @@ if __name__=='__main__':
             for sock in socks:
                 ret=sock.recv_multipart()
                 topic=ret[0]
-                data=pickle.loads(ret[1])
-                #if 
+                if topic==zmq_topics.topic_dvl_cmd:
+                    ser.write(ret[1])
             line=ser.readline()
             if len(line) < 4:
                 continue

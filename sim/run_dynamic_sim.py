@@ -32,7 +32,7 @@ pub_dvl = utils.publisher(zmq_topics.topic_dvl_port)
 
 subs_socks=[]
 subs_socks.append(utils.subscribe([zmq_topics.topic_thrusters_comand],zmq_topics.topic_thrusters_comand_port))
-
+subs_socks.append(utils.subscribe([zmq_topics.topic_dvl_cmd],zmq_topics.topic_controller_port))
 position_struct={}
 
 from scipy.interpolate import interp1d
@@ -53,8 +53,9 @@ def get_next_state(curr_q,curr_u,control,dt,lamb):
     next_u=curr_u+u_dot_f*dt
     return next_q,next_u
 
-
+dvl_offset=np.zeros(3)
 async def pubposition():
+    global dvl_offset,dvl_cmd
     curr_q = np.zeros(6)
     curr_u = np.zeros(6)
     cnt=0
@@ -109,20 +110,29 @@ async def pubposition():
             pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':vel_msg})])
 
         if cnt%5==1:
-            pos_msg='wrp,1550139816.178,{},{},{},{},2.5,-3.7,-62.5,0*XX\r\n'.format(*curr_q[:3],100).encode()
+            pos_msg='wrp,1550139816.178,{},{},{},{},2.5,-3.7,-62.5,0*XX\r\n'.\
+                    format(*(curr_q[:3]-dvl_offset),100).encode()
             pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':pos_msg})])
+        
+        if dvl_cmd is not None:
+            if dvl_cmd==b'wcr\n':
+                print('got dvl reset')
+                dvl_offset=curr_q[:3]
+            dvl_cmd=None
 
 
         cnt+=1
-
+dvl_cmd=None
 async def recv_and_process():
-    global current_command
+    global current_command,dvl_cmd
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.000)[0]
         for sock in socks:
             ret=sock.recv_multipart()
             if ret[0]==zmq_topics.topic_thrusters_comand:
                 _,current_command=pickle.loads(ret[1])
+            if ret[0]==zmq_topics.topic_dvl_cmd:
+                dvl_cmd=ret[1]
         await asyncio.sleep(0.001)
         #print('-1-',time.time()) 
 
