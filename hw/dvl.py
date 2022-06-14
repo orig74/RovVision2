@@ -89,6 +89,10 @@ if __name__=='__main__':
         pub_srange = zmq_wrapper.publisher(zmq_topics.topic_sonar_port)
         cnt=0
         last_time=None
+
+        #send reset for Deadreckoning
+        ser.write(b'wcr\n')
+
         while 1:
             socks=zmq.select(subs_socks,[],[],0.000)[0]
             for sock in socks:
