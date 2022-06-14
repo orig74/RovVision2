@@ -13,7 +13,7 @@ import os,zmq
 import math
 sys.path.append('..')
 sys.path.append('../utils')
-import zmq_wrapper as utils
+import zmq_wrapper 
 print('done import 2')
 import zmq_topics
 import asyncio,pickle
@@ -24,6 +24,8 @@ def check_crc(line):
     data, checksum = line.split(b'*')
     return checksum.strip()==b'XX' or crc(bytes(data)) == int(checksum, 16) #the XX is for sim
 
+subs_socks=[]
+subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_dvl_cmd],zmq_topics.topic_controller_port))
 
 def init_serial(dev=None):
     if dev is None:
@@ -83,11 +85,17 @@ def parse_line(line):
 if __name__=='__main__':
     if len(sys.argv)==1:
         ser = init_serial()
-        pub_dvl = utils.publisher(zmq_topics.topic_dvl_port)
-        pub_srange = utils.publisher(zmq_topics.topic_sonar_port)
+        pub_dvl = zmq_wrapper.publisher(zmq_topics.topic_dvl_port)
+        pub_srange = zmq_wrapper.publisher(zmq_topics.topic_sonar_port)
         cnt=0
         last_time=None
         while 1:
+            socks=zmq.select(subs_socks,[],[],0.000)[0]
+            for sock in socks:
+                ret=sock.recv_multipart()
+                topic=ret[0]
+                data=pickle.loads(ret[1])
+                #if 
             line=ser.readline()
             if len(line) < 4:
                 continue

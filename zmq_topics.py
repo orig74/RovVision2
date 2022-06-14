@@ -76,3 +76,4 @@ topic_hw_stats_port=10103
 topic_dvl_raw=b'topic_dvl_raw'
 topic_dvl_port=13295
 
+topic_dvl_cmd=b'topic_dvl_cmd'
