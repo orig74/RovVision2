@@ -214,7 +214,7 @@ def update_graph(axes):
                     if ldata is not None and ldata['type']=='deadreacon':
                         #import pdb;pdb.set_trace()
                         new_data=True
-                        ret=(ldata['x'],ldata['y'])
+                        ret=(ldata['y'],ldata['x'])
                         gdata.pos_hist.add(ret)
                         print('===',ret)
                         gdata.trace_hist.add(ret)
@@ -241,7 +241,7 @@ def update_graph(axes):
     if not pause_satus and new_data:
         xs = np.arange(len(gdata.trace_hist))
         pos_arr = gdata.pos_hist()
-        pos_arr=pos_arr-pos_arr[0,:]
+        #pos_arr=pos_arr-pos_arr[0,:]
         hdl_pos[0].set_ydata(pos_arr[:,1])
         hdl_pos[0].set_xdata(pos_arr[:,0])
         #hdl_last_pos

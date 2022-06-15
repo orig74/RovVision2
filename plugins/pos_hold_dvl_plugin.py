@@ -36,7 +36,11 @@ async def recv_and_process():
         socks=zmq.select(subs_socks,[],[],0.005)[0]
         for sock in socks:
             ret=sock.recv_multipart()
-            topic,data=ret[0],pickle.loads(ret[1])
+            try:
+                topic,data=ret[0],pickle.loads(ret[1])
+            except Exception as E:
+                print('error in pickle','ret: ',ret)
+                continue
 
             if topic==zmq_topics.topic_imu:
                 yaw,pitch,roll=data['yaw'],data['pitch'],data['roll']
@@ -63,7 +67,7 @@ async def recv_and_process():
                             debug_pid = {'P':pids[ind].p,'I':pids[ind].i,'D':pids[ind].d,'C':cmds[ind],'T':target_pos[ind],'N':x, 'R':v, 'TS':ts}
                             pub_sock.send_multipart([zmq_topics.topic_pos_hold_pid_fmt%ind, pickle.dumps(debug_pid,-1)])
                     
-                    thruster_cmd = mixer.mix(cmds[2],cmds[1],cmds[0],0,0,0,0,0)
+                    thruster_cmd = mixer.mix(cmds[2],-cmds[1],-cmds[0],0,0,0,0,0)
                     thrusters_source.send_pyobj(['pos',time.time(),thruster_cmd])
 
             if topic==zmq_topics.topic_axes:
