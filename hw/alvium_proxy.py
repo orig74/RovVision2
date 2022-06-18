@@ -33,7 +33,7 @@ NUM_CAMS = len(CAM_IDS)
 
 # Min exposure time: 32us
 CAM_EXPOSURE_US = None #10000
-CAM_EXPOSURE_MAX = 20000    # us
+CAM_EXPOSURE_MAX = 10000    # us
 CAM_EXPOSURE_MIN = 32
 
 IMG_SIZE_BYTES = 5065984
@@ -91,7 +91,7 @@ class AlviumMultiCam(threading.Thread):
             def on_change(val):
                 self.debug_cam_idx = val
             cv2.namedWindow("DEBUG WINDOW", cv2.WINDOW_GUI_NORMAL)
-            cv2.createTrackbar("Cam IDX", "DEBUG WINDOW", 0, 2, on_change)
+            cv2.createTrackbar("Cam IDX", "DEBUG WINDOW", 0, 3, on_change)
 
         while system_state != 'STOP':
             vimba_ctx = Vimba.get_instance()
@@ -193,8 +193,15 @@ class AlviumMultiCam(threading.Thread):
                                         socket_pub_ts.send_multipart([zmq_topics.topic_stereo_camera_ts,
                                             pickle.dumps((total_syncd_frames,prev_syncd_trig_ts,time.time()))])
                                         if args.debug and total_syncd_frames%1==0:
-                                            debug_cam_key = CAM_IDS[min(self.debug_cam_idx, NUM_CAMS-1)]
-                                            frame_bgr = cv2.cvtColor(current_frames[debug_cam_key], cv2.COLOR_BayerBG2BGR)
+                                            if self.debug_cam_idx == 3:
+                                                frame_bgr_0 = cv2.cvtColor(current_frames[CAM_IDS[0]], cv2.COLOR_BayerBG2BGR)
+                                                frame_bgr_1 = cv2.cvtColor(current_frames[CAM_IDS[1]], cv2.COLOR_BayerBG2BGR)
+                                                frame_bgr_2 = cv2.cvtColor(current_frames[CAM_IDS[2]], cv2.COLOR_BayerBG2BGR)
+                                                frame_bgr = frame_bgr_0.astype(np.float32) + frame_bgr_1.astype(np.float32) + frame_bgr_2.astype(np.float32)
+                                                frame_bgr = (255 * frame_bgr / np.max(frame_bgr)).astype(np.uint8)
+                                            else:
+                                                debug_cam_key = CAM_IDS[min(self.debug_cam_idx, NUM_CAMS-1)]
+                                                frame_bgr = cv2.cvtColor(current_frames[debug_cam_key], cv2.COLOR_BayerBG2BGR)
                                             cv2.imshow("DEBUG WINDOW", frame_bgr)
                                             if cv2.waitKey(1) == ord('q'):
                                                 trigger_thread.alive = False
