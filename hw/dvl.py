@@ -82,6 +82,8 @@ def parse_line(line):
 
     return ret
 
+reset_cmd = b'wcr\n' 
+
 if __name__=='__main__':
     if len(sys.argv)==1:
         ser = init_serial()

@@ -14,7 +14,7 @@ import config
 import mixer
 import zmq_wrapper 
 import zmq_topics
-from dvl import parse_line
+from dvl import parse_line,reset_cmd
 from joy_mix import Joy_map  
 from config_pid_dvl import pos_pids
 from pid import PID
@@ -36,6 +36,16 @@ async def recv_and_process():
         socks=zmq.select(subs_socks,[],[],0.005)[0]
         for sock in socks:
             ret=sock.recv_multipart()
+            if ret[0]==zmq_topics.topic_dvl_cmd:
+                print('got dvl command ',ret[1])
+                if ret[1]==reset_cmd:
+                    print('got dvl reset cmd')
+                    if dvl_last_pos is not None:
+                        for ind in range(len(pids)):
+                            pids[ind] = PID(**pos_pids[ind])
+                            target_pos=np.zeros(3)
+                continue
+
             try:
                 topic,data=ret[0],pickle.loads(ret[1])
             except Exception as E:
@@ -44,6 +54,7 @@ async def recv_and_process():
 
             if topic==zmq_topics.topic_imu:
                 yaw,pitch,roll=data['yaw'],data['pitch'],data['roll']
+
 
             if topic==zmq_topics.topic_dvl_raw:
                 dd=parse_line(data['dvl_raw'])
