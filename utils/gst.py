@@ -3,13 +3,15 @@
 #to watch
 #gst-launch-1.0 -e -v udpsrc port=5700 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! autovideosink
 #gst-launch-1.0 -e -v udpsrc port=5701 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! autovideosink
-from subprocess import Popen,PIPE
+from subprocess import Popen,PIPE,STDOUT
 import sys,time,select,os
 import numpy as np
 import config
 import image_enc_dec
+import cv2
 ############# gst wirite #########
 gst_pipes=None
+use_ffmpeg_for_read=False
 send_cnt=[0,0]
 def init_gst(sx,sy,npipes):
     global gst_pipes
@@ -65,7 +67,7 @@ def init_gst_reader(npipes):
         gst_pipes_264.append(r)
         gst_pipes.append(r1)
     for cmd in cmds: #start together
-        Popen(cmd, shell=True, bufsize=0)
+        Popen(cmd, shell=True, bufsize=0, stdout=STDOUT,stderr=STDOUT)
 
 if config.camera_setup == 'stereo':
     images=[None,None]
@@ -85,7 +87,9 @@ def get_imgs():
     global images
     for i in range(len(images)):
         if len(select.select([ gst_pipes[i] ],[],[],0.005)[0])>0 :
-            data=os.read(gst_pipes[i],sx*sy*3)
+            data=b''
+            while len(data)<sx*sy*3:
+                data+=os.read(gst_pipes[i],sx*sy*3-len(data))
             try:
                 images[i] = np.fromstring(data,'uint8').reshape([sy,sx,3])
             except:
@@ -109,7 +113,14 @@ def read_image_from_pipe(p, prevcnt=-1):
     if len(select.select([p],[],[],5)[0])==0:
         print('got None!!')
         return None,-1
-    data=os.read(p,sx*sy*3)
+
+    data=b''
+    while len(data)<sx*sy*3:
+        try:
+            data+=os.read(p,sx*sy*3-len(data))
+        except BlockingIOError:
+            print('bloking....',sx*sy*3-len(data))
+    print('---1==')
     if data:
         img=np.fromstring(data,'uint8').reshape([sy,sx,3])
         fmt_cnt=image_enc_dec.decode(img)
@@ -120,10 +131,13 @@ def read_image_from_pipe(p, prevcnt=-1):
         return None,-1
     return img,fmt_cnt
 
-def gst_file_reader(path, nosync):
+def gst_file_reader_gst(path, nosync):
     global images
     cmd='gst-launch-1.0 filesrc location={} ! '+\
-        ' h264parse ! decodebin ! videoconvert ! video/x-raw,height={},width={},format=RGB ! filesink location=fifo_raw_{}  sync=false'
+        ' h264parse ! decodebin ! videoconvert ! video/x-raw,height={},width={},format=RGB ! filesink location=fifo_raw_{} sync=false'
+    cmd='gst-launch-1.0 filesrc location={} ! '+\
+        ' decodebin ! videoconvert ! video/x-raw,height={},width={},format=RGB ! filesink location=fifo_raw_{} sync=false'
+    #cmd='ffmpeg -i {} -pixel_format rgb24 -video_size {}x{} -f rawvideo pipe:1 > fifo_raw_{}'
     gst_pipes=[]
     os.system('rm fifo_raw_*')
 
@@ -131,12 +145,13 @@ def gst_file_reader(path, nosync):
         fname_raw='fifo_raw_'+'lr'[i]
         os.mkfifo(fname_raw)
         r1 = os.open(fname_raw,os.O_RDONLY | os.O_NONBLOCK)
-        fname=glob.glob(path+'/*_'+'lr'[i]+'.mp4')[0]
+        #fname=glob.glob(path+'/*_'+'lr'[i]+'.mp4')[0]
+        fname=glob.glob(path+'/*_'+'lr'[i]+'.avi')[0]
         gcmd = cmd.format(fname,sy,sx,'lr'[i])
         print(gcmd)
         gst_pipes.append(r1)
-        Popen(gcmd, shell=True)
-
+        Popen(gcmd, shell=True)#, stderr=STDOUT,stdout=STDOUT)
+        #os.system(gcmd+' &')
     prevcnt=-1
     while 1:
         if len(select.select(gst_pipes,[],[],0.1)[0])==len(gst_pipes):
@@ -154,4 +169,81 @@ def gst_file_reader(path, nosync):
             yield images,cnt1
         else:
             time.sleep(0.001)
+            print('kkk')
             yield None,-1
+
+def read_image_from_pipe_ff(p, prevcnt=-1):
+    if len(select.select([p],[],[],5)[0])==0:
+        print('got None!!')
+        return None,-1
+
+    data=b''
+    ds=sx*sy*3//2
+    while len(data)<ds:
+        try:
+            data+=os.read(p,ds-len(data))
+        except BlockingIOError:
+            print('bloking....',ds-len(data))
+    print('---1==')
+    if data:
+        #img=np.fromstring(data,'uint8').reshape((sy*3//2,sx))
+        img=np.fromstring(data,'uint8')
+        img=img.reshape([sy*3//2,sx])
+        img=cv2.cvtColor(img, cv2.COLOR_YUV420p2RGB)
+        #img=cv2.cvtColor(img,cv2.COLOR_YUV2BGR)
+        
+        #img=img.reshape([sy,sx,3])
+        fmt_cnt=image_enc_dec.decode(img)
+        if fmt_cnt is None:
+            fmt_cnt = prevcnt+1
+    else:
+        #print('Error no data')
+        return None,-1
+    return img,fmt_cnt
+
+
+def gst_file_reader_ffmpeg(path, nosync):
+    global images
+    cmd='ffmpeg -i {} -f rawvideo -pixel_format rgb24 -video_size {}x{} - >> fifo_raw_{}'
+    #cmd='ffmpeg -i {} -f rawvideo -pixel_format rgb24  - >> fifo_raw_{}'
+    gst_pipes=[]
+    os.system('rm fifo_raw_*')
+
+    for i in [0,1]:
+        fname_raw='fifo_raw_'+'lr'[i]
+        os.mkfifo(fname_raw)
+        r1 = os.open(fname_raw,os.O_RDONLY | os.O_NONBLOCK)
+        #r1 = os.open(fname_raw,os.O_RDWR | os.O_NONBLOCK)
+        fname=glob.glob(path+'/*_'+'lr'[i]+'.mp4')[0]
+        #fname=glob.glob(path+'/*_'+'lr'[i]+'.avi')[0]
+        #sx,sy=514,616
+        gcmd = cmd.format(fname,sx,sy,'lr'[i])
+        #gcmd = cmd.format(fname,'lr'[i])
+        print(gcmd)
+        gst_pipes.append(r1)
+        #Popen(gcmd, shell=True, stdout=None, stdin=None)#, stderr=STDOUT)#, stdout=r1)#, stderr=STDOUT,stdout=STDOUT)
+        os.system(gcmd+' &')
+    prevcnt=-1
+    while 1:
+        if len(select.select(gst_pipes,[],[],0.1)[0])==len(gst_pipes):
+            im1,cnt1=read_image_from_pipe_ff(gst_pipes[0],prevcnt)
+            im2,cnt2=read_image_from_pipe_ff(gst_pipes[1],prevcnt)
+            #syncing frame numbers
+            if not nosync:
+                if cnt1 > 0  and cnt2 > 0:
+                    while cnt2>cnt1:
+                        im1,cnt1=read_image_from_pipe_ff(gst_pipes[0],prevcnt)
+                    while cnt1>cnt2:
+                        im2,cnt2=read_image_from_pipe_ff(gst_pipes[1],prevcnt)
+            images=[im1,im2]
+            prevcnt = cnt1
+            yield images,cnt1
+        else:
+            time.sleep(0.001)
+            print('kkk')
+            yield None,-1
+
+if use_ffmpeg_for_read:
+    gst_file_reader=gst_file_reader_ffmpeg
+else:
+    gst_file_reader=gst_file_reader_gst
