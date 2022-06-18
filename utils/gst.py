@@ -3,7 +3,7 @@
 #to watch
 #gst-launch-1.0 -e -v udpsrc port=5700 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! autovideosink
 #gst-launch-1.0 -e -v udpsrc port=5701 ! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! autovideosink
-from subprocess import Popen,PIPE,STDOUT
+from subprocess import Popen,PIPE
 import sys,time,select,os
 import numpy as np
 import config
@@ -67,7 +67,7 @@ def init_gst_reader(npipes):
         gst_pipes_264.append(r)
         gst_pipes.append(r1)
     for cmd in cmds: #start together
-        Popen(cmd, shell=True, bufsize=0, stdout=STDOUT,stderr=STDOUT)
+        Popen(cmd, shell=True, bufsize=0)
 
 if config.camera_setup == 'stereo':
     images=[None,None]
@@ -134,10 +134,7 @@ def read_image_from_pipe(p, prevcnt=-1):
 def gst_file_reader_gst(path, nosync):
     global images
     cmd='gst-launch-1.0 filesrc location={} ! '+\
-        ' h264parse ! decodebin ! videoconvert ! video/x-raw,height={},width={},format=RGB ! filesink location=fifo_raw_{} sync=false'
-    cmd='gst-launch-1.0 filesrc location={} ! '+\
-        ' decodebin ! videoconvert ! video/x-raw,height={},width={},format=RGB ! filesink location=fifo_raw_{} sync=false'
-    #cmd='ffmpeg -i {} -pixel_format rgb24 -video_size {}x{} -f rawvideo pipe:1 > fifo_raw_{}'
+        ' h264parse ! decodebin ! videoconvert ! video/x-raw,height={},width={},format=RGB ! filesink location=fifo_raw_{}  sync=false'
     gst_pipes=[]
     os.system('rm fifo_raw_*')
 
@@ -145,13 +142,12 @@ def gst_file_reader_gst(path, nosync):
         fname_raw='fifo_raw_'+'lr'[i]
         os.mkfifo(fname_raw)
         r1 = os.open(fname_raw,os.O_RDONLY | os.O_NONBLOCK)
-        #fname=glob.glob(path+'/*_'+'lr'[i]+'.mp4')[0]
-        fname=glob.glob(path+'/*_'+'lr'[i]+'.avi')[0]
+        fname=glob.glob(path+'/*_'+'lr'[i]+'.mp4')[0]
         gcmd = cmd.format(fname,sy,sx,'lr'[i])
         print(gcmd)
         gst_pipes.append(r1)
-        Popen(gcmd, shell=True)#, stderr=STDOUT,stdout=STDOUT)
-        #os.system(gcmd+' &')
+        Popen(gcmd, shell=True)
+
     prevcnt=-1
     while 1:
         if len(select.select(gst_pipes,[],[],0.1)[0])==len(gst_pipes):
@@ -169,7 +165,6 @@ def gst_file_reader_gst(path, nosync):
             yield images,cnt1
         else:
             time.sleep(0.001)
-            print('kkk')
             yield None,-1
 
 def read_image_from_pipe_ff(p, prevcnt=-1):
