@@ -27,7 +27,6 @@ async def recv_and_process():
 
     jm=Joy_map()
     joy=None
-    lost_track=False
     dvl_last_vel=None
     dvl_last_pos=None
     last_vel_report=time.time()
@@ -68,7 +67,9 @@ async def recv_and_process():
                     for ind in range(len(pids)):
                         pid_states=['RX_HOLD','RY_HOLD','RZ_HOLD']
                         if pid_states[ind] not in system_state['mode'] \
-                                or pids[ind] is None or lost_track:
+                                or pids[ind] is None or \
+                                (pid_states[ind]=='RX_HOLD' and abs(jm.joy_mix()['fb'])>0.1) or \
+                                (pid_states[ind]=='RY_HOLD' and abs(jm.joy_mix()['lr'])>0.1):
                             pids[ind] = PID(**pos_pids[ind])
                             target_pos[ind]=dvl_last_pos['xyz'[ind]]
                         elif dvl_last_vel['valid']==b'y':
