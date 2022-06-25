@@ -216,13 +216,15 @@ def update_graph(axes):
                         new_data=True
                         ret=(ldata['y'],ldata['x'])
                         gdata.pos_hist.add(ret)
-                        print('===',ret)
+                        #print('===',ret)
                         gdata.trace_hist.add(ret)
                         gdata.curr_pos=ret
                         if 'yaw' in tin_data:
                             gdata.heading_rot=tin_data['yaw']
-                        else:
-                            gdata.heading_rot=0
+                            ch=np.cos(np.radians(tin_data['yaw']-90))
+                            sh=np.sin(np.radians(tin_data['yaw']-90))
+                        #else:
+                        #    gdata.heading_rot=0
                     if ldata is not None and ldata['type']=='transducer':
                         if 'dist' in ldata:
                             gdata.range_arr.add(ldata['dist'])

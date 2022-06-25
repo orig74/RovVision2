@@ -48,6 +48,7 @@ def get_next_state(curr_q,curr_u,control,dt,lamb):
     control = np.clip(control,-1,1)
     forces=scale_thrust(control)
     currents_vector = [0.1,0.8,0]
+    #currents_vector = [0.0,0.0,0]
     u_dot_f=lamb(curr_q,curr_u,*forces,*currents_vector).flatten()
     next_q=curr_q+curr_u*dt
     next_u=curr_u+u_dot_f*dt
@@ -104,8 +105,11 @@ async def pubposition():
         pub_depth.send_multipart([zmq_topics.topic_depth,pickle.dumps({'ts':tic,'depth':curr_q[2]})])
 
         if cnt%5==0:
-            #simulate dvl messgaes
             vx,vy,vz = curr_u[:3]
+            #simulate dvl messgaes
+            yaw_off=-dvl_angle_offsets[0]#-np.pi/2
+            c,s = np.cos(yaw_off),np.sin(yaw_off)
+            vx,vy = vx*c-vy*s,vx*s+vy*c
             vel_msg='wrz,{},{},{},y,1.99,0.006,3.65e-05;3.39e-06;7.22e-06;3.39e-06;2.46e-06;-8.5608e-07;7.223e-06;-8.560e-07;3.2363e-06,1550139816188624,1550139816447957,188.80,0*XX\r\n'.format(vx,vy,vz).encode()
 
 
@@ -113,8 +117,8 @@ async def pubposition():
 
         if cnt%5==1:
             x,y,z=curr_q[:3]-dvl_offset
-
-            c,s = np.cos(-dvl_angle_offsets[0]),np.sin(-dvl_angle_offsets[0])
+            yaw_off=-dvl_angle_offsets[0]#-np.pi/2
+            c,s = np.cos(yaw_off),np.sin(yaw_off)
             x,y = x*c-y*s,x*s+y*c
 
             pos_msg='wrp,1550139816.178,{},{},{},{},2.5,-3.7,-62.5,0*XX\r\n'.\
