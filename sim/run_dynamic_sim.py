@@ -47,15 +47,16 @@ def scale_thrust(control):
 def get_next_state(curr_q,curr_u,control,dt,lamb):
     control = np.clip(control,-1,1)
     forces=scale_thrust(control)
-    currents_vector = [0,0.1,0]
+    currents_vector = [0.1,0.8,0]
     u_dot_f=lamb(curr_q,curr_u,*forces,*currents_vector).flatten()
     next_q=curr_q+curr_u*dt
     next_u=curr_u+u_dot_f*dt
     return next_q,next_u
 
 dvl_offset=np.zeros(3)
+dvl_angle_offsets=np.zeros(3)
 async def pubposition():
-    global dvl_offset,dvl_cmd
+    global dvl_offset,dvl_cmd,dvl_angle_offsets
     curr_q = np.zeros(6)
     curr_u = np.zeros(6)
     cnt=0
@@ -104,20 +105,27 @@ async def pubposition():
 
         if cnt%5==0:
             #simulate dvl messgaes
-            vel_msg='wrz,{},{},{},y,1.99,0.006,3.65e-05;3.39e-06;7.22e-06;3.39e-06;2.46e-06;-8.5608e-07;7.223e-06;-8.560e-07;3.2363e-06,1550139816188624,1550139816447957,188.80,0*XX\r\n'.format(*curr_u[:3]).encode()
+            vx,vy,vz = curr_u[:3]
+            vel_msg='wrz,{},{},{},y,1.99,0.006,3.65e-05;3.39e-06;7.22e-06;3.39e-06;2.46e-06;-8.5608e-07;7.223e-06;-8.560e-07;3.2363e-06,1550139816188624,1550139816447957,188.80,0*XX\r\n'.format(vx,vy,vz).encode()
 
 
             pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':vel_msg})])
 
         if cnt%5==1:
+            x,y,z=curr_q[:3]-dvl_offset
+
+            c,s = np.cos(-dvl_angle_offsets[0]),np.sin(-dvl_angle_offsets[0])
+            x,y = x*c-y*s,x*s+y*c
+
             pos_msg='wrp,1550139816.178,{},{},{},{},2.5,-3.7,-62.5,0*XX\r\n'.\
-                    format(*(curr_q[:3]-dvl_offset),100).encode()
+                    format(x,y,z,100).encode()
             pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':pos_msg})])
         
         if dvl_cmd is not None:
             if dvl_cmd==b'wcr\n':
                 print('got dvl reset')
                 dvl_offset=curr_q[:3]
+                dvl_angle_offsets=curr_q[3:]
             dvl_cmd=None
 
 
