@@ -115,8 +115,8 @@ if __name__=='__main__':
                     print('d=',d)
                 cnt+=1
                 # Mock downward facing SONAR output
-                if d and d['type']=='vel':
-                    to_send=pickle.dumps({'ts':tic, 'sonar':[d['alt'], 1 if d['valid']==b'y' else 0]})
+                if d and d['type']=='vel' and d['valid']==b'y':
+                    to_send=pickle.dumps({'ts':tic, 'sonar':[d['alt'], 1.0]})
                     pub_srange.send_multipart([zmq_topics.topic_sonar,to_send])
             except Exception as e:
                 print('-----------------------')

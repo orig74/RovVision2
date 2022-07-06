@@ -19,6 +19,15 @@ from joy_mix import Joy_map
 from config_pid_dvl import pos_pids
 from pid import PID
 
+
+GRIDSCAN_VECS = [np.array([5.0, 0.0, 0.0]),
+                 np.array([0.0, 0.5, 0.0]),
+                 np.array([-5.0, 0.0, 0.0]),
+                 np.array([0.0, 0.5, 0.0])]
+GRIDSCAN_REPS = 8
+VELOCITY = 0.1
+
+
 async def recv_and_process():
     keep_running=True
     target_pos=np.zeros(3)
@@ -30,6 +39,12 @@ async def recv_and_process():
     dvl_last_vel=None
     dvl_last_pos=None
     last_vel_report=time.time()
+
+    gridscan_idx = 0
+    rep_idx = 0
+    prev_ts = time.time()
+    prev_target = None
+    target_tmp = None
 
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.005)[0]
@@ -57,9 +72,9 @@ async def recv_and_process():
 
             if topic==zmq_topics.topic_dvl_raw:
                 dd=parse_line(data['dvl_raw'])
-                if dd['type']=='deadreacon':
+                if dd and dd['type']=='deadreacon':
                     dvl_last_pos=dd
-                if dd['type']=='vel' and dd['valid']==b'y':
+                if dd and dd['type']=='vel' and dd['valid']==b'y':
                     dvl_last_vel=dd
                     last_vel_report=time.time()
                 if dvl_last_pos and dvl_last_vel:
@@ -78,7 +93,6 @@ async def recv_and_process():
                             ts=time.time()
                             debug_pid = {'P':pids[ind].p,'I':pids[ind].i,'D':pids[ind].d,'C':cmds[ind],'T':target_pos[ind],'N':x, 'R':v, 'TS':ts}
                             pub_sock.send_multipart([zmq_topics.topic_pos_hold_pid_fmt%ind, pickle.dumps(debug_pid,-1)])
-                    
                     thruster_cmd = mixer.mix(cmds[2],-cmds[1],-cmds[0],0,0,0,0,0)
                     thrusters_source.send_pyobj(['pos',time.time(),thruster_cmd])
 
@@ -91,6 +105,26 @@ async def recv_and_process():
 
             if topic==zmq_topics.topic_system_state:
                 _,system_state=data
+
+
+            # Update autoscan target
+            if all(s in system_state['mode'] for s in ['RX_HOLD','RY_HOLD']) and prev_target is not None and rep_idx < GRIDSCAN_REPS:
+                dt = time.time() - prev_ts
+                prev_ts = time.time()
+                seg_dist = np.linalg.norm(GRIDSCAN_VECS[gridscan_idx])
+                target_pos += dt * VELOCITY * GRIDSCAN_VECS[gridscan_idx] / seg_dist
+                #print(target_pos)
+                
+                dist_travelled = np.linalg.norm(prev_target - target_pos)
+                if dist_travelled > seg_dist:
+                    prev_target = target_pos.copy()
+                    gridscan_idx += 1
+                    if gridscan_idx == len(GRIDSCAN_VECS):
+                        gridscan_idx = 0
+                        rep_idx += 1
+            else:
+                prev_target = target_pos.copy()
+
 
         await asyncio.sleep(0.001)
  

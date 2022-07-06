@@ -1,7 +1,7 @@
-sc=0.13
+sc=0.25
 pos_pid_x={
-        'P':2.5 * sc ,
-        'I':0.001 * sc ,
+        'P':5.0 * sc ,
+        'I':0.01 * sc ,
         'D':5 * sc ,
         'limit':0.6,
         'step_limit':0.05,
@@ -12,8 +12,8 @@ pos_pid_x={
         'func_in_err':None}
 sc=0.25
 pos_pid_y={
-        'P':2.5 * sc ,
-        'I':0.001 * sc ,
+        'P':5.0 * sc ,
+        'I':0.01 * sc ,
         'D':5 * sc ,
         'limit':0.6,
         'step_limit':0.05,
