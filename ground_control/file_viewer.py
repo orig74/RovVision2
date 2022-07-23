@@ -102,7 +102,7 @@ if __name__=='__main__':
             while fcnt>-1:
                 try:
                     ret=pickle.load(fd)
-                    print('got',ret[0])
+                    #print('got',ret[0])
                 except EOFError:
                     print('No more data')
                     break
