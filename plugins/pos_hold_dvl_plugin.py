@@ -20,12 +20,12 @@ from config_pid_dvl import pos_pids
 from pid import PID
 
 
-GRIDSCAN_VECS = [np.array([5.0, 0.0, 0.0]),
+AUTOSCAN_PATH = 8 * [np.array([5.0, 0.0, 0.0]),
                  np.array([0.0, 0.5, 0.0]),
                  np.array([-5.0, 0.0, 0.0]),
                  np.array([0.0, 0.5, 0.0])]
-GRIDSCAN_REPS = 8
-VELOCITY = 0.1
+AUTO_VELOCITY = 0.1
+AUTO_TARGET_THRESH = 0.1
 
 
 async def recv_and_process():
@@ -40,11 +40,9 @@ async def recv_and_process():
     dvl_last_pos=None
     last_vel_report=time.time()
 
-    gridscan_idx = 0
-    rep_idx = 0
-    prev_ts = time.time()
-    prev_target = None
-    target_tmp = None
+    prev_target=None
+    prev_ts=time.time()
+    path_vec_idx=0
 
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.005)[0]
@@ -106,25 +104,24 @@ async def recv_and_process():
             if topic==zmq_topics.topic_system_state:
                 _,system_state=data
 
-
-            # Update autoscan target
-            if all(s in system_state['mode'] for s in ['RX_HOLD','RY_HOLD']) and prev_target is not None and rep_idx < GRIDSCAN_REPS:
+            # Autoscan position interpolation
+            if 'AUTONAV' in system_state['mode']:
                 dt = time.time() - prev_ts
                 prev_ts = time.time()
-                seg_dist = np.linalg.norm(GRIDSCAN_VECS[gridscan_idx])
-                target_pos += dt * VELOCITY * GRIDSCAN_VECS[gridscan_idx] / seg_dist
-                #print(target_pos)
-                
-                dist_travelled = np.linalg.norm(prev_target - target_pos)
-                if dist_travelled > seg_dist:
-                    prev_target = target_pos.copy()
-                    gridscan_idx += 1
-                    if gridscan_idx == len(GRIDSCAN_VECS):
-                        gridscan_idx = 0
-                        rep_idx += 1
-            else:
-                prev_target = target_pos.copy()
+                cur_path_vec = AUTOSCAN_PATH[path_vec_idx]
+                vec_length = np.linalg.norm(cur_path_vec)
+                target_pos += dt * AUTO_VELOCITY * cur_path_vec / vec_length
 
+                target_err = prev_target + cur_path_vec - target_pos
+                if np.linalg.norm(target_err) < AUTO_TARGET_THRESH:
+                    prev_target = prev_target + cur_path_vec
+                    path_vec_idx += 1
+                    if path_vec_idx == len(AUTOSCAN_PATH):
+                        path_vec_idx = 0
+            else:
+                path_vec_idx = 0
+                prev_ts = time.time()
+                prev_target = target_pos.copy()
 
         await asyncio.sleep(0.001)
  

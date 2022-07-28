@@ -16,8 +16,10 @@ topic_camera_servo=b'camera_servo'
 #topic_camera_right=b'topic_camera_right'
 topic_stereo_camera=b'topic_stereo_camera'
 topic_stereo_camera_ts=b'topic_stereo_camera_ts'
+topic_camera_telem=b'topic_camera_telem'
 topic_camera_port=7789
 topic_camera_ts_port=17789
+topic_camera_telem_port=17790
 
 topic_stereo_camera_calib=b'topic_stereo_camera_calib'
 topic_camera_calib_port=8890
