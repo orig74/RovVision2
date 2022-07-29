@@ -115,9 +115,11 @@ if __name__=='__main__':
                     print('d=',d)
                 cnt+=1
                 # Mock downward facing SONAR output
-                if d and d['type']=='vel' and d['valid']==b'y':
-                    to_send=pickle.dumps({'ts':tic, 'sonar':[d['alt'], 1.0]})
-                    pub_srange.send_multipart([zmq_topics.topic_sonar,to_send])
+                if d and d['type']=='vel':
+                    pub_dvl.send_multipart([zmq_topics.topic_dvl_vel, pickle.dumps(d)])
+                    if d['valid']==b'y':
+                        to_send=pickle.dumps({'ts':tic, 'sonar':[d['alt'], 1.0]})
+                        pub_srange.send_multipart([zmq_topics.topic_sonar,to_send])
             except Exception as e:
                 print('-----------------------')
                 traceback.print_exc(file=sys.stdout)

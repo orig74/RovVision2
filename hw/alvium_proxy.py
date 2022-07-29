@@ -224,19 +224,16 @@ class AlviumMultiCam(threading.Thread):
 
                         # Get device stats
                         if loop_cnt % 400 == 0:
-                            cam_key = random.choice(self.producers.keys())
-                            cam = self.producers[cam_key]
-                            try:
-                                temp = cam.get_feature_by_name('DeviceTemperature').get()
-                                exposure = cam.get_feature_by_name('ExposureTimeAbs').get()
-                                gain = cam.get_feature_by_name('Gain').get()
-                                balance = cam.get_feature_by_name('BalanceRatioAbs').get()
-                                print("{} Temp: {} degrees C".format(k, round(temp, 2)))
-                                to_send = {'Temp': temp, 'Exp_us': exposure, 'Gain': gain, 'WB': balance}
-                                socket_pub_telem.send_multipart([zmq_topics.topic_camera_telem,
-                                                                 pickle.dumps((time.time(),to_send))])
-                            except:
-                                print("Get cam telem failed!")
+                            cam_key = random.choice(list(self.producers.keys()))
+                            cam = self.producers[cam_key].cam
+                            temp = cam.get_feature_by_name('DeviceTemperature').get()
+                            exposure = cam.get_feature_by_name('ExposureTimeAbs').get()
+                            gain = cam.get_feature_by_name('Gain').get()
+                            balance = cam.get_feature_by_name('BalanceRatioAbs').get()
+                            print("{} Temp: {} degrees C".format(cam_key, round(temp, 2)))
+                            to_send = {'ID': cam_key, 'Temp': temp, 'Exp_us': exposure, 'Gain': gain, 'WB': balance}
+                            socket_pub_telem.send_multipart([zmq_topics.topic_camera_telem,
+                                                             pickle.dumps((time.time(),to_send))])
 
                         while (time.time() - prev_loop_time < 1 / self.loop_fps):
                             time.sleep(0.001)
