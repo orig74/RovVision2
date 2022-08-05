@@ -29,6 +29,12 @@ cvshow=0
 test=1
 
 dill.settings['recurse'] = True
+
+#work arrond https://github.com/uqfoundation/dill/pull/406 suggested for loading python3.7 pickled in python 3.8
+import platform
+if int(platform.python_version_tuple()[1])>=8:
+    dill._dill._reverse_typemap['CodeType'] = dill._dill._create_code
+
 lamb=dill.load(open('../sim/lambda.pkl','rb'))
 current_command=[0 for _ in range(8)] # 8 thrusters
 dt=1/60.0
@@ -45,15 +51,20 @@ import random
 robj=[]
 def set_random_objects():
     random.seed(0)
-    for _ in range(400):
-        urdf = "random_urdfs/{0:03d}/{0:03d}.urdf".format(random.randint(1,1000)) 
-        x = (random.random()-0.5)*5
-        y = (random.random()-0.5)*5
-        z = (random.random())*-10
-        obj = pb.loadURDF(urdf,basePosition=[x,y,z],globalScaling=3,baseOrientation=[random.random() for _ in range(4)])
-        robj.append(obj)
-        print('---loading--',urdf,x,y)
-        #pb.resetBasePositionAndOrientation(obj,(x,y,z),pb.getQuaternionFromEuler((0,0,0,)))
+    for row in [0,1]:
+        for col in [0,1,2]:
+            for _ in range(200):
+                urdf = "random_urdfs/{0:03d}/{0:03d}.urdf".format(random.randint(1+row*50*3+col*50,50+row*50*3+col*50)) 
+                x = col*1.5 + (random.random()-0.5)*.3
+                y = row*1.5 + (random.random()-0.5)*.3
+                z = (random.random())*-10
+                try:
+                    obj = pb.loadURDF(urdf,basePosition=[x,y,z],globalScaling=3,baseOrientation=[random.random() for _ in range(4)])
+                    robj.append(obj)
+                    print('---loading--',urdf,x,y)
+                except:
+                    print('fail to load object',x,y)
+                #pb.resetBasePositionAndOrientation(obj,(x,y,z),pb.getQuaternionFromEuler((0,0,0,)))
 
 set_random_objects()
 keep_running = True
@@ -133,6 +144,8 @@ def main():
 
     if render==pb.GUI:
         boxId = getrov()
+    
+    last_fps_print=time.time()
 
     while keep_running:
         tic_cycle = time.time()
@@ -250,7 +263,8 @@ def main():
 
         time.sleep(0.010)
         if cnt%20==0 and imgl is not None:
-            print('send...',cnt, imgl.shape)
+            print('send...',cnt, imgl.shape, 'fps=%.1f'%(20/(time.time()-last_fps_print)))
+            last_fps_print=time.time()
         cnt+=1
 
 
