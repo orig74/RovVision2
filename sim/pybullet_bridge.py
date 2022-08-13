@@ -17,6 +17,7 @@ import zmq_topics
 import config
 import dill
 from numpy import sin,cos
+from scipy.spatial.transform import Rotation as R
 
 zmq_sub=utils.subscribe([zmq_topics.topic_thrusters_comand],zmq_topics.topic_thrusters_comand_port)
 zmq_pub=utils.publisher(zmq_topics.topic_camera_port)
@@ -42,7 +43,8 @@ dt=1/60.0
 #render = pb.GUI if len(sys.argv)>1 and sys.argv[1]=='g' else pb.DIRECT # pb.GUI
 render = pb.GUI
 #physicsClient = pb.connect(pb.GUI)#or p.DIRECT for non-graphical version
-physicsClient = pb.connect(render)#or p.DIRECT for non-graphical version
+physicsClient = pb.connect(render)#or p.DIRECT for non-graphical versio
+#import ipdb;ipdb.set_trace()
 pb.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 pb.setGravity(0,0,-0)
 print('start...')
@@ -73,11 +75,35 @@ keep_running = True
 def dsym2pybullet_rad(x,y,z,yaw,pitch,roll):
     return -y,x,-z,pitch,roll,-yaw
 
+def MatDsym2pybullet(x,y,z,yaw,pitch,roll):
+    M=np.zeros((4,4))
+    M[:3,:3]=R.from_euler('ZYX',(yaw,pitch,roll),degrees=False).as_matrix()
+    M[:,3]=[x,y,z,1]
+    MI=np.linalg.inv(M)
+    return M,MI
+
+
+def translateQuatfromM(M):
+    quat=R.from_matrix(M[:3,:3]).as_quat()
+    t=M[:3,3]
+    #print('==',t)
+    return t.tolist(),quat.tolist()
+
+def translateM(M,dx,dy,dz):
+    T=np.eye(4)
+    T[:,3]=(dx,dy,dz,1)
+    #VM = T @ np.array(M).reshape((4,4)) 
+    VM =  M @ T
+    print('=========\n',VM)
+    return VM
+
+
+
 def getrov():
 
     shift = [0, -0.0, 0]
     meshScale = np.array([0.01, 0.01, 0.01])*0.2
-    vfo=pb.getQuaternionFromEuler(np.deg2rad([90, 0, 0]))
+    vfo=pb.getQuaternionFromEuler(np.deg2rad([-90, 0, 90]))
     visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
                                         fileName="br1.obj",
                                         rgbaColor=[1, 0, 0, 1],
@@ -98,7 +124,7 @@ def gettree():
     vfo=pb.getQuaternionFromEuler(np.deg2rad([90, 0, 0]))
     visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
                                         fileName="tree.obj",
-                                        visualFramePosition=[0,2,0],
+                                        visualFramePosition=[2,0,0],
                                         visualFrameOrientation=vfo,
                                         meshScale=meshScale)#set the center of mass frame (loadURDF sets base link frame) startPos/Ornp.resetBasePositionAndOrientation(boxId, startPos, startOrientation)
     boxId=pb.createMultiBody(baseMass=0,
@@ -135,17 +161,6 @@ def get_next_state(curr_q,curr_u,control,dt,lamb):
     next_u=curr_u+u_dot_f*dt
     return next_q,next_u
 
-
-def translateM(M,dx,dy,dz):
-    T = np.zeros((4,4),dtype=float)
-    T[np.diag_indices(4)]=1.0
-    T[0,3]=dx
-    T[1,3]=dy
-    T[2,3]=dz
-    #VM = T @ np.array(M).reshape((4,4)) 
-    VM =  np.array(M).reshape((4,4)) @ T.T
-    VM = VM.flatten().tolist()
-    return VM
 
 def resize(img,factor):
     h,w = img.shape[:2]
@@ -186,26 +201,32 @@ def main():
         #print('dsim {:4.2f} {:4.2f} {:4.2f} {:3.1f} {:3.1f} {:3.1f}'.format(*curr_q),current_command)
         #yaw,roll,pitch = curr_q[3:]
         #px,py,pz=curr_q[:3]
-        px,py,pz,yaw,pitch,roll = dsym2pybullet_rad(*curr_q[:6])
+        #px,py,pz,yaw,pitch,roll = dsym2pybullet_rad(*curr_q[:6])
+        Mdsym, MdsymI=MatDsym2pybullet(*curr_q[:6])
 
         if cnt%frame_ratio==0:
             #print('====',yaw,pitch,roll)
             #first camera
-            yawd,pitchd,rolld=map(np.rad2deg,[yaw,pitch,roll])
-            print(('{:04.2f} '*6).format(px,py,pz,yawd,pitchd,rolld))
+            #yawd,pitchd,rolld=map(np.rad2deg,[yaw,pitch,roll])
+            #print(('{:04.2f} '*6).format(px,py,pz,yawd,pitchd,rolld))
             #VM = pb.computeViewMatrixFromYawPitchRoll((px,py,pz),0.1,yawd,pitchd,rolld,2)
-            VM = pb.computeViewMatrixFromYawPitchRoll((-px,py,pz),0.1,rolld,yawd,pitchd,2)
-            if not mono:
-                VML=translateM(VM,-0.1,0.3,0.3)#left camera 0.2 for left 
-            else:
-                VML=VM
+            #pos,quat=pb.multiplyTransforms((px,py,pz),pb.getQuaternionFromEuler((yaw,pitch,roll)),(0.1,0,0),(1,0,0,0))
+            #CM = np.array(pb.computeViewMatrix((0,0,0),(1,0,0),(0,0,-1))).reshape((4,4))
+            #VML=translateM(Mdsym,0.3,-0.1,-0.2) @ CM
+
+            bl=0.0 if mono else 0
+            CM = np.array(pb.computeViewMatrix((0,-bl,0),(1,-0,0),(0,-0,-1))).reshape((4,4),order='F')
+            VML= CM @ MdsymI
+
+            #VM = pb.computeViewMatrixFromYawPitchRoll(pos,0.1,*pb.getEulerFromQuaternion(quat),2)
+            #print('===',len(VML))
             PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
             w = int(config.cam_res_rgbx*resize_fact)
             h = int(config.cam_res_rgby*resize_fact)
             width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
                 width=w, 
                 height=h,
-                viewMatrix=VML,
+                viewMatrix=VML.flatten('F').tolist(),
                 projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL)
                     #get images from py bullet
             imgl=resize(rgbImg[:,:,:3],1/resize_fact)#inly interested in rgb
@@ -214,15 +235,15 @@ def main():
             #second camera
             if not mono:
                 #VM = pb.computeViewMatrixFromYawPitchRoll((py,px,-pz),1.0,-yawd,pitchd,rolld,2)
-                VMR=translateM(VM,0.1,0.3,0.3)#left camera 0.2 for left 
+                CM = np.array(pb.computeViewMatrix((0,bl,0),(1,0,0),(0,0,-1))).reshape((4,4),order='F')
+                VMR=CM @ MdsymI #left camera 0.2 for left 
                 PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
                 width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
                     width=w, 
                     height=h,
-                    viewMatrix=VMR,
+                    viewMatrix=VMR.flatten('F').tolist(),
                     projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL)
                 imgr=resize(rgbImg[:,:,:3],1/resize_fact) #todo...
-                        
 
             if cvshow:
                 #if 'depth' in topic:
@@ -260,7 +281,9 @@ def main():
             #print('====',px,py,pz,roll,pitch,yaw)
             #pb.resetBasePositionAndOrientation(boxId,(px,py,pz),pb.getQuaternionFromEuler((roll,pitch,yaw)))
             if render==pb.GUI:
-                pb.resetBasePositionAndOrientation(boxId,(px,py,pz),pb.getQuaternionFromEuler((yaw,pitch,roll)))
+                #pb.resetBasePositionAndOrientation(boxId,(px,py,pz),pb.getQuaternionFromEuler((yaw,pitch,roll)))
+                tr,qu = translateQuatfromM(Mdsym) 
+                pb.resetBasePositionAndOrientation(boxId,tr,qu)
             ### test
             tic=time.time()
             imu={'ts':tic}

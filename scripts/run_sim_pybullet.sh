@@ -28,7 +28,7 @@ sleep 1
 
 ################## onboard part
 source run_onboard.sh
-sleep 2
+sleep 1
 
 ################## ground control part
 if [ ! -v HEADLESS ]; then
