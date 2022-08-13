@@ -39,7 +39,8 @@ lamb=dill.load(open('../sim/lambda.pkl','rb'))
 current_command=[0 for _ in range(8)] # 8 thrusters
 dt=1/60.0
 #pybullet init
-render = pb.DIRECT # pb.GUI
+#render = pb.GUI if len(sys.argv)>1 and sys.argv[1]=='g' else pb.DIRECT # pb.GUI
+render = pb.GUI
 #physicsClient = pb.connect(pb.GUI)#or p.DIRECT for non-graphical version
 physicsClient = pb.connect(render)#or p.DIRECT for non-graphical version
 pb.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
@@ -66,13 +67,16 @@ def set_random_objects():
                     print('fail to load object',x,y)
                 #pb.resetBasePositionAndOrientation(obj,(x,y,z),pb.getQuaternionFromEuler((0,0,0,)))
 
-set_random_objects()
+#set_random_objects()
 keep_running = True
+
+def dsym2pybullet_rad(x,y,z,yaw,pitch,roll):
+    return -y,x,-z,pitch,roll,-yaw
 
 def getrov():
 
     shift = [0, -0.0, 0]
-    meshScale = np.array([0.01, 0.01, 0.01])*0.3
+    meshScale = np.array([0.01, 0.01, 0.01])*0.2
     vfo=pb.getQuaternionFromEuler(np.deg2rad([90, 0, 0]))
     visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
                                         fileName="br1.obj",
@@ -88,6 +92,22 @@ def getrov():
                           basePosition=[0,0,0],
                           useMaximalCoordinates=True)
     return boxId
+
+def gettree():
+    meshScale = np.ones(3)*0.3
+    vfo=pb.getQuaternionFromEuler(np.deg2rad([90, 0, 0]))
+    visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
+                                        fileName="tree.obj",
+                                        visualFramePosition=[0,2,0],
+                                        visualFrameOrientation=vfo,
+                                        meshScale=meshScale)#set the center of mass frame (loadURDF sets base link frame) startPos/Ornp.resetBasePositionAndOrientation(boxId, startPos, startOrientation)
+    boxId=pb.createMultiBody(baseMass=0,
+                          baseInertialFramePosition=[0, 0, 0],
+                          baseVisualShapeIndex=visualShapeId,
+                          basePosition=[0,0,0],
+                          useMaximalCoordinates=True)
+    return boxId
+
 
 def _get_next_state(curr_q,curr_u,control,dt,lamb):
     forces=control
@@ -134,7 +154,7 @@ def resize(img,factor):
 def main():
     cnt=0
     frame_cnt=0
-    frame_ratio=6 # for 6 sim cycles 1 video frame
+    frame_ratio=3 # for 6 sim cycles 1 video frame
     resize_fact=0.5
     mono=False
     imgl = None
@@ -145,6 +165,8 @@ def main():
     if render==pb.GUI:
         boxId = getrov()
     
+    tree_id = gettree()
+
     last_fps_print=time.time()
 
     while keep_running:
@@ -162,24 +184,19 @@ def main():
 
         ps={}
         #print('dsim {:4.2f} {:4.2f} {:4.2f} {:3.1f} {:3.1f} {:3.1f}'.format(*curr_q),current_command)
-        ps['posx'],ps['posy'],ps['posz']=curr_q[:3]
-        yaw,roll,pitch = curr_q[3:]
-        ps['yaw'],ps['roll'],ps['pitch']=np.rad2deg(curr_q[3:])
-        #ps['yaw']=-ps['yaw']
-        #ps['posy']=-ps['posy']
-    #ps['pitch']=-ps['pitch'] 
-        #ps['roll']=-ps['roll']
-        #pub_pos_sim.send_multipart([xzmq_topics.topic_sitl_position_report,pickle.dumps((time.time(),curr_q))])
-        zmq_pub.send_multipart([ue4_zmq_topics.topic_sitl_position_report,pickle.dumps(ps)])
-        px,py,pz=ps['posx'],ps['posy'],ps['posz']
+        #yaw,roll,pitch = curr_q[3:]
+        #px,py,pz=curr_q[:3]
+        px,py,pz,yaw,pitch,roll = dsym2pybullet_rad(*curr_q[:6])
 
         if cnt%frame_ratio==0:
             #print('====',yaw,pitch,roll)
             #first camera
-            yawd,pitchd,rolld=ps['yaw'],ps['roll'],ps['pitch']
-            VM = pb.computeViewMatrixFromYawPitchRoll((py,px,-pz),-0.1,-yawd,pitchd,rolld,2)
+            yawd,pitchd,rolld=map(np.rad2deg,[yaw,pitch,roll])
+            print(('{:04.2f} '*6).format(px,py,pz,yawd,pitchd,rolld))
+            #VM = pb.computeViewMatrixFromYawPitchRoll((px,py,pz),0.1,yawd,pitchd,rolld,2)
+            VM = pb.computeViewMatrixFromYawPitchRoll((-px,py,pz),0.1,rolld,yawd,pitchd,2)
             if not mono:
-                VML=translateM(VM,0.1,0,0.0)#left camera 0.2 for left 
+                VML=translateM(VM,-0.1,0.3,0.3)#left camera 0.2 for left 
             else:
                 VML=VM
             PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
@@ -197,7 +214,7 @@ def main():
             #second camera
             if not mono:
                 #VM = pb.computeViewMatrixFromYawPitchRoll((py,px,-pz),1.0,-yawd,pitchd,rolld,2)
-                VMR=translateM(VM,-0.10,0.00,0.0)#left camera 0.2 for left 
+                VMR=translateM(VM,0.1,0.3,0.3)#left camera 0.2 for left 
                 PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
                 width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
                     width=w, 
@@ -243,7 +260,7 @@ def main():
             #print('====',px,py,pz,roll,pitch,yaw)
             #pb.resetBasePositionAndOrientation(boxId,(px,py,pz),pb.getQuaternionFromEuler((roll,pitch,yaw)))
             if render==pb.GUI:
-                pb.resetBasePositionAndOrientation(boxId,(py,px,-pz),pb.getQuaternionFromEuler((roll,-pitch,-yaw+np.radians(0))))
+                pb.resetBasePositionAndOrientation(boxId,(px,py,pz),pb.getQuaternionFromEuler((yaw,pitch,roll)))
             ### test
             tic=time.time()
             imu={'ts':tic}

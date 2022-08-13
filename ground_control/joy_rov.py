@@ -59,6 +59,7 @@ while not done:
                 pub(zmq_topics.topic_button,pickle.dumps(buttons))
 
             if event.type in [pygame.KEYDOWN,pygame.KEYUP]: 
+                print('got key event')
                 axes_vals = [0 for i in range(8)]
                 buttons = [0 for i in range(10)]
                 #https://www.pygame.org/docs/ref/key.html
