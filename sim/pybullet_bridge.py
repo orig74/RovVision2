@@ -112,20 +112,38 @@ def getrov():
                           useMaximalCoordinates=True)
     return boxId
 
-def gettree():
+def getscene():
+    ret=[]
     meshScale = np.ones(3)*0.8
     vfo=pb.getQuaternionFromEuler(np.deg2rad([90, 0, 0]))
     visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
-                                        fileName="tree.obj",
-                                        visualFramePosition=[2,0,0],
+                                        fileName="pybullet_data/tree.obj",
+                                        visualFramePosition=[0,0,0],
                                         visualFrameOrientation=vfo,
                                         meshScale=meshScale)#set the center of mass frame (loadURDF sets base link frame) startPos/Ornp.resetBasePositionAndOrientation(boxId, startPos, startOrientation)
-    boxId=pb.createMultiBody(baseMass=0,
+    for j in range(2):
+        for i in range(5):
+            ret.append(pb.createMultiBody(baseMass=0,
+                              baseInertialFramePosition=[0, 0, 0],
+                              baseVisualShapeIndex=visualShapeId,
+                              basePosition=[2+j*6,i*3.0,0],
+                              useMaximalCoordinates=True))
+
+
+    meshScale = np.ones(3)*1
+    vfo=pb.getQuaternionFromEuler(np.deg2rad([-90, 0, 0]))
+    visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
+                                        fileName="pybullet_data/seabed.obj",
+                                        visualFramePosition=[0,0,10],
+                                        visualFrameOrientation=vfo,
+                                        meshScale=meshScale)#set the center of mass frame (loadURDF sets base link frame) startPos/Ornp.resetBasePositionAndOrientation(boxId, startPos, startOrientation)
+    ret.append(pb.createMultiBody(baseMass=0,
                           baseInertialFramePosition=[0, 0, 0],
                           baseVisualShapeIndex=visualShapeId,
                           basePosition=[0,0,0],
-                          useMaximalCoordinates=True)
-    return boxId
+                          useMaximalCoordinates=True))
+ 
+    return ret
 
 
 def _get_next_state(curr_q,curr_u,control,dt,lamb):
@@ -173,7 +191,7 @@ def main():
     if render==pb.GUI:
         boxId = getrov()
     
-    tree_id = gettree()
+    scene = getscene()
 
     last_fps_print=time.time()
 
@@ -210,7 +228,7 @@ def main():
                 viewMatrix=VML.flatten('F').tolist(),
                 projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL)
             #cv2.circle(rgbImg,(w//2,h//2),8,(225,255,0),2)
-            imgl=resize(rgbImg[:,:,:3],1/resize_fact)#inly interested in rgb
+            imgl=resize(rgbImg[:,:,[2,1,0]],1/resize_fact)#inly interested in rgb
 
             #second camera
             if not mono:
@@ -223,7 +241,7 @@ def main():
                     viewMatrix=VMR.flatten('F').tolist(),
                     projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL)
             
-                imgr=resize(rgbImg[:,:,:3],1/resize_fact) #todo...
+                imgr=resize(rgbImg[:,:,[2,1,0]],1/resize_fact) #todo...
 
             if cvshow:
                 imgls = imgl[::2,::2]
