@@ -112,28 +112,35 @@ def getrov():
                           useMaximalCoordinates=True)
     return boxId
 
-def getscene():
+
+def gen_rope(x,y):
     ret=[]
-    meshScale = np.ones(3)*0.8
-    vfo=pb.getQuaternionFromEuler(np.deg2rad([90, 0, 0]))
-    visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
-                                        fileName="pybullet_data/tree.obj",
+    meshScale = np.ones(3)*0.2
+    for i in range(20):
+        vfo=pb.getQuaternionFromEuler(np.deg2rad([90, 0, i*30]))
+        visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
+                                        fileName="pybullet_data/mussle_rope_part.obj",
                                         visualFramePosition=[0,0,0],
                                         visualFrameOrientation=vfo,
                                         meshScale=meshScale)#set the center of mass frame (loadURDF sets base link frame) startPos/Ornp.resetBasePositionAndOrientation(boxId, startPos, startOrientation)
+        ret.append(pb.createMultiBody(baseMass=0,
+                          baseInertialFramePosition=[0, 0, 0],
+                          baseVisualShapeIndex=visualShapeId,
+                          basePosition=[x,y,i*1.2],
+                          useMaximalCoordinates=True))
+
+    return ret
+
+def getscene():
+    ret=[]
     for j in range(2):
         for i in range(5):
-            ret.append(pb.createMultiBody(baseMass=0,
-                              baseInertialFramePosition=[0, 0, 0],
-                              baseVisualShapeIndex=visualShapeId,
-                              basePosition=[2+j*6,i*3.0,0],
-                              useMaximalCoordinates=True))
-
+            ret+=gen_rope(2+j*6,i*3)
 
     meshScale = np.ones(3)*1
     vfo=pb.getQuaternionFromEuler(np.deg2rad([-90, 0, 0]))
     visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
-                                        fileName="pybullet_data/seabed.obj",
+                                        fileName="pybullet_data/seabed1.obj",
                                         visualFramePosition=[0,0,10],
                                         visualFrameOrientation=vfo,
                                         meshScale=meshScale)#set the center of mass frame (loadURDF sets base link frame) startPos/Ornp.resetBasePositionAndOrientation(boxId, startPos, startOrientation)
@@ -226,7 +233,8 @@ def main():
                 width=w, 
                 height=h,
                 viewMatrix=VML.flatten('F').tolist(),
-                projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL)
+                projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL,
+                lightColor=(0,0,1))
             #cv2.circle(rgbImg,(w//2,h//2),8,(225,255,0),2)
             imgl=resize(rgbImg[:,:,[2,1,0]],1/resize_fact)#inly interested in rgb
 
