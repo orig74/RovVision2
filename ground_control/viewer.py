@@ -97,7 +97,7 @@ if __name__=='__main__':
                 frame_cnt,shape = pickle.loads(ret[1])
                 images = []
                 for im in ret[2:]:
-                    images.append(np.frombuffer(im,'uint8').reshape(shape))
+                    images.append(np.frombuffer(im,'uint8').reshape(shape).copy())
                 print('======',len(images),ret[0])
                 if len(images)>0:
                     break
