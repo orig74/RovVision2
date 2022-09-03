@@ -18,6 +18,16 @@ from camera_tools import get_stereo_cameras,triangulate
 from rope_detect import rope_detect 
 
 
+show_hsv=False
+
+def togrey(im):
+    if 0:
+        return im[:,:,2]
+    ret= cv2.cvtColor(im,cv2.COLOR_BGR2HSV_FULL)[:,:,0].copy()
+    _,ret= cv2.threshold(ret,50,255,cv2.THRESH_TOZERO_INV)
+    return ret*3
+
+
 def generate_stereo_cameras():
     return get_stereo_cameras(config.focal_length,(config.pixelwidthx,config.pixelwidthy),config.baseline,config.camera_pitch)
 
@@ -38,7 +48,8 @@ class StereoTrack():
 
     def reset(self):
         self.ofx=self.disparity_offset
-        self.rope_track_state = None #'max','min',None
+        #self.rope_track_state = None #'max','min',None
+        self.rope_track_state = 'max' #'max','min',None
         self.last_res=None
         self.ref_point=None #first valid pt after reset
 
@@ -47,8 +58,8 @@ class StereoTrack():
         cx  = shape[1]//2+self.ofx
         cy  = shape[0]//2
         
-        if config.ignore_extrema_type:
-            self.rope_track_state = None
+        #if config.ignore_extrema_type:
+        #    self.rope_track_state = None
 
         ret=rope_detect(cx,self.rope_track_state, cy-100,200, 
                 imgl,clear_freqs=self.clear_freqs, max_diff_cols=config.max_diff_cols)
@@ -77,8 +88,10 @@ class StereoTrack():
         else:
             cx_off_r=cx_off_l
         l2,r2=cx_off_r-wx//2-sxl,cx_off_r+wx//2+sxr
-        l2=np.clip(l2,0,imgl.shape[1]-1)
-        r2=np.clip(r2,0,imgl.shape[1]-1)
+        #l2=np.clip(l2,0,imgl.shape[1]-1)
+        #r2=np.clip(r2,0,imgl.shape[1]-1)
+        l2=np.clip(l2,40,imgl.shape[1]-40)
+        r2=np.clip(r2,40,imgl.shape[1]-40)
         #else:
         cy_off=cy
         l1,r1=cx_off_l-wx//2,cx_off_l+wx//2
@@ -91,18 +104,13 @@ class StereoTrack():
         u2,d2=cy_off-wy//2-sy,cy_off+wy//2+sy
 
         corrs=[]
-        for c in [0,1,2]:
-            search=imgr[u2:d2,l2:r2,c]
-            corr_search=search.copy()
-            patern=imgl[u1:d1,l1:r1,c]
-            corr_pat=patern.copy()
-            try:
-                corr = cv2.matchTemplate(corr_search,corr_pat,cv2.TM_CCOEFF_NORMED)
-            except:
-                print('Error corr exception')
-                return None
-            corrs.append(corr)
-        corr=corrs[2]*corrs[1]*corrs[0]
+        try:
+            corr_search=togrey(imgr[u2:d2,l2:r2,:].copy())
+            corr_pat=togrey(imgl[u1:d1,l1:r1,:]).copy()
+            corr = cv2.matchTemplate(corr_search,corr_pat,cv2.TM_CCOEFF_NORMED)
+        except Exception as E:
+            print('Error corr exception',E)
+            return None
         corr-=corr.min()
         corr=corr/corr.max()
         snr=corr.max()/np.median(corr)
@@ -169,14 +177,21 @@ class StereoTrack():
 
 
     def __track_and_validate(self, imgl, imgr):
-        imgl1r=imgl[:,:,0].copy()
-        imgr1r=imgr[:,:,0].copy()
-        imgl1b=imgl[:,:,2].copy()
-        imgr1b=imgr[:,:,2].copy()
-        cx,cy = imgl1r.shape[1]//2,imgl1r.shape[0]//2
+        #imgl1r=imgl[:,:,0].copy()
+        #imgr1r=imgr[:,:,0].copy()
+        #imgl1b=imgl[:,:,2].copy()
+        #imgr1b=imgr[:,:,2].copy()
+
+        #im_grey_to_track = imgl[:,:,2].copy()
+        im_grey_to_track = togrey(imgl)
+
+
+        if show_hsv:
+            cv2.imshow('hsv',im_grey_to_track)
+        cx,cy = im_grey_to_track.shape[1]//2,im_grey_to_track.shape[0]//2
         cx_off=cx+self.ofx
  
-        valid = self.__track_left_im(imgl1b) #tracked point on left image
+        valid = self.__track_left_im(im_grey_to_track) #tracked point on left image
         #pt_r_x,pt_r_y=self.__track_stereo(imgl1r,imgr1r) #tracked point on right image
         ret=self.__track_stereo(imgl,imgr) #tracked point on right image
         if ret is None:
@@ -289,6 +304,7 @@ def draw_track_rects(ret,imgl,imgr):
         cv2.rectangle(imgl,(xl-wx_t//2,yl-wy_t//2),(xl+wx_t//2,yl+wy_t//2),col)
         cv2.rectangle(imgl,(xl-wx_s//2,yl-wy_s//2),(xl+wx_s//2,yl+wy_s//2),col)
         cv2.rectangle(imgr,(xr-wx_s//2,yr-wy_s//2),(xr+wx_s//2,yr+wy_s//2),col)
+        print('++++',xr-xl)
 
     if 'clr_frq' in ret:
         font = cv2.FONT_HERSHEY_SIMPLEX
@@ -304,6 +320,7 @@ if __name__=="__main__":
     sys.path.append('../../')
     import gst
     dd=StereoTrack()
+    show_hsv=True
     #fr=gst.gst_file_reader('../../../data/190726-063112/',False)
     #fr=gst.gst_file_reader('../../../data/190803-141658/',False)
     #fr=gst.gst_file_reader('../../../data/190822-140723/',False)
