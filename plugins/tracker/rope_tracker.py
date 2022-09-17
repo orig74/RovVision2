@@ -46,8 +46,11 @@ class StereoTrack():
         self.clear_freqs=config.clear_freqs
         self.reset()
 
-    def reset(self):
-        self.ofx=self.disparity_offset
+    def reset(self,pt=None):
+        if pt is None:
+            self.ofx=self.disparity_offset
+        else:
+            self.ofx=int((pt[0]-0.5)*self.shape[1])
         #self.rope_track_state = None #'max','min',None
         self.rope_track_state = 'max' #'max','min',None
         self.last_res=None
@@ -55,6 +58,7 @@ class StereoTrack():
 
     def __track_left_im(self,imgl):
         shape=imgl.shape
+        self.shape=shape
         cx  = shape[1]//2+self.ofx
         cy  = shape[0]//2
         
@@ -304,7 +308,7 @@ def draw_track_rects(ret,imgl,imgr):
         cv2.rectangle(imgl,(xl-wx_t//2,yl-wy_t//2),(xl+wx_t//2,yl+wy_t//2),col)
         cv2.rectangle(imgl,(xl-wx_s//2,yl-wy_s//2),(xl+wx_s//2,yl+wy_s//2),col)
         cv2.rectangle(imgr,(xr-wx_s//2,yr-wy_s//2),(xr+wx_s//2,yr+wy_s//2),col)
-        print('++++',xr-xl)
+        #print('++++',xr-xl)
 
     if 'clr_frq' in ret:
         font = cv2.FONT_HERSHEY_SIMPLEX
@@ -344,8 +348,15 @@ if __name__=="__main__":
             imrs=imr.copy()
             print('====',cnt,ret['dx'],ret['dy'],ret['dz']) 
             draw_track_rects(ret,imls,imrs)
-            cv2.imshow('left',imls)
-            cv2.imshow('rigth',imrs)
+            if 1:
+                cv2.imshow('left',imls)
+                cv2.imshow('rigth',imrs)
+            else:
+                im_st=imls.copy()
+                par=150
+                im_st[:,par:,2]=imrs[:,:-par,0]
+                cv2.imshow('left',im_st)
+                
             
             while 1:
                 if cnt<skip:

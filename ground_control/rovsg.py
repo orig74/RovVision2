@@ -117,18 +117,24 @@ def main():
     plotter = Plotter(window["-CANVAS-"].TKCanvas)
     
     last_im=None
+    image_shape=None 
     while True:
         event, values = window.read(timeout=20) #10 mili timeout
         #print('----------',event,values)
         if event == "Exit" or event == sg.WIN_CLOSED:
             break
 
-        if event.startswith('-MAIN'):
-            print('----------',event.split(),values['-MAIN-IMAGE-'])
+        if image_shape is not None and event.startswith('-MAIN'):
+            x,y=values['-MAIN-IMAGE-']
+            x=x/image_shape[1]
+            y=y/image_shape[0]
+            print('---click--',x,y)
+            rovCommander.lock(x,y)
 
         frameId, rawImgs = rovHandler.getNewImages()
 
         if rawImgs is not None:
+            image_shape=rawImgs[0].shape
             #print('===',time.time(),rawImgs[0].shape)
             #print(rawImgs[0].shape)
             if last_im is not None:

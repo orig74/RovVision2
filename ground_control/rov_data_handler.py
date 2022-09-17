@@ -22,6 +22,9 @@ class rovCommandHandler(object):
     def armdisarm(self):
         self.pub({'cmd':'armdisarm'})
 
+    def lock(self,x,y):
+        self.pub({'cmd':'lock','click_pt':(x,y)})
+
     def pub(self,data):
         self.pub_sock.send_multipart([zmq_topics.topic_remote_cmd,pickle.dumps(data,protocol=3)])
     #pickle.dump([time.time()-start_time,topic,data],joy_log,-1)
