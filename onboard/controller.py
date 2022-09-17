@@ -16,8 +16,10 @@ pub_sock = utils.publisher(zmq_topics.topic_controller_port)
 subs_socks=[]
 subs_socks.append(utils.subscribe([zmq_topics.topic_axes,zmq_topics.topic_button],zmq_topics.topic_joy_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_imu],zmq_topics.topic_imu_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_remote_cmd],zmq_topics.topic_remote_cmd_port))
 thruster_sink = utils.pull_sink(zmq_topics.thrusters_sink_port)
 subs_socks.append(thruster_sink)
+
 
 
 async def recv_and_process():
@@ -72,6 +74,12 @@ async def recv_and_process():
                     if jm.image_rect_event():
                         togle_mode('RECT')
                     if jm.arm_event():
+                        system_state['arm']=not system_state['arm']
+                        if not system_state['arm']:
+                            system_state['mode']=[]
+                if topic==zmq_topics.topic_remote_cmd:
+                    print('got command',data)
+                    if data['cmd']=='armdisarm':
                         system_state['arm']=not system_state['arm']
                         if not system_state['arm']:
                             system_state['mode']=[]

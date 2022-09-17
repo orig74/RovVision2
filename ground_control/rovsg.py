@@ -26,9 +26,10 @@ import image_enc_dec
 import argparse
 import matplotlib.pyplot as plt
 
-from rov_data_handler import rovDataHandler
+from rov_data_handler import rovDataHandler,rovCommandHandler
 from plttk import Plotter
 import zmq_topics
+
 
 def img_to_tk(img,shrink=1):
     if shrink==1:
@@ -41,9 +42,10 @@ def img_to_tk(img,shrink=1):
 
 def main():
     rovHandler = rovDataHandler(None)
+    rovCommander = rovCommandHandler()
     layout = [
         [sg.Image(key="-MAIN-IMAGE-"),
-            [sg.Image(key="-IMAGE-1-"),sg.Image(key="-IMAGE-2-")]],
+            sg.Image(key="-IMAGE-1-")],#,sg.Image(key="-IMAGE-2-")],
         [sg.Canvas(key="-CANVAS-")],
 
         [
@@ -52,7 +54,11 @@ def main():
             sg.Button("Arm-Disarm"),
         ],
     ]
-    window = sg.Window("ROV Viewer", layout, finalize=True, element_justification='left', font='Helvetica 16')
+    window = sg.Window("ROV Viewer", 
+            layout, finalize=True, 
+            element_justification='left', 
+            font='Helvetica 16',
+            size=(1920,1280))
     plotter = Plotter(window["-CANVAS-"].TKCanvas)
     
     while True:
@@ -66,11 +72,11 @@ def main():
             #print('===',time.time(),rawImgs[0].shape)
             window["-MAIN-IMAGE-"].update(data=img_to_tk(rawImgs[0]))
             #window["-IMAGE-1-"].update(data=img_to_tk(rawImgs[0]))
-            window["-IMAGE-2-"].update(data=img_to_tk(rawImgs[1],2))
+            window["-IMAGE-1-"].update(data=img_to_tk(rawImgs[1],1))
  
         if event == "Arm-Disarm":
             #filename = values["-FILE-"]
-            pass
+            rovCommander.armdisarm()
 
         plotter.update_pid(rovHandler.plot_buffers[zmq_topics.topic_depth_hold_pid])
 

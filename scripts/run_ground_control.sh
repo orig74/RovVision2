@@ -18,7 +18,10 @@ fi
 
 new_6_win
 run 0 ground_control joy_rov.py
-run 1 ground_control "viewer.py --pub_data"
+#run 1 ground_control "viewer.py --pub_data"
+#run 1 ground_control "rovViewer.py"
+#run 1 ground_control "rovtk.py"
+run 1 ground_control "rovsg.py"
 run 2 web "--version && FLASK_APP=server.py flask run"
 run 3 ground_control gps_logger.py
 #run 3 web "--version && sleep 3 && firefox http://127.0.0.1:5000/static/html/ropedive.html --new-window  --new-tab -url http://127.0.0.1:5000/static/html/checklists.html"
