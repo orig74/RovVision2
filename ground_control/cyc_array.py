@@ -3,11 +3,15 @@ class CycArr():
     def __init__(self,size=20000):
         self.buf=[]
         self.size=size
+        self.cnt=0
+        self.changed = False
 
     def add(self,arr):
         self.buf.append(arr)
         if len(self.buf)>self.size:
             self.buf.pop(0)
+        self.cnt+=1
+        self.changed = True
 
     def get_data(self,labels):
         data = np.zeros((len(self.buf),len(labels)))
