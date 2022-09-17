@@ -17,6 +17,7 @@ import zmq_topics
 import config
 import dill
 import cv2
+from dvl_sim import DVLSim
 from numpy import sin,cos
 from scipy.spatial.transform import Rotation as R
 
@@ -26,8 +27,11 @@ zmq_sub=utils.subscribe([zmq_topics.topic_thrusters_comand],zmq_topics.topic_thr
 zmq_pub=utils.publisher(zmq_topics.topic_camera_port)
 pub_imu = utils.publisher(zmq_topics.topic_imu_port)
 pub_depth = utils.publisher(zmq_topics.topic_depth_port)
+pub_dvl = utils.publisher(zmq_topics.topic_dvl_port)
 
 pub_sonar = utils.publisher(zmq_topics.topic_sonar_port)
+
+dvlSim=DVLSim()
 cvshow=0
 #cvshow=False
 test=1
@@ -155,10 +159,13 @@ def main():
             if topic==zmq_topics.topic_thrusters_comand:
                 _,current_command=pickle.loads(data[1])
                 current_command=[i*1.3 for i in current_command]
+            if topic==zmq_topics.topic_dvl_cmd:
+                dvlSim.reset()
 
         next_q,next_u=get_next_state(curr_q,curr_u,current_command,dt,lamb)
         next_q,next_u=next_q.flatten(),next_u.flatten()
         curr_q,curr_u=next_q,next_u
+        dvlSim.update(curr_q,curr_u)
 
         ps={}
         Mdsym, MdsymI=MatDsym2pybullet(*curr_q[:6])
@@ -171,7 +178,7 @@ def main():
 
             #VM = pb.computeViewMatrixFromYawPitchRoll(pos,0.1,*pb.getEulerFromQuaternion(quat),2)
             #print('===',len(VML))
-            PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
+            PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=100)
             w = int(config.cam_res_rgbx*resize_fact)
             h = int(config.cam_res_rgby*resize_fact)
             width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
@@ -181,7 +188,17 @@ def main():
                 projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL,
                 lightColor=(0,0,1))
             #cv2.circle(rgbImg,(w//2,h//2),8,(225,255,0),2)
+
+            ##experimental
+            if 1:
+                hsv = cv2.cvtColor(rgbImg,cv2.COLOR_BGR2HSV)
+                hsv[:,:,0]=(np.clip(10*(1-depthImg),0,1)*hsv[:,:,0].astype('float')).astype('uint8')
+                #hsv[:,:,0]=255
+                rgbImg = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
+
             imgl=resize(rgbImg[:,:,[2,1,0]],1/resize_fact)#inly interested in rgb
+            print('max...',depthImg.max(),depthImg.min())
+            #hsv[:,:,0]=
 
             #second camera
             if not mono:
@@ -241,6 +258,10 @@ def main():
             pub_imu.send_multipart([zmq_topics.topic_imu,pickle.dumps(imu)])
             pub_depth.send_multipart([zmq_topics.topic_depth,pickle.dumps({'ts':tic,'depth':curr_q[2]})])
 
+        if cnt%5==0:
+            tic=time.time()
+            pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':dvlSim.dvl_pos_msg()})])
+            pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':dvlSim.dvl_vel_msg()})])
 
         time.sleep(0.010)
         if cnt%20==0 and imgl is not None:

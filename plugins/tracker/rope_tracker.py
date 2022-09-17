@@ -19,7 +19,10 @@ from rope_detect import rope_detect
 
 
 show_hsv=False
+hsv_wait=False
 
+if show_hsv:
+    cv2.namedWindow('hsv',cv2.WINDOW_NORMAL)
 def togrey(im):
     if 0:
         return im[:,:,2]
@@ -192,6 +195,8 @@ class StereoTrack():
 
         if show_hsv:
             cv2.imshow('hsv',im_grey_to_track)
+            if hsv_wait:
+                cv2.waitKey(1)
         cx,cy = im_grey_to_track.shape[1]//2,im_grey_to_track.shape[0]//2
         cx_off=cx+self.ofx
  
