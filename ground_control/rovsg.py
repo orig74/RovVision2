@@ -38,23 +38,36 @@ def img_to_tk(img,shrink=1):
         img = Image.fromarray(img[::shrink,::shrink])
     img = ImageTk.PhotoImage(img)
     return img
-def img_to_tk2(img,shrink=1):
-    if shrink==1:
-        img = Image.fromarray(img)
-    else:
-        img = Image.fromarray(img[::shrink,::shrink])
-    bio = io.BytesIO()
-    img.save(bio,format='PNG')
-    return bio.getvalue()
+#def img_to_tk2(img,shrink=1):
+#    if shrink==1:
+#        img = Image.fromarray(img)
+#    else:
+#        img = Image.fromarray(img[::shrink,::shrink])
+#    bio = io.BytesIO()
+#    img.save(bio,format='PNG')
+#    return bio.getvalue()
+#def img_to_tk3(img,shrink=1):
+#    if shrink>1:
+#        img = img[::shrink,::shrink]
+#    return cv2.imencode('.png',img)[1].tobytes()
+#def img_to_tk4(img,shrink=1):
+#    if shrink==1:
+#        img = Image.fromarray(img)
+#    else:
+#        img = Image.fromarray(img[::shrink,::shrink])
+#    return img
 
-
+def draw_image(self, image):
+    id = self._TKCanvas2.create_image((image.width()//2,image.height()//2), image=image)
+    self.Images[id] = image
+    return id
 
 def main():
     rovHandler = rovDataHandler(None)
     rovCommander = rovCommandHandler()
     im_size = (960,600) 
     row1_layout = [[
-        sg.Graph(im_size, graph_bottom_left=(0, 0), graph_top_right=im_size ,key="-MAIN-IMAGE-",
+        sg.Graph(im_size, graph_bottom_left=(0, im_size[1]), graph_top_right=(im_size[0],0) ,key="-MAIN-IMAGE-",
             change_submits=True,
             enable_events=True,
             ),
@@ -103,6 +116,7 @@ def main():
     #window['-MAIN-IMAGE-'].bind('<Button-1>','')
     plotter = Plotter(window["-CANVAS-"].TKCanvas)
     
+    last_im=None
     while True:
         event, values = window.read(timeout=20) #10 mili timeout
         #print('----------',event,values)
@@ -117,12 +131,13 @@ def main():
         if rawImgs is not None:
             #print('===',time.time(),rawImgs[0].shape)
             #print(rawImgs[0].shape)
-            window["-MAIN-IMAGE-"].draw_image(data=img_to_tk2(rawImgs[0]),location=(0,im_size[1]))#im_size[1]))
-            #window["-MAIN-IMAGE-"].draw_image(data=sg.EMOJI_BASE64_HAPPY_JOY, location=(0,20))
-   #window["-MAIN-IMAGE-"].update(data=img_to_tk(rawImgs[0]))
-            #window["-MAIN-IMAGE-"].draw_circle((75, 75), 25, fill_color='black', line_color='white')
-            #window['-MAIN-IMAGE-'].bind('Button-1','')
-            #window["-IMAGE-1-"].update(data=img_to_tk(rawImgs[0]))
+            if last_im is not None:
+                #window["-MAIN-IMAGE-"].delete_figure(last_im)
+                window["-MAIN-IMAGE-"].erase()
+                #window["-MAIN-IMAGE-"].Images[last_im]=img_to_tk(rawImgs[0])
+            
+            #last_im=window["-MAIN-IMAGE-"].draw_image(data=img_to_tk3(rawImgs[0]),location=(0,0))#im_size[1]))
+            last_im=draw_image(window["-MAIN-IMAGE-"],img_to_tk(rawImgs[0]))#im_size[1]))
             window["-IMAGE-1-"].update(data=img_to_tk(rawImgs[1],1))
  
         if event == "Arm-Disarm":
