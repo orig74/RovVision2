@@ -34,7 +34,6 @@ pub_sonar = utils.publisher(zmq_topics.topic_sonar_port)
 dvlSim=DVLSim()
 cvshow=0
 #cvshow=False
-test=1
 
 dill.settings['recurse'] = True
 
@@ -50,6 +49,8 @@ dt=1/60.0
 render = pb.GUI if len(sys.argv)>1 and sys.argv[1]=='g' else pb.DIRECT # pb.GUI
 
 physicsClient = pb.connect(render)#or p.DIRECT for non-graphical versio
+pb.setRealTimeSimulation(False)
+pb.setTimeStep(1/10)
 pb.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 pb.setGravity(0,0,-0)
 print('start...')
@@ -136,7 +137,7 @@ def resize(img,factor):
 def main():
     cnt=0
     frame_cnt=0
-    frame_ratio=3 # for 6 sim cycles 1 video frame
+    frame_ratio=1 # for 6 sim cycles 1 video frame
     resize_fact=0.5
     mono=False
     imgl = None
@@ -263,7 +264,8 @@ def main():
             pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':dvlSim.dvl_pos_msg()})])
             pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':dvlSim.dvl_vel_msg()})])
 
-        time.sleep(0.010)
+        time.sleep(0.100)
+
         if cnt%20==0 and imgl is not None:
             print('send...',cnt, imgl.shape, 'fps=%.1f'%(20/(time.time()-last_fps_print)))
             last_fps_print=time.time()
