@@ -112,7 +112,7 @@ def main():
             layout, finalize=True, 
             element_justification='left', 
             font='Helvetica 16',
-            size=(1920,1280))
+            size=(1920,1080))
     #window['-MAIN-IMAGE-'].bind('<Button-1>','')
     plotter = Plotter(window["-CANVAS-"].TKCanvas)
     
