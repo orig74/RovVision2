@@ -118,6 +118,7 @@ def main():
     
     last_im=None
     image_shape=None 
+    cnt=0
     while True:
         event, values = window.read(timeout=20) #10 mili timeout
         #print('----------',event,values)
@@ -149,6 +150,11 @@ def main():
         if event == "Arm-Disarm":
             #filename = values["-FILE-"]
             rovCommander.armdisarm()
+
+        if (cnt%(1000//20))==0:
+            rovCommander.heartbit()
+        
+        cnt+=1
 
         plotter.update_pid(rovHandler.plot_buffers[zmq_topics.topic_depth_hold_pid])
 

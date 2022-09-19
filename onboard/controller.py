@@ -81,8 +81,12 @@ async def recv_and_process():
                     print('got command',data)
                     if data['cmd']=='armdisarm':
                         system_state['arm']=not system_state['arm']
+                        print('system state is:',system_state)
                         if not system_state['arm']:
                             system_state['mode']=[]
+                    if data['cmd']=='heartbit':
+                        last_axes_joy_message_time=time.time()
+
                            
                 if topic==zmq_topics.topic_axes:
                     last_axes_joy_message_time=time.time()

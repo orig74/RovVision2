@@ -21,6 +21,9 @@ class rovCommandHandler(object):
 
     def armdisarm(self):
         self.pub({'cmd':'armdisarm'})
+    
+    def heartbit(self):
+        self.pub({'cmd':'heartbit'})
 
     def lock(self,x,y):
         self.pub({'cmd':'lock','click_pt':(x,y)})
