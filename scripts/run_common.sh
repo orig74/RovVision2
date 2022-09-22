@@ -51,7 +51,8 @@ function run { #pane number, path, script
 tmux select-pane -t $1 
 [ ! -z "$RESIZE_VIEWER" ] && tmux send-keys "export RESIZE_VIEWER=$RESIZE_VIEWER" ENTER
 tmux send-keys "printf '\033]2;%s\033\\' '$3'" ENTER
-tmux send-keys "conda activate pybullet" ENTER
+#tmux send-keys "conda activate pybullet" ENTER
+tmux send-keys "conda activate python3.7" ENTER
 tmux send-keys "cd $PROJECT_PATH/$2" ENTER
 tmux send-keys "python $3" ENTER
 }

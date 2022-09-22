@@ -29,14 +29,14 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--debug", help="Show frames with opencv", action='store_true')
 args = parser.parse_args()
 
-CAM_IDS = ['DEV_000F315DAB37', 'DEV_000F315DAB68', 'DEV_000F315DB084'] # 
+CAM_IDS = ['DEV_000F315DAB37', 'DEV_000F315DAB68']#, 'DEV_000F315DB084'] # 
 MASTER_CAM_ID = CAM_IDS[0]
 NUM_CAMS = len(CAM_IDS)
 
 # Min exposure time: 32us
 CAM_EXPOSURE_US = None #10000
-CAM_EXPOSURE_MAX = 2000    # us
-CAM_EXPOSURE_MIN = 32
+CAM_EXPOSURE_MAX = 20000 #2000    # us
+CAM_EXPOSURE_MIN = 2000  #32
 
 IMG_SIZE_BYTES = 5065984
 
@@ -100,7 +100,8 @@ class AlviumMultiCam(threading.Thread):
             with vimba_ctx:
                 # Construct FrameProducer threads for all detected cameras
                 for cam in vimba_ctx.get_all_cameras():
-                    self.producers[cam.get_id()] = FrameProducer(cam, self.frame_queue)
+                    if cam.get_id() in CAM_IDS:
+                        self.producers[cam.get_id()] = FrameProducer(cam, self.frame_queue)
 
                 # Start FrameProducer threads
                 with self.producers_lock:
