@@ -29,13 +29,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--debug", help="Show frames with opencv", action='store_true')
 args = parser.parse_args()
 
-CAM_IDS = ['DEV_000F315DAB37', 'DEV_000F315DB084', 'DEV_000F315DAB68'] # 
+CAM_IDS = ['DEV_000F315DAB37', 'DEV_000F315DAB68', 'DEV_000F315DB084'] # 
 MASTER_CAM_ID = CAM_IDS[0]
 NUM_CAMS = len(CAM_IDS)
 
 # Min exposure time: 32us
 CAM_EXPOSURE_US = None #10000
-CAM_EXPOSURE_MAX = 1000    # us
+CAM_EXPOSURE_MAX = 2000    # us
 CAM_EXPOSURE_MIN = 32
 
 IMG_SIZE_BYTES = 5065984
