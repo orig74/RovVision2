@@ -56,8 +56,9 @@ class CycArr():
 msgs = {}
 
 it=10
-def update_graph(axes):
+def update_graph(fig):
     global it
+
     tic=time.time()
     new_data=False
     while 1:
@@ -84,10 +85,10 @@ def update_graph(axes):
     if not pause_satus and new_data:
         if args.type=='pid':
             update_pid(axis_hdls,args.topic.encode())
-            axes.figure.canvas.draw()
+            fig.canvas.draw()
         if args.type=='vector':
             update_vector(axis_hdls,args.topic.encode())
-            axes.figure.canvas.draw()
+            fig.canvas.draw()
 
 
 def clear(evt):
@@ -171,7 +172,7 @@ axpause = plt.axes([0.7, 0.05, 0.1, 0.075])
 axclear = plt.axes([0.81, 0.05, 0.1, 0.075])
 
 timer = fig.canvas.new_timer(interval=50)
-timer.add_callback(update_graph, ax)
+timer.add_callback(update_graph, fig)
 timer.start()
 
 bnpause = Button(axpause, 'Pause')

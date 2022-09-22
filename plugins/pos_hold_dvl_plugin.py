@@ -20,11 +20,11 @@ from config_pid_dvl import pos_pids
 from pid import PID
 
 
-AUTOSCAN_PATH = 8 * [np.array([5.0, 0.0, 0.0]),
+AUTOSCAN_PATH = 5 * [np.array([5.0, 0.0, 0.0]),
                  np.array([0.0, 0.5, 0.0]),
                  np.array([-5.0, 0.0, 0.0]),
                  np.array([0.0, 0.5, 0.0])]
-AUTO_VELOCITY = 0.1
+AUTO_VELOCITY = 0.2
 AUTO_TARGET_THRESH = 0.1
 
 
@@ -79,10 +79,10 @@ async def recv_and_process():
                     cmds=[0]*3
                     for ind in range(len(pids)):
                         pid_states=['RX_HOLD','RY_HOLD','RZ_HOLD']
-                        if pid_states[ind] not in system_state['mode'] \
+                        if pid_states[ind] not in system_state['mode'] and 'AUTONAV' not in system_state['mode'] \
                                 or pids[ind] is None or \
-                                (pid_states[ind]=='RX_HOLD' and abs(jm.joy_mix()['fb'])>0.1) or \
-                                (pid_states[ind]=='RY_HOLD' and abs(jm.joy_mix()['lr'])>0.1):
+                                (pid_states[ind]=='RX_HOLD' and abs(jm.joy_mix()['fb'])>0.1 and 'AUTONAV' not in system_state['mode']) or \
+                                (pid_states[ind]=='RY_HOLD' and abs(jm.joy_mix()['lr'])>0.1 and 'AUTONAV' not in system_state['mode']):
                             pids[ind] = PID(**pos_pids[ind])
                             target_pos[ind]=dvl_last_pos['xyz'[ind]]
                         elif dvl_last_vel['valid']==b'y':
@@ -111,10 +111,10 @@ async def recv_and_process():
                 cur_path_vec = AUTOSCAN_PATH[path_vec_idx]
                 vec_length = np.linalg.norm(cur_path_vec)
                 target_pos += dt * AUTO_VELOCITY * cur_path_vec / vec_length
-
                 target_err = prev_target + cur_path_vec - target_pos
                 if np.linalg.norm(target_err) < AUTO_TARGET_THRESH:
-                    prev_target = prev_target + cur_path_vec
+                    print(path_vec_idx)
+                    prev_target += cur_path_vec
                     path_vec_idx += 1
                     if path_vec_idx == len(AUTOSCAN_PATH):
                         path_vec_idx = 0
