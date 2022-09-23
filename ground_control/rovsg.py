@@ -72,6 +72,8 @@ sym_left='\u21e6'
 sym_right='\u21e8'
 sym_fwd='\u21e7'
 sym_back='\u21e9'
+sym_yaw_left='\u21b6'
+sym_yaw_right='\u21b7'
 
 def main():
     rovHandler = rovDataHandler(None)
@@ -92,7 +94,7 @@ def main():
             [sg.Button('Att-hold'),sg.Text('Pitch:'),sg.Input(key='Target-Pitch',default_text='0.0',size=(4,1))],
             [sg.Button('X-hold'),sg.Button(sym_fwd),sg.Button(sym_back),sg.Input(key='Target-X',default_text='0.1',size=(4,1))],
             [sg.Button('Y-hold'),sg.Button(sym_left),sg.Button(sym_right),sg.Input(key='Target-Y',default_text='0.1',size=(4,1))],
-            [sg.Button('Yaw+'),sg.Button('Yaw-'),sg.Input(key='DeltaYawD',default_text='0.0',size=(4,1))],
+            [sg.Button(sym_yaw_left),sg.Button(sym_yaw_right),sg.Input(key='DeltaYawD',default_text='1.0',size=(4,1))],
             ]
 
     yaw_source_options=['VNAV','DVL']
@@ -103,7 +105,7 @@ def main():
             [sg.Button('Lights+'),sg.Button('Lights-')],
             ]
 
-    plot_options=['DEPTH','X_HOLD','Y_HOLD']
+    plot_options=['DEPTH','X_HOLD','Y_HOLD','YAW','PITCH','ROLL']
     matplot_column = [
         [sg.Text('Plot Type:'),sg.Combo(plot_options,key='-PLOT-TYPE-',default_value=plot_options[0])],
         [ sg.Canvas(key="-CANVAS-", size=(300,200)), sg.Canvas(key="-TRACE-CANVAS-", size=(300,300))]]
@@ -193,6 +195,10 @@ def main():
             rovCommander.go((0,float(values['Target-Y']),0))
         if event == sym_left:
             rovCommander.go((0,-float(values['Target-Y']),0))
+        if event == sym_yaw_left:
+            rovCommander.att_cmd((-float(values['DeltaYawD']),0,0))
+        if event == sym_yaw_right:
+            rovCommander.att_cmd((float(values['DeltaYawD']),0,0))
 
         if (cnt%(1000//20))==0:
             rovCommander.heartbit()
@@ -209,6 +215,12 @@ def main():
             target_xy[i]=pb.get_last('T')
             if target_xy[i] is None:
                 target_xy[i]=0
+        for p_type,pb in [\
+                ('YAW',zmq_topics.topic_att_hold_yaw_pid),
+                ('PITCH',zmq_topics.topic_att_hold_pitch_pid),
+                ('ROLL',zmq_topics.topic_att_hold_roll_pid)]:
+            if values['-PLOT-TYPE-']==p_type:
+                plotter.update_pid(rovHandler.plot_buffers[pb])
 
         rovHandler.next()
         rov_telem=rovHandler.getTelemtry()

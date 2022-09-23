@@ -99,7 +99,7 @@ async def recv_and_process():
 
             if topic==zmq_topics.topic_remote_cmd:
                 if data['cmd']=='att':
-                    target_att = target_att + data['ypr'] if data['rel'] else np.array(data['ypr'])
+                    target_att = np.array(target_att) + data['ypr'] if data['rel'] else np.array(data['ypr'])
 
 
             if topic==zmq_topics.topic_system_state:

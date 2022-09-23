@@ -32,8 +32,8 @@ class rovCommandHandler(object):
     def att_hold(self):#,yaw,pitch,roll):
         self.pub({'cmd':'att_hold'})
 
-    def att_cmd(self,ypr_rad,relative=True):
-        self.pub({'cmd':'att','ypr':ypr_rad,'rel':relative})
+    def att_cmd(self,ypr_deg,relative=True):
+        self.pub({'cmd':'att','ypr':ypr_deg,'rel':relative})
 
     def x_hold(self):
         self.pub({'cmd':'x_hold'})
@@ -103,6 +103,9 @@ class rovDataHandler(object):
 
         self.plot_buffers = {
             zmq_topics.topic_depth_hold_pid: CycArr(),
+            zmq_topics.topic_att_hold_yaw_pid: CycArr(),
+            zmq_topics.topic_att_hold_roll_pid: CycArr(),
+            zmq_topics.topic_att_hold_pitch_pid: CycArr(),
             }
         for i in [0,1,2]:
             self.plot_buffers[zmq_topics.topic_pos_hold_pid_fmt%i]=CycArr()

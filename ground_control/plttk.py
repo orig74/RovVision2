@@ -45,8 +45,8 @@ class Plotter(object):
             hdls2[i][0].set_ydata(data[:,i])
             hdls2[i][0].set_xdata(xs)
         ax2.set_xlim(data.shape[0]-400,data.shape[0])
-        min_y = data.min()
-        max_y = data.max()
+        min_y = data.min()-0.1
+        max_y = data.max()+0.1
         ax2.set_ylim(min_y,max_y)
         cyc_buffer.changed = False 
         self.canvas.draw()
