@@ -34,8 +34,12 @@ class rovCommandHandler(object):
     def dvl_hold(self):
         self.pub({'cmd':'dvl_hold'})
 
-    def depth_command(self,depth,rel=True):
-        self.pub({'cmd':'depth','rel':rel,'depth':depth})
+    def depth_command(self,depth,relative=True):
+        self.pub({'cmd':'depth','rel':relative,'depth':depth})
+
+    def clear_freqs(self,val,relative=True):
+        self.pub({'cmd':'clear_freqs','rel':relative,'data':val})
+        print('ggggg',)
 
     def lock(self,x,y):
         self.pub({'cmd':'lock','click_pt':(x,y)})

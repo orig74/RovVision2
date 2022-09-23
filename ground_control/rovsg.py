@@ -96,7 +96,7 @@ def main():
     config_column = [
             [sg.Text('Yaw Source:'),sg.Combo(yaw_source_options,key='YAW_SOURCE',default_value=yaw_source_options[0])],
             [sg.Button('Reset-DVL'),sg.Button('Calib-DVL')],
-            [sg.Button('Freq+'),sg.Button('Freq-')],
+            [sg.Button('CF+'),sg.Button('CF-')],
             [sg.Button('Lights+'),sg.Button('Lights-')],
             ]
 
@@ -169,6 +169,10 @@ def main():
             rovCommander.depth_command(-float(values['Target-Depth']))
         if event == 'Att-Hold':
             rovCommander.att_hold()
+        if event == 'CF+':
+            rovCommander.clear_freqs(1)
+        if event == 'CF-':
+            rovCommander.clear_freqs(-1)
 
         if (cnt%(1000//20))==0:
             rovCommander.heartbit()

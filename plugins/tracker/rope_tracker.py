@@ -77,6 +77,10 @@ class StereoTrack():
         
         return False
 
+    def set_clear_freqs(self,val,relative):
+        v = self.clear_freqs+val if relative else val
+        self.clear_freqs=min(max(v,2),20)
+
     def inc_clear_freqs(self): # dec mins incressing the zerofreqs
         self.clear_freqs = max(self.clear_freqs-1,2)
 

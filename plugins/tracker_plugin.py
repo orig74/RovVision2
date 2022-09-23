@@ -52,6 +52,9 @@ async def recv_and_process():
             if topic==zmq_topics.topic_remote_cmd:
                 if data['cmd']=='lock':
                     st.reset(data['click_pt'])
+                if data['cmd']=='clear_freqs':
+                    st.set_clear_freqs(data['data'],relative=data['rel'])
+
             if topic==zmq_topics.topic_axes:
                 jm.update_axis(data)
                 if config.tracker=='rope':
