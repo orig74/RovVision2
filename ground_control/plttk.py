@@ -10,34 +10,21 @@ class Plotter(object):
         self.ax2 = self.figure1.add_subplot(212)
         self.canvas = FigureCanvasTkAgg(self.figure1, master=canvas)
         self.canvas.get_tk_widget().pack(side="top", fill="both", expand=1)
-        # here: plot suff to your fig
-
-        #self.frame = Frame(self.parent)
-        #frame.grid(row=0, column=9)
-        #toolbar = NavigationToolbar2Tk(self.canvas, self.frame)
-        #self.frame.place(x=1000,y=1)
-        #self.canvas.get_tk_widget().grid(column=9, row=1, rowspan=1, columnspan=8)
-        #self.canvas.get_tk_widget().grid(rowspan=1, columnspan=8)
-        #self.canvas.get_tk_widget().place(x=1000,y=45)
         self.initPlots()
-
-
         self.runPlotsFlag = True
 
     def initPlots(self):
-        
         self.ax1.clear()
         self.ax2.clear()
-        
-        self.hdls=[self.ax1.plot([1],'-b', alpha=0.3), self.ax1.plot([1],'-g', alpha=0.3), self.ax1.plot([1],'-r', alpha=0.3), self.ax1.plot([1],'-k', alpha=0.3)]
-        
+        al=0.6
+        self.hdls=[self.ax1.plot([1],'-b', alpha=al), self.ax1.plot([1],'-g', alpha=al), self.ax1.plot([1],'-r', alpha=al), self.ax1.plot([1],'-k', alpha=al)]
+        self.ax1.legend(list('PIDC'))
         self.ax1.grid('on')
-        
-        self.hdls2=[self.ax2.plot([1],'-b', alpha=0.3), self.ax2.plot([1],'-g', alpha=0.3), self.ax2.plot([1],'-r', alpha=0.3), self.ax2.plot([1],'-k', alpha=0.3)]
+        self.hdls2=[self.ax2.plot([1],'-b', alpha=al), self.ax2.plot([1],'-g', alpha=al), self.ax2.plot([1],'-r', alpha=al), self.ax2.plot([1],'-k', alpha=al)]
+        self.ax2.legend(list('TNR'))
         self.ax2.grid('on')
-        
         self.canvas.draw()
-    
+
     def update_pid(self,cyc_buffer):
         if not cyc_buffer.changed:
             return 

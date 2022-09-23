@@ -8,6 +8,7 @@ import os
 from annotations import draw_mono,draw_seperate
 from joy_mix import Joy_map
 from cyc_array import CycArr
+from dvl import parse_line as dvl_parse_line
 
 from zmq import select
 print('===is sim ',config.is_sim)
@@ -28,8 +29,11 @@ class rovCommandHandler(object):
     def depth_hold(self):
         self.pub({'cmd':'depth_hold'})
 
-    def att_hold(self):
+    def att_hold(self):#,yaw,pitch,roll):
         self.pub({'cmd':'att_hold'})
+
+    def att_cmd(self,ypr_rad,relative=True):
+        self.pub({'cmd':'att','ypr':ypr_rad,'rel':relative})
 
     def x_hold(self):
         self.pub({'cmd':'x_hold'})
@@ -48,12 +52,12 @@ class rovCommandHandler(object):
 
     def clear_freqs(self,val,relative=True):
         self.pub({'cmd':'clear_freqs','rel':relative,'data':val})
-        print('ggggg',)
 
     def lock(self,x,y):
         self.pub({'cmd':'lock','click_pt':(x,y)})
 
     def pub(self,data):
+        print('sending command ...',data)
         self.pub_sock.send_multipart([zmq_topics.topic_remote_cmd,pickle.dumps(data,protocol=3)])
     #pickle.dump([time.time()-start_time,topic,data],joy_log,-1)
 
@@ -99,10 +103,9 @@ class rovDataHandler(object):
 
         self.plot_buffers = {
             zmq_topics.topic_depth_hold_pid: CycArr(),
-            zmq_topics.topic_dvl_raw: CycArr(),
-            zmq_topics.topic_tracker: CycArr()
-            } 
-        
+            }
+        for i in [0,1,2]:
+            self.plot_buffers[zmq_topics.topic_pos_hold_pid_fmt%i]=CycArr()
         
     def getNewImages(self):
         ret = [self.curFrameId, None]
@@ -226,6 +229,10 @@ class rovDataHandler(object):
                 if topic in self.plot_buffers:
                     self.plot_buffers[topic].add(data)
 
+                if topic==zmq_topics.topic_dvl_raw:
+                    dvl_data = dvl_parse_line(data['dvl_raw']) 
+                    if dvl_data is not None and dvl_data['type']=='deadreacon':
+                        self.telemtry['dvl_deadrecon']=dvl_data
         
 
             if self.data_file_fd is not None:

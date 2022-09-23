@@ -12,6 +12,7 @@ import pickle
 import json
 
 sys.path.append('../onboard')
+sys.path.append('../hw')
 sys.path.append('../utils')
 sys.path.append('..')
 
@@ -28,6 +29,8 @@ import matplotlib.pyplot as plt
 
 from rov_data_handler import rovDataHandler,rovCommandHandler
 from plttk import Plotter
+from plttk_tracer import Plotter as TracePlotter
+
 import zmq_topics
 
 
@@ -86,10 +89,10 @@ def main():
             [sg.Button('Arm-Disarm')],
             [sg.Button('Depth-Hold'),
                 sg.Button(sym_up),sg.Button(sym_down),sg.Input(key='Target-Depth',default_text='0.1',size=(4,1))],
-            [sg.Button('Att-hold')],
+            [sg.Button('Att-hold'),sg.Text('Pitch:'),sg.Input(key='Target-Pitch',default_text='0.0',size=(4,1))],
             [sg.Button('X-hold'),sg.Button(sym_fwd),sg.Button(sym_back),sg.Input(key='Target-X',default_text='0.1',size=(4,1))],
             [sg.Button('Y-hold'),sg.Button(sym_left),sg.Button(sym_right),sg.Input(key='Target-Y',default_text='0.1',size=(4,1))],
-            [sg.Button('Yaw+'),sg.Button('Yaw-')],
+            [sg.Button('Yaw+'),sg.Button('Yaw-'),sg.Input(key='DeltaYawD',default_text='0.0',size=(4,1))],
             ]
 
     yaw_source_options=['VNAV','DVL']
@@ -100,10 +103,10 @@ def main():
             [sg.Button('Lights+'),sg.Button('Lights-')],
             ]
 
-    plot_options=['DEPTH','YAW','PITCH','ROLL','RANGE']
+    plot_options=['DEPTH','X_HOLD','Y_HOLD']
     matplot_column = [
         [sg.Text('Plot Type:'),sg.Combo(plot_options,key='-PLOT-TYPE-',default_value=plot_options[0])],
-        [ sg.Canvas(key="-CANVAS-", size=(500,500))]]
+        [ sg.Canvas(key="-CANVAS-", size=(300,200)), sg.Canvas(key="-TRACE-CANVAS-", size=(300,300))]]
     row2_layout = [[
             #sg.Canvas(key="-CANVAS-", size=(500,500)),
             sg.Column(matplot_column),
@@ -127,10 +130,14 @@ def main():
             size=(1920,1080))
     #window['-MAIN-IMAGE-'].bind('<Button-1>','')
     plotter = Plotter(window["-CANVAS-"].TKCanvas)
+    trace_plotter = TracePlotter(window["-TRACE-CANVAS-"].TKCanvas)
     
     last_im=None
     image_shape=None 
     cnt=0
+
+    current_yaw_deg=0
+    target_xy=[0,0]
     while True:
         event, values = window.read(timeout=20) #10 mili timeout
         if event == "Exit" or event == sg.WIN_CLOSED:
@@ -163,11 +170,10 @@ def main():
         if event == "Depth-Hold":
             rovCommander.depth_hold()
         if event == sym_down:
-            print('----------',event,values)
             rovCommander.depth_command(float(values['Target-Depth']))
         if event == sym_up:
             rovCommander.depth_command(-float(values['Target-Depth']))
-        if event == 'Att-Hold':
+        if event == 'Att-hold':
             rovCommander.att_hold()
         if event == 'CF+':
             rovCommander.clear_freqs(1)
@@ -188,16 +194,28 @@ def main():
         if event == sym_left:
             rovCommander.go((0,-float(values['Target-Y']),0))
 
-
         if (cnt%(1000//20))==0:
             rovCommander.heartbit()
         
         cnt+=1
 
-        plotter.update_pid(rovHandler.plot_buffers[zmq_topics.topic_depth_hold_pid])
+        if values['-PLOT-TYPE-']=='DEPTH':
+            plotter.update_pid(rovHandler.plot_buffers[zmq_topics.topic_depth_hold_pid])
+        
+        for i,p_type in [(0,'X_HOLD'),(1,'Y_HOLD')]:
+            pb=rovHandler.plot_buffers[zmq_topics.topic_pos_hold_pid_fmt%i]
+            if values['-PLOT-TYPE-']==p_type:
+                plotter.update_pid(pb)
+            target_xy[i]=pb.get_last('T')
+            if target_xy[i] is None:
+                target_xy[i]=0
 
         rovHandler.next()
-
+        rov_telem=rovHandler.getTelemtry()
+        if 'dvl_deadrecon' in rov_telem:
+            trace_plotter.update_dvl_data(rov_telem['dvl_deadrecon'],target_pos=target_xy[::-1],yaw_deg=current_yaw_deg)
+        if zmq_topics.topic_imu in rov_telem:
+            current_yaw_deg = rov_telem[zmq_topics.topic_imu]['yaw']
 
     window.close()
 if __name__ == "__main__":

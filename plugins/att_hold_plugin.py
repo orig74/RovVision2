@@ -97,6 +97,11 @@ async def recv_and_process():
                 jm.update_buttons(data)
                 #target_depth+=data[jm.ud]
 
+            if topic==zmq_topics.topic_remote_cmd:
+                if data['cmd']=='att':
+                    target_att = target_att + data['ypr'] if data['rel'] else np.array(data['ypr'])
+
+
             if topic==zmq_topics.topic_system_state:
                 _,system_state=data
 
@@ -114,6 +119,7 @@ if __name__=='__main__':
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_axes,zmq_topics.topic_button],zmq_topics.topic_joy_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_imu],zmq_topics.topic_imu_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
+    subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_remote_cmd],zmq_topics.topic_remote_cmd_port))
 
     ### plugin outputs
     thrusters_source = zmq_wrapper.push_source(zmq_topics.thrusters_sink_port)

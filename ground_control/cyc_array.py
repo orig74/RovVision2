@@ -13,6 +13,10 @@ class CycArr():
         self.cnt+=1
         self.changed = True
 
+    def get_last(self,label):
+        if len(self.buf)>0:
+            return self.buf[-1][label]
+
     def get_data(self,labels):
         data = np.zeros((len(self.buf),len(labels)))
         for i,d in enumerate(self.buf):
