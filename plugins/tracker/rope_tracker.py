@@ -23,10 +23,14 @@ hsv_wait=False
 
 if show_hsv:
     cv2.namedWindow('hsv',cv2.WINDOW_NORMAL)
-def togrey(im):
-    if 0:
-        return im[:,:,2]
+def toh(im):
     ret= cv2.cvtColor(im,cv2.COLOR_BGR2HSV_FULL)[:,:,0].copy()
+    return ret
+def togrey(im):
+    return im[:,:,2]
+
+
+def treshhold(ret):
     _,ret= cv2.threshold(ret,50,255,cv2.THRESH_TOZERO_INV)
     return ret*3
 
@@ -65,11 +69,9 @@ class StereoTrack():
         cx  = shape[1]//2+self.ofx
         cy  = shape[0]//2
         
-        #if config.ignore_extrema_type:
-        #    self.rope_track_state = None
 
         ret=rope_detect(cx,self.rope_track_state, cy-100,200, 
-                imgl,clear_freqs=self.clear_freqs, max_diff_cols=config.max_diff_cols)
+                treshhold(imgl),clear_freqs=self.clear_freqs, max_diff_cols=config.max_diff_cols)
         if ret is not None:
            self.rope_track_state, col,self.rope_debug=ret
            self.ofx = col-shape[1]//2
@@ -194,7 +196,7 @@ class StereoTrack():
         #imgr1b=imgr[:,:,2].copy()
 
         #im_grey_to_track = imgl[:,:,2].copy()
-        im_grey_to_track = togrey(imgl)
+        im_grey_to_track = toh(imgl)
 
 
         if show_hsv:
