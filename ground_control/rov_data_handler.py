@@ -31,8 +31,17 @@ class rovCommandHandler(object):
     def att_hold(self):
         self.pub({'cmd':'att_hold'})
 
-    def dvl_hold(self):
-        self.pub({'cmd':'dvl_hold'})
+    def x_hold(self):
+        self.pub({'cmd':'x_hold'})
+
+    def y_hold(self):
+        self.pub({'cmd':'y_hold'})
+
+    def z_hold(self):
+        self.pub({'cmd':'z_hold'})
+
+    def go(self,p,relative=True):
+        self.pub({'cmd':'go','point':p,'rel':relative})
 
     def depth_command(self,depth,relative=True):
         self.pub({'cmd':'depth','rel':relative,'depth':depth})

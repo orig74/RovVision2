@@ -95,6 +95,15 @@ async def recv_and_process():
                     if data['cmd']=='heartbit':
                         last_axes_joy_message_time=time.time()
 
+                    if data['cmd']=='x_hold':
+                        togle_mode('RX_HOLD')
+
+                    if data['cmd']=='y_hold':
+                        togle_mode('RY_HOLD')
+
+                    if data['cmd']=='z_hold':
+                        togle_mode('RZ_HOLD')
+
                            
                 if topic==zmq_topics.topic_axes:
                     last_axes_joy_message_time=time.time()

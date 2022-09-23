@@ -82,6 +82,11 @@ async def recv_and_process():
                     thruster_cmd = mixer.mix(cmds[2],-cmds[1],-cmds[0],0,0,0,0,0)
                     thrusters_source.send_pyobj(['pos',time.time(),thruster_cmd])
 
+            if topic==zmq_topics.topic_remote_cmd:
+                if data['cmd']=='go':
+                    target_pos = target_pos + data['point'] if data['rel'] else np.array(data['point'])
+
+
             if topic==zmq_topics.topic_axes:
                 jm.update_axis(data)
 
@@ -108,6 +113,7 @@ if __name__=='__main__':
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_dvl_cmd],zmq_topics.topic_controller_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_dvl_raw],zmq_topics.topic_dvl_port))
+    subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_remote_cmd],zmq_topics.topic_remote_cmd_port))
 
     ### plugin outputs
     thrusters_source = zmq_wrapper.push_source(zmq_topics.thrusters_sink_port) 

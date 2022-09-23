@@ -173,6 +173,21 @@ def main():
             rovCommander.clear_freqs(1)
         if event == 'CF-':
             rovCommander.clear_freqs(-1)
+        if event == 'X-hold':
+            rovCommander.x_hold()
+        if event == 'Y-hold':
+            rovCommander.y_hold()
+        if event == 'Z-hold':
+            rovCommander.z_hold()
+        if event == sym_fwd:
+            rovCommander.go((float(values['Target-X']),0,0))
+        if event == sym_back:
+            rovCommander.go((-float(values['Target-X']),0,0))
+        if event == sym_right:
+            rovCommander.go((0,float(values['Target-Y']),0))
+        if event == sym_left:
+            rovCommander.go((0,-float(values['Target-Y']),0))
+
 
         if (cnt%(1000//20))==0:
             rovCommander.heartbit()

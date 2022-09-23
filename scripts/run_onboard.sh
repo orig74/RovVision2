@@ -26,7 +26,7 @@ tmux new-window
 new_6_win
 #run 0 plugins pos_hold_plugin.py
 run 0 plugins pos_hold_dvl_plugin.py
-run 1 plugins sonar_hold_plugin.py
+#run 1 plugins sonar_hold_plugin.py
 run 2 onboard hw_stats.py
 
 #only hw from here
