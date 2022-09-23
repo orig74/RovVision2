@@ -64,7 +64,7 @@ class rovCommandHandler(object):
             self.pub({'cmd':'exec','script':'att_hold_plugin.py',
                 'torun':f'pid_{pid_type[0]}.{target}*={mult}'})
             self.pub({'cmd':'exec','script':'att_hold_plugin.py',
-                'torun':f'pid.dump("att_{pid_type[0]}_pid.json")'})
+                'torun':f'pid.dump("att_{pid_type[0]}_pid.json");'+f'printer(pid_{pid_type[0]}.{target})'})
 
 
         xy_pids= ['x_hold','y_hold']
@@ -73,7 +73,7 @@ class rovCommandHandler(object):
             self.pub({'cmd':'exec','script':'pos_hold_dvl_plugin.py',
                 'torun':f'pids[{ind}].{target}*={mult}'})
             self.pub({'cmd':'exec','script':'pos_hold_dvl_plugin.py',
-                'torun':f'pids[{ind}].dump("{pid_type}_pid.json")'})
+                'torun':f'pids[{ind}].dump("{pid_type}_pid.json");'+f'printer(pids[{ind}].{target})'})
 
         if pid_type == 'depth':
             self.pub({'cmd':'exec','script':'depth_hold_plugin.py',

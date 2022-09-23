@@ -114,6 +114,11 @@ async def main():
             recv_and_process(),
             )
 
+def printer(txt,c=None):
+    print('printing:',txt)
+    printer_source.send_pyobj({'txt':txt,'c':c})
+
+
 if __name__=='__main__':
     ### plugin inputs
     subs_socks=[]
@@ -127,6 +132,7 @@ if __name__=='__main__':
 
     ### plugin outputs
     thrusters_source = zmq_wrapper.push_source(zmq_topics.thrusters_sink_port) 
+    printer_source = zmq_wrapper.push_source(zmq_topics.printer_sink_port)
     
     pub_sock = zmq_wrapper.publisher(zmq_topics.topic_pos_hold_port)
 
