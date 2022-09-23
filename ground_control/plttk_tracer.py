@@ -91,7 +91,7 @@ class Plotter(object):
         self.hdl_pos = self.ax1.plot([1,2],[1,2],'-')
         self.hdl_arrow = self.ax1.arrow(1,1,0.5,0.5,width=0.1)
         self.hdl_target_pos = self.ax1.plot([1],[1],'+')
-        plt.grid('on')
+        self.ax1.grid('on')
         self.canvas.draw()
 
     def update_dvl_data(self,ldata,target_pos=None,yaw_deg=None):
