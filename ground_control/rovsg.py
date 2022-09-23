@@ -90,9 +90,10 @@ def main():
     plot_options=['DEPTH','X_HOLD','Y_HOLD','YAW','PITCH','ROLL']
     matplot_column = [
         [sg.Text('Plot Type:'),sg.Combo(plot_options,key='-PLOT-TYPE-',default_value=plot_options[0]),
-            sg.Button('P+'),sg.Button('P-'),sg.Input(key='Ps',default_text='0.01',size=(4,1)),
-            sg.Button('I+'),sg.Button('I-'),sg.Input(key='Is',default_text='0.01',size=(5,1)),
-            sg.Button('D+'),sg.Button('D-'),sg.Input(key='Ds',default_text='0.01',size=(4,1)),
+            sg.Button('P+'),sg.Button('P-'),
+            sg.Button('I+'),sg.Button('I-'),
+            sg.Button('D+'),sg.Button('D-'),
+            sg.Text('Prc:'),sg.Input(key='PID_Mul',default_text='3.0',size=(4,1)),
             ],
         [ sg.Canvas(key="-CANVAS-", size=(300,200)), sg.Canvas(key="-TRACE-CANVAS-", size=(300,300))]]
 
@@ -188,8 +189,10 @@ def main():
             rovCommander.att_cmd((float(values['DeltaYawD']),0,0))
         if event in ['P+','P-','I+','I-','D-','D+']:
             plot_type=values['-PLOT-TYPE-']
-            step=float(event[1]+values[event[0]+'s'].strip())
-            rovCommander.update_pid(plot_type,event[0],step)
+            mul=float(values['PID_Mul'].strip())/100+1.0
+            if event[1]=='-':
+                mul=1/mul
+            rovCommander.update_pid(plot_type,event[0],mul)
 
         if (cnt%(1000//20))==0:
             rovCommander.heartbit()

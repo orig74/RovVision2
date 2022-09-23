@@ -56,13 +56,13 @@ class rovCommandHandler(object):
     def lock(self,x,y):
         self.pub({'cmd':'lock','click_pt':(x,y)})
 
-    def update_pid(self,pid_type,target,step):
-        print('updateing pid ',pid_type,target,step)
+    def update_pid(self,pid_type,target,mult):
+        print('updateing pid ',pid_type,target,mult)
         pid_type=pid_type.lower()
 
         if pid_type in ['yaw','pitch','roll']:
             self.pub({'cmd':'exec','script':'att_hold_plugin.py',
-                'torun':f'pid_{pid_type[0]}.{target}+={step}'})
+                'torun':f'pid_{pid_type[0]}.{target}*={mult}'})
             self.pub({'cmd':'exec','script':'att_hold_plugin.py',
                 'torun':f'pid.dump("att_{pid_type[0]}_pid.json")'})
 
@@ -71,13 +71,13 @@ class rovCommandHandler(object):
         if pid_type in ['x_hold','y_hold']:
             ind=xy_pids.index(pid_type)
             self.pub({'cmd':'exec','script':'pos_hold_dvl_plugin.py',
-                'torun':f'pids[{ind}].{target}+={step}'})
+                'torun':f'pids[{ind}].{target}*={mult}'})
             self.pub({'cmd':'exec','script':'pos_hold_dvl_plugin.py',
                 'torun':f'pids[{ind}].dump("{pid_type}_pid.json")'})
 
         if pid_type == 'depth':
             self.pub({'cmd':'exec','script':'depth_hold_plugin.py',
-                'torun':f'pid.{target}+={step}'})
+                'torun':f'pid.{target}*={mult}'})
             self.pub({'cmd':'exec','script':'depth_hold_plugin.py',
                 'torun':'pid.dump("depth_pid.json")'})
             
