@@ -77,13 +77,21 @@ async def recv_and_process():
                         system_state['arm']=not system_state['arm']
                         if not system_state['arm']:
                             system_state['mode']=[]
+
                 if topic==zmq_topics.topic_remote_cmd:
                     print('got command',data)
                     if data['cmd']=='armdisarm':
                         system_state['arm']=not system_state['arm']
                         print('system state is:',system_state)
                         if not system_state['arm']:
-                            system_state['mode']=[]
+                            system_state['mode']=[] 
+            
+                    if data['cmd']=='depth_hold':
+                        togle_mode('DEPTH_HOLD')
+
+                    if data['cmd']=='att_hold':
+                        togle_mode('ATT_HOLD')
+
                     if data['cmd']=='heartbit':
                         last_axes_joy_message_time=time.time()
 

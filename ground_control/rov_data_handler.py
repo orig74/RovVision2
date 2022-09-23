@@ -25,6 +25,18 @@ class rovCommandHandler(object):
     def heartbit(self):
         self.pub({'cmd':'heartbit'})
 
+    def depth_hold(self):
+        self.pub({'cmd':'depth_hold'})
+
+    def att_hold(self):
+        self.pub({'cmd':'att_hold'})
+
+    def dvl_hold(self):
+        self.pub({'cmd':'dvl_hold'})
+
+    def depth_command(self,depth,rel=True):
+        self.pub({'cmd':'depth','rel':rel,'depth':depth})
+
     def lock(self,x,y):
         self.pub({'cmd':'lock','click_pt':(x,y)})
 

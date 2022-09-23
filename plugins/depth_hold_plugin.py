@@ -63,6 +63,13 @@ async def recv_and_process():
                 if abs(jm.joy_mix()['ud']) > config.joy_dtarget_min:
                     target_depth=depth
 
+            if topic==zmq_topics.topic_remote_cmd:
+                if data['cmd']=='depth':
+                    if data['rel']:
+                        target_depth+=data['depth']
+                    else:
+                        target_depth=data['depth']
+
             if topic==zmq_topics.topic_imu:
                 pitch,roll=data['pitch'],data['roll']
 
@@ -83,6 +90,7 @@ if __name__=='__main__':
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_imu],zmq_topics.topic_imu_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_depth],zmq_topics.topic_depth_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
+    subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_remote_cmd],zmq_topics.topic_remote_cmd_port))
 
     ### plugin outputs
     thrusters_source = zmq_wrapper.push_source(zmq_topics.thrusters_sink_port)

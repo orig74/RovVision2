@@ -62,6 +62,14 @@ def draw_image(self, image):
     self.Images[id] = image
     return id
 
+#unicode simbols from (https://unicode-table.com/en/sets/arrow-symbols/#up-down-arrows)
+sym_up='\u2191'
+sym_down='\u2193'
+sym_left='\u21e6'
+sym_right='\u21e8'
+sym_fwd='\u21e7'
+sym_back='\u21e9'
+
 def main():
     rovHandler = rovDataHandler(None)
     rovCommander = rovCommandHandler()
@@ -76,16 +84,20 @@ def main():
 
     cmd_column = [
             [sg.Button('Arm-Disarm')],
-            [sg.Button('Depth-Hold'),sg.Button('D+'),sg.Button('D-'),sg.Input(key='Target-Depth',size=(4,1))],
+            [sg.Button('Depth-Hold'),
+                sg.Button(sym_up),sg.Button(sym_down),sg.Input(key='Target-Depth',default_text='0.1',size=(4,1))],
             [sg.Button('Att-hold')],
-            [sg.Button('X-hold'),sg.Button('X+'),sg.Button('X-'),sg.Input(key='Target-X',size=(4,1))],
-            [sg.Button('Y-hold'),sg.Button('Y+'),sg.Button('Y-'),sg.Input(key='Target-Y',size=(4,1))],
+            [sg.Button('X-hold'),sg.Button(sym_fwd),sg.Button(sym_back),sg.Input(key='Target-X',default_text='0.1',size=(4,1))],
+            [sg.Button('Y-hold'),sg.Button(sym_left),sg.Button(sym_right),sg.Input(key='Target-Y',default_text='0.1',size=(4,1))],
             [sg.Button('Yaw+'),sg.Button('Yaw-')],
             ]
 
     yaw_source_options=['VNAV','DVL']
     config_column = [
-            [sg.Text('Yaw Source:'),sg.Combo(yaw_source_options,key='YAW_SOURCE',default_value=yaw_source_options[0])]
+            [sg.Text('Yaw Source:'),sg.Combo(yaw_source_options,key='YAW_SOURCE',default_value=yaw_source_options[0])],
+            [sg.Button('Reset-DVL'),sg.Button('Calib-DVL')],
+            [sg.Button('Freq+'),sg.Button('Freq-')],
+            [sg.Button('Lights+'),sg.Button('Lights-')],
             ]
 
     plot_options=['DEPTH','YAW','PITCH','ROLL','RANGE']
@@ -121,7 +133,6 @@ def main():
     cnt=0
     while True:
         event, values = window.read(timeout=20) #10 mili timeout
-        #print('----------',event,values)
         if event == "Exit" or event == sg.WIN_CLOSED:
             break
 
@@ -148,8 +159,16 @@ def main():
             window["-IMAGE-1-"].update(data=img_to_tk(rawImgs[1],1))
  
         if event == "Arm-Disarm":
-            #filename = values["-FILE-"]
             rovCommander.armdisarm()
+        if event == "Depth-Hold":
+            rovCommander.depth_hold()
+        if event == sym_down:
+            print('----------',event,values)
+            rovCommander.depth_command(float(values['Target-Depth']))
+        if event == sym_up:
+            rovCommander.depth_command(-float(values['Target-Depth']))
+        if event == 'Att-Hold':
+            rovCommander.att_hold()
 
         if (cnt%(1000//20))==0:
             rovCommander.heartbit()

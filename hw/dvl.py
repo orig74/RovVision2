@@ -83,6 +83,8 @@ def parse_line(line):
     return ret
 
 reset_cmd = b'wcr\n' 
+calibrate_gyro = b'wcg\n' 
+
 
 if __name__=='__main__':
     if len(sys.argv)==1:
