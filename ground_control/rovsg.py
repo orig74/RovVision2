@@ -57,8 +57,12 @@ sym_back='\u21e9'
 sym_yaw_left='\u21b6'
 sym_yaw_right='\u21b7'
 
+def printer(text,color=None):
+    print('printer:',text)
+    sg.cprint(text,c='black on white')
+
 def main():
-    rovHandler = rovDataHandler(None)
+    rovHandler = rovDataHandler(None,printer=printer)
     rovCommander = rovCommandHandler()
     im_size = (960,600) 
     row1_layout = [[
@@ -85,6 +89,7 @@ def main():
             [sg.Button('Reset-DVL'),sg.Button('Calib-DVL')],
             [sg.Button('CF+'),sg.Button('CF-')],
             [sg.Button('Lights+'),sg.Button('Lights-')],
+            [sg.Multiline(key='MESSEGES',s=(18,5), autoscroll=True, reroute_stdout=False, write_only=True)],
             ]
 
     plot_options=['DEPTH','X_HOLD','Y_HOLD','YAW','PITCH','ROLL']
@@ -128,6 +133,7 @@ def main():
 
     current_yaw_deg=0
     target_xy=[0,0]
+    sg.cprint_set_output_destination(window, 'MESSEGES')
     while True:
         event, values = window.read(timeout=20) #10 mili timeout
         if event == "Exit" or event == sg.WIN_CLOSED:
@@ -192,6 +198,7 @@ def main():
             mul=float(values['PID_Mul'].strip())/100+1.0
             if event[1]=='-':
                 mul=1/mul
+            sg.cprint('sending pid',c='black on white')
             rovCommander.update_pid(plot_type,event[0],mul)
 
         if (cnt%(1000//20))==0:

@@ -18,6 +18,10 @@ import os
 from pid import PID
 from filters import ab_filt
 
+def printer(txt,c=None):
+    print('printing:',txt)
+    printer_source.send_pyobj({'txt':txt,'c':c})
+
 async def recv_and_process():
     keep_running=True
     pitch,roll=0,0
@@ -105,6 +109,7 @@ if __name__=='__main__':
 
     ### plugin outputs
     thrusters_source = zmq_wrapper.push_source(zmq_topics.thrusters_sink_port)
+    printer_source = zmq_wrapper.push_source(zmq_topics.printer_sink_port)
     pub_sock = zmq_wrapper.publisher(zmq_topics.topic_depth_hold_port)
 
 

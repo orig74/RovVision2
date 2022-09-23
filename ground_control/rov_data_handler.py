@@ -79,7 +79,7 @@ class rovCommandHandler(object):
             self.pub({'cmd':'exec','script':'depth_hold_plugin.py',
                 'torun':f'pid.{target}*={mult}'})
             self.pub({'cmd':'exec','script':'depth_hold_plugin.py',
-                'torun':'pid.dump("depth_pid.json")'})
+                'torun':'pid.dump("depth_pid.json");'+f'printer(pid.{target})'})
             
     def pub(self,data):
         print('sending command ...',data)
@@ -87,7 +87,7 @@ class rovCommandHandler(object):
     #pickle.dump([time.time()-start_time,topic,data],joy_log,-1)
 
 class rovDataHandler(object):
-    def __init__(self, rovViewer):
+    def __init__(self, rovViewer,printer):
         self.subs_socks=[]
         self.subs_socks.append(utils.subscribe([zmq_topics.topic_thrusters_comand,zmq_topics.topic_system_state, zmq_topics.topic_lights],zmq_topics.topic_controller_port))
         self.subs_socks.append(utils.subscribe([zmq_topics.topic_button, zmq_topics.topic_hat], zmq_topics.topic_joy_port))
@@ -110,6 +110,8 @@ class rovDataHandler(object):
                                           zmq_topics.topic_att_hold_roll_pid], zmq_topics.topic_att_hold_port))
             
         self.sub_vid=utils.subscribe([zmq_topics.topic_stereo_camera], zmq_topics.topic_camera_port) #for sync perposes
+        self.printer_sink = utils.pull_sink(zmq_topics.printer_sink_port)
+        self.subs_socks.append(self.printer_sink)
         #self.subs_socks=[]
         self.images = None 
         self.curFrameId = -1
@@ -134,6 +136,7 @@ class rovDataHandler(object):
             }
         for i in [0,1,2]:
             self.plot_buffers[zmq_topics.topic_pos_hold_pid_fmt%i]=CycArr()
+        self.printer=printer
         
     def getNewImages(self):
         ret = [self.curFrameId, None]
@@ -211,57 +214,62 @@ class rovDataHandler(object):
             if len(socks)==0: #flush msg buffer
                 break
             for sock in socks:
-                ret = sock.recv_multipart()
-                topic, data = ret
-                data = pickle.loads(ret[1])
-                message_dict[topic] = data
-                self.telemtry.update(message_dict.copy())
-                
-                
-                if self.pubData:
-                    self.socket_pub.send_multipart([ret[0],ret[1]])
-                
-                #if zmq_topics.topic_tracker_result == topic:
-                #    #print('trck data res:', data)
-                #    try:
-                #        if data[1][0] < 0:
-                #            message_dict.pop(zmq_topics.topic_tracker_result)
-                #    except:
-                #        import traceback
-                #        traceback.print_exc()
+                if sock==self.printer_sink:
+                    data=sock.recv_pyobj()
+                    print('got...',data)
+                    self.printer(data['txt'],data['c'])
+                else:
+                    ret = sock.recv_multipart()
+                    topic, data = ret
+                    data = pickle.loads(ret[1])
+                    message_dict[topic] = data
+                    self.telemtry.update(message_dict.copy())
+                    
+                    
+                    if self.pubData:
+                        self.socket_pub.send_multipart([ret[0],ret[1]])
+                    
+                    #if zmq_topics.topic_tracker_result == topic:
+                    #    #print('trck data res:', data)
+                    #    try:
+                    #        if data[1][0] < 0:
+                    #            message_dict.pop(zmq_topics.topic_tracker_result)
+                    #    except:
+                    #        import traceback
+                    #        traceback.print_exc()
 
-                if topic==zmq_topics.topic_button:
-                    self.jm.update_buttons(data)
-                    if self.jm.record_event(): 
-                        #toggle recording
-                        if not self.record_state:
-                            self.record_state=datetime.now().strftime('%y%m%d-%H%M%S') 
-                        else:
-                            self.record_state=False
-                    self.pub_record_state.send_multipart([zmq_topics.topic_record_state,pickle.dumps(self.record_state)])
-                    message_dict[zmq_topics.topic_record_state]=self.record_state
-                
-                if topic==zmq_topics.topic_stereo_camera_calib:
-                  print("Camera params recieved!")
-                  try:
-                    rectifier.__dict__.update(data)
-                    leftIntrinsics = rectifier.proj_mat_l
-                    rightIntrinsics = rectifier.proj_mat_r
-                    stereoTrns = rectifier.Trns
-                    STEREO_FOCAL_LENGTH = leftIntrinsics[0, 0]
-                    STEREO_BASELINE = np.linalg.norm(stereoTrns)
-                    valid_calib = True
-                  except:
-                    print("Failed to get camera calibration")
+                    if topic==zmq_topics.topic_button:
+                        self.jm.update_buttons(data)
+                        if self.jm.record_event(): 
+                            #toggle recording
+                            if not self.record_state:
+                                self.record_state=datetime.now().strftime('%y%m%d-%H%M%S') 
+                            else:
+                                self.record_state=False
+                        self.pub_record_state.send_multipart([zmq_topics.topic_record_state,pickle.dumps(self.record_state)])
+                        message_dict[zmq_topics.topic_record_state]=self.record_state
+                    
+                    if topic==zmq_topics.topic_stereo_camera_calib:
+                      print("Camera params recieved!")
+                      try:
+                        rectifier.__dict__.update(data)
+                        leftIntrinsics = rectifier.proj_mat_l
+                        rightIntrinsics = rectifier.proj_mat_r
+                        stereoTrns = rectifier.Trns
+                        STEREO_FOCAL_LENGTH = leftIntrinsics[0, 0]
+                        STEREO_BASELINE = np.linalg.norm(stereoTrns)
+                        valid_calib = True
+                      except:
+                        print("Failed to get camera calibration")
 
-                if topic in self.plot_buffers:
-                    self.plot_buffers[topic].add(data)
+                    if topic in self.plot_buffers:
+                        self.plot_buffers[topic].add(data)
 
-                if topic==zmq_topics.topic_dvl_raw:
-                    dvl_data = dvl_parse_line(data['dvl_raw']) 
-                    if dvl_data is not None and dvl_data['type']=='deadreacon':
-                        self.telemtry['dvl_deadrecon']=dvl_data
-        
+                    if topic==zmq_topics.topic_dvl_raw:
+                        dvl_data = dvl_parse_line(data['dvl_raw']) 
+                        if dvl_data is not None and dvl_data['type']=='deadreacon':
+                            self.telemtry['dvl_deadrecon']=dvl_data
+            
 
             if self.data_file_fd is not None:
                 pickle.dump([topic,data],self.data_file_fd,-1)
