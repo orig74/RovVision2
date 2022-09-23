@@ -56,6 +56,13 @@ class rovCommandHandler(object):
     def lock(self,x,y):
         self.pub({'cmd':'lock','click_pt':(x,y)})
 
+    def update_pid(self,pid_type,target,step):
+        print('updateing pid ',pid_type,target,step)
+        pid_type=pid_type.lower()
+        if pid_type in ['yaw','pitch','roll']:
+            self.pub({'cmd':'exec','script':'att_hold_plugin.py',
+                'torun':f'pid_{pid_type[0]}.{target}+={step}'})
+
     def pub(self,data):
         print('sending command ...',data)
         self.pub_sock.send_multipart([zmq_topics.topic_remote_cmd,pickle.dumps(data,protocol=3)])

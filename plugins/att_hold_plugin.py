@@ -5,6 +5,7 @@ import asyncio
 import time
 import pickle
 import numpy as np
+import os
 
 sys.path.append('..')
 sys.path.append('../utils')
@@ -100,7 +101,11 @@ async def recv_and_process():
             if topic==zmq_topics.topic_remote_cmd:
                 if data['cmd']=='att':
                     target_att = np.array(target_att) + data['ypr'] if data['rel'] else np.array(data['ypr'])
-
+                if data['cmd']=='exec' and data['script']==os.path.basename(__file__):
+                    try:
+                        exec(data['torun'])
+                    except Exception as E:
+                        print('Error in exec command: ',E,data['torun'])
 
             if topic==zmq_topics.topic_system_state:
                 _,system_state=data

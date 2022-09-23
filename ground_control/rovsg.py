@@ -41,24 +41,6 @@ def img_to_tk(img,shrink=1):
         img = Image.fromarray(img[::shrink,::shrink])
     img = ImageTk.PhotoImage(img)
     return img
-#def img_to_tk2(img,shrink=1):
-#    if shrink==1:
-#        img = Image.fromarray(img)
-#    else:
-#        img = Image.fromarray(img[::shrink,::shrink])
-#    bio = io.BytesIO()
-#    img.save(bio,format='PNG')
-#    return bio.getvalue()
-#def img_to_tk3(img,shrink=1):
-#    if shrink>1:
-#        img = img[::shrink,::shrink]
-#    return cv2.imencode('.png',img)[1].tobytes()
-#def img_to_tk4(img,shrink=1):
-#    if shrink==1:
-#        img = Image.fromarray(img)
-#    else:
-#        img = Image.fromarray(img[::shrink,::shrink])
-#    return img
 
 def draw_image(self, image):
     id = self._TKCanvas2.create_image((image.width()//2,image.height()//2), image=image)
@@ -107,7 +89,11 @@ def main():
 
     plot_options=['DEPTH','X_HOLD','Y_HOLD','YAW','PITCH','ROLL']
     matplot_column = [
-        [sg.Text('Plot Type:'),sg.Combo(plot_options,key='-PLOT-TYPE-',default_value=plot_options[0])],
+        [sg.Text('Plot Type:'),sg.Combo(plot_options,key='-PLOT-TYPE-',default_value=plot_options[0]),
+            sg.Button('P+'),sg.Button('P-'),sg.Input(key='Ps',default_text='0.01',size=(4,1)),
+            sg.Button('I+'),sg.Button('I-'),sg.Input(key='Is',default_text='0.01',size=(5,1)),
+            sg.Button('D+'),sg.Button('D-'),sg.Input(key='Ds',default_text='0.01',size=(4,1)),
+            ],
         [ sg.Canvas(key="-CANVAS-", size=(300,200)), sg.Canvas(key="-TRACE-CANVAS-", size=(300,300))]]
     row2_layout = [[
             #sg.Canvas(key="-CANVAS-", size=(500,500)),
@@ -199,6 +185,10 @@ def main():
             rovCommander.att_cmd((-float(values['DeltaYawD']),0,0))
         if event == sym_yaw_right:
             rovCommander.att_cmd((float(values['DeltaYawD']),0,0))
+        if event in ['P+','P-','I+','I-','D-','D+']:
+            plot_type=values['-PLOT-TYPE-']
+            step=float(event[1]+values[event[0]+'s'].strip())
+            rovCommander.update_pid(plot_type,event[0],step)
 
         if (cnt%(1000//20))==0:
             rovCommander.heartbit()
