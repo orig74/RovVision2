@@ -5,6 +5,7 @@ import asyncio
 import time
 import pickle
 import numpy as np
+import os
 
 sys.path.append('..')
 sys.path.append('../utils')
@@ -71,6 +72,9 @@ async def recv_and_process():
                                 (pid_states[ind]=='RX_HOLD' and abs(jm.joy_mix()['fb'])>0.1) or \
                                 (pid_states[ind]=='RY_HOLD' and abs(jm.joy_mix()['lr'])>0.1):
                             pids[ind] = PID(**pos_pids[ind])
+                            fname='xyz'[ind]+'_hold_pid.json'
+                            if os.path.isfile(fname):
+                                pids[ind].load(fname)
                             target_pos[ind]=dvl_last_pos['xyz'[ind]]
                         elif dvl_last_vel['valid']==b'y':
                             x,v=dvl_last_pos['xyz'[ind]],dvl_last_vel['v'+'xyz'[ind]]
@@ -85,6 +89,12 @@ async def recv_and_process():
             if topic==zmq_topics.topic_remote_cmd:
                 if data['cmd']=='go':
                     target_pos = target_pos + data['point'] if data['rel'] else np.array(data['point'])
+                if data['cmd']=='exec' and data['script']==os.path.basename(__file__):
+                    try:
+                        exec(data['torun'])
+                    except Exception as E:
+                        print('Error in exec command: ',E,data['torun'])
+
 
 
             if topic==zmq_topics.topic_axes:

@@ -57,6 +57,10 @@ async def recv_and_process():
                         pid_y=PID(**yaw_pid)
                         pid_p=PID(**pitch_pid)
                         pid_r=PID(**roll_pid)
+                        for ind,pid in enumerate([pid_y,pid_p,pid_r]):
+                            fname=f'att_{"ypr"[ind]}_pid.json'
+                            if os.path.isfile(fname):
+                                pid.load(fname)
                     else:
                         #if joy and joy['inertial'] and abs(joy['yaw'])<0.05:
                         if joy and abs(joy['yaw']) < config.joy_dtarget_min:
@@ -87,7 +91,7 @@ async def recv_and_process():
                         thrusters_source.send_pyobj(['att',time.time(),thruster_cmd])
                 else:
                     if pid_y is not None:
-                        pid_y.reset(),pid_r.reset(),pid_y.reset()
+                        pid_y.reset(),pid_r.reset(),pid_p.reset()
                     target_att=[yaw,0,0]
                     thrusters_source.send_pyobj(['att',time.time(),mixer.zero_cmd()])
 

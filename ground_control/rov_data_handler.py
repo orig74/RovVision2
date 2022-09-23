@@ -59,10 +59,28 @@ class rovCommandHandler(object):
     def update_pid(self,pid_type,target,step):
         print('updateing pid ',pid_type,target,step)
         pid_type=pid_type.lower()
+
         if pid_type in ['yaw','pitch','roll']:
             self.pub({'cmd':'exec','script':'att_hold_plugin.py',
                 'torun':f'pid_{pid_type[0]}.{target}+={step}'})
+            self.pub({'cmd':'exec','script':'att_hold_plugin.py',
+                'torun':f'pid.dump("att_{pid_type[0]}_pid.json")'})
 
+
+        xy_pids= ['x_hold','y_hold']
+        if pid_type in ['x_hold','y_hold']:
+            ind=xy_pids.index(pid_type)
+            self.pub({'cmd':'exec','script':'pos_hold_dvl_plugin.py',
+                'torun':f'pids[{ind}].{target}+={step}'})
+            self.pub({'cmd':'exec','script':'pos_hold_dvl_plugin.py',
+                'torun':f'pids[{ind}].dump("{pid_type}_pid.json")'})
+
+        if pid_type == 'depth':
+            self.pub({'cmd':'exec','script':'depth_hold_plugin.py',
+                'torun':f'pid.{target}+={step}'})
+            self.pub({'cmd':'exec','script':'depth_hold_plugin.py',
+                'torun':'pid.dump("depth_pid.json")'})
+            
     def pub(self,data):
         print('sending command ...',data)
         self.pub_sock.send_multipart([zmq_topics.topic_remote_cmd,pickle.dumps(data,protocol=3)])

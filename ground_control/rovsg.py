@@ -95,6 +95,7 @@ def main():
             sg.Button('D+'),sg.Button('D-'),sg.Input(key='Ds',default_text='0.01',size=(4,1)),
             ],
         [ sg.Canvas(key="-CANVAS-", size=(300,200)), sg.Canvas(key="-TRACE-CANVAS-", size=(300,300))]]
+
     row2_layout = [[
             #sg.Canvas(key="-CANVAS-", size=(500,500)),
             sg.Column(matplot_column),

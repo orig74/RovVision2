@@ -14,6 +14,7 @@ import zmq_wrapper
 import zmq_topics
 from joy_mix import Joy_map
 from config_pid import depth_pid
+import os
 from pid import PID
 from filters import ab_filt
 
@@ -45,6 +46,8 @@ async def recv_and_process():
                 if 'DEPTH_HOLD' in system_state['mode']:
                     if pid is None:
                         pid=PID(**depth_pid)
+                        if os.path.isfile('depth_pid.json'):
+                            pid.load('depth_pid.json')
                     else:
                         ud_command = pid(depth,target_depth,rate,0)
                         debug_pid = {'P':pid.p,'I':pid.i,'D':pid.d,'C':ud_command,'T':target_depth,'N':depth,'TS':new_depth_ts}
@@ -64,11 +67,19 @@ async def recv_and_process():
                     target_depth=depth
 
             if topic==zmq_topics.topic_remote_cmd:
+                print('=== cmd ===',data)
                 if data['cmd']=='depth':
                     if data['rel']:
                         target_depth+=data['depth']
                     else:
                         target_depth=data['depth']
+
+                if data['cmd']=='exec' and data['script']==os.path.basename(__file__):
+                    try:
+                        exec(data['torun'])
+                    except Exception as E:
+                        print('Error in exec command: ',E,data['torun'])
+
 
             if topic==zmq_topics.topic_imu:
                 pitch,roll=data['pitch'],data['roll']
