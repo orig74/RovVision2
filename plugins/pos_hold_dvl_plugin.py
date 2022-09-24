@@ -97,7 +97,9 @@ async def recv_and_process():
 
             if topic==zmq_topics.topic_remote_cmd:
                 if data['cmd']=='go':
-                    target_pos = target_pos + data['point'] if data['rel'] else np.array(data['point'])
+                    pt=data['point']
+                    pt=np.array([pt[0],pt[1],0])
+                    target_pos = target_pos + pt if data['rel'] else pt
 
                 if data['cmd']=='tracker_vert_object_lock':
                     tracker_lock_range = data['range']

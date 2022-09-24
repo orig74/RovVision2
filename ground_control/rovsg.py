@@ -249,7 +249,7 @@ def main():
             track_thread.do_next()
 
         if not values['MISSION_PAUSE']:
-            track_thread.run()
+            track_thread.run(float(values['Lrange']),float(values['Pxy']))
         
         cnt+=1
 
