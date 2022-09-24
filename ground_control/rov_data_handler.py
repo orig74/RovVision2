@@ -212,7 +212,24 @@ class rovDataHandler(object):
             draw_mono(images[0],self.telemtry,fmt_cnt_l)
             if len(images)>1:
                 draw_seperate(images[0],images[1],self.telemtry)
-                
+               
+    def get_pos_xy(self):
+        pass
+
+    def get_track_range(self):
+        pass
+
+    def get_track_dy(self):
+        pass
+
+    def get_depth(self):
+        pass
+
+    def get_target_xy(self):
+        pass
+
+    def get_target_depth(self):
+        pass
  
     def process_telem(self):
         message_dict={}

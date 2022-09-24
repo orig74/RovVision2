@@ -83,6 +83,8 @@ def main():
             [sg.Button('X-hold'),sg.Button(sym_fwd),sg.Button(sym_back),sg.Input(key='Target-X',default_text='0.1',size=(4,1))],
             [sg.Button('Y-hold'),sg.Button(sym_left),sg.Button(sym_right),sg.Input(key='Target-Y',default_text='0.1',size=(4,1))],
             [sg.Button(sym_yaw_left),sg.Button(sym_yaw_right),sg.Input(key='DeltaYawD',default_text='1.0',size=(4,1))],
+            [sg.Button('C',key='CENTER_MAX_CORR',tooltip='center on max corr')]
+
             ]
 
     yaw_source_options=['VNAV','DVL']
