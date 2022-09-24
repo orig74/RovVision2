@@ -83,8 +83,13 @@ def main():
             [sg.Button('X-hold'),sg.Button(sym_fwd),sg.Button(sym_back),sg.Input(key='Target-X',default_text='0.1',size=(4,1))],
             [sg.Button('Y-hold'),sg.Button(sym_left),sg.Button(sym_right),sg.Input(key='Target-Y',default_text='0.1',size=(4,1))],
             [sg.Button(sym_yaw_left),sg.Button(sym_yaw_right),sg.Input(key='DeltaYawD',default_text='1.0',size=(4,1))],
-            [sg.Button('C',key='CENTER_MAX_CORR',tooltip='center on max corr')]
-
+            [
+                sg.Checkbox('V',key='V_LOCK',enable_events=True,tooltip='vertical object lock'),
+                sg.Text('Range:'),
+                sg.Input(key='Lrange',default_text='0.35',size=(4,1)),
+                sg.Text('Pxy:'),
+                sg.Input(key='Pxy',default_text='0.03',size=(4,1))
+                ],
             ]
 
     yaw_source_options=['VNAV','DVL']
@@ -210,6 +215,14 @@ def main():
             plot_type=values['-PLOT-TYPE-']
             sg.cprint('sending saving pid',c='black on white')
             rovCommander.save_pid(plot_type)
+
+        if event=='V_LOCK':
+            printer(f"got v_lock {values['V_LOCK']}")
+            if values['V_LOCK']:
+                rovCommander.vertical_object_lock(rng=float(values['Lrange']),Pxy=float(values['Pxy']))
+            else:
+                rovCommander.vertical_object_unlock()
+
 
         if (cnt%(1000//20))==0:
             rovCommander.heartbit()

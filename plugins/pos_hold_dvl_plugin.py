@@ -31,6 +31,8 @@ async def recv_and_process():
     dvl_last_vel=None
     dvl_last_pos=None
     last_vel_report=time.time()
+    tracker_lock_range=None
+    Pxy=0.1
 
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.005)[0]
@@ -54,7 +56,6 @@ async def recv_and_process():
 
             if topic==zmq_topics.topic_imu:
                 yaw,pitch,roll=data['yaw'],data['pitch'],data['roll']
-
 
             if topic==zmq_topics.topic_dvl_raw:
                 dd=parse_line(data['dvl_raw'])
@@ -86,9 +87,25 @@ async def recv_and_process():
                     thruster_cmd = mixer.mix(cmds[2],-cmds[1],-cmds[0],0,0,0,0,0)
                     thrusters_source.send_pyobj(['pos',time.time(),thruster_cmd])
 
+            if topic==zmq_topics.topic_tracker:
+                if data['valid'] and tracker_lock_range is not None:
+                    dx=tracker_lock_range-data['range']
+                    #printer(f">>>dx={dx:.2f},{tracker_lock_range:.2f},{data['range']:.2f}")
+                    dy=data['dy']
+                    target_pos[0]=dvl_last_pos['x']-Pxy*dx
+                    target_pos[1]=dvl_last_pos['y']+Pxy*dy
+
             if topic==zmq_topics.topic_remote_cmd:
                 if data['cmd']=='go':
                     target_pos = target_pos + data['point'] if data['rel'] else np.array(data['point'])
+
+                if data['cmd']=='tracker_vert_object_lock':
+                    tracker_lock_range = data['range']
+                    Pxy=data['Pxy']
+                
+                if data['cmd']=='tracker_vert_object_unlock':
+                    tracker_lock_range = None
+
                 if data['cmd']=='exec' and data['script']==os.path.basename(__file__):
                     try:
                         exec(data['torun'])
@@ -129,6 +146,7 @@ if __name__=='__main__':
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_dvl_cmd],zmq_topics.topic_controller_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_dvl_raw],zmq_topics.topic_dvl_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_remote_cmd],zmq_topics.topic_remote_cmd_port))
+    subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_tracker],zmq_topics.topic_tracker_port))
 
     ### plugin outputs
     thrusters_source = zmq_wrapper.push_source(zmq_topics.thrusters_sink_port) 

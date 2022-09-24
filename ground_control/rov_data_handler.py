@@ -9,6 +9,7 @@ from annotations import draw_mono,draw_seperate
 from joy_mix import Joy_map
 from cyc_array import CycArr
 from dvl import parse_line as dvl_parse_line
+from datetime import datetime
 
 from zmq import select
 print('===is sim ',config.is_sim)
@@ -55,6 +56,12 @@ class rovCommandHandler(object):
 
     def lock(self,x,y):
         self.pub({'cmd':'lock','click_pt':(x,y)})
+
+    def vertical_object_lock(self,rng=0.32,Pxy=0.1):
+        self.pub({'cmd':'tracker_vert_object_lock','range':rng,'Pxy':Pxy})
+
+    def vertical_object_unlock(self):
+        self.pub({'cmd':'tracker_vert_object_unlock'})
 
     def update_pid(self,pid_type,target,mult):
         print('updateing pid ',pid_type,target,mult)
@@ -167,7 +174,7 @@ class rovDataHandler(object):
    
     def process_video(self):
         images = [None, None]
-        sx,sy=config.cam_res_rgbx,config.cam_res_rgby
+        #sx,sy=config.cam_res_rgbx,config.cam_res_rgby
         bmargx,bmargy=config.viewer_blacks
         if not vid_zmq:
             images = get_imgs()
@@ -187,7 +194,7 @@ class rovDataHandler(object):
                     print('start recording...')
                     fds=[]
                     #datestr=sensor_gate_data['record_date_str']
-                    datestr=record_state
+                    datestr=self.record_state
                     save_path=args.data_path+'/'+datestr
                     if not os.path.isdir(save_path):
                         os.mkdir(save_path)
@@ -214,13 +221,19 @@ class rovDataHandler(object):
                 draw_seperate(images[0],images[1],self.telemtry)
                
     def get_pos_xy(self):
-        pass
+        pass 
 
     def get_track_range(self):
-        pass
+        if zmq_topics.topic_tracker in self.telemtry:
+            trdata = self.telemtry[zmq_topics.topic_tracker]
+            if trdata['valid']:
+                return trdata['range']
 
     def get_track_dy(self):
-        pass
+        if zmq_topics.topic_tracker in self.telemtry:
+            trdata = self.telemtry[zmq_topics.topic_tracker]
+            if trdata['valid']:
+                return trdata['dy']
 
     def get_depth(self):
         pass
@@ -233,8 +246,6 @@ class rovDataHandler(object):
  
     def process_telem(self):
         message_dict={}
-        rcv_cnt=0
-        
 
         while True:
             socks = zmq.select(self.subs_socks,[],[],0.001)[0]
