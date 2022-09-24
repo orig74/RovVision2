@@ -89,7 +89,8 @@ def main():
             [sg.Button('Reset-DVL'),sg.Button('Calib-DVL')],
             [sg.Button('CF+'),sg.Button('CF-')],
             [sg.Button('Lights+'),sg.Button('Lights-')],
-            [sg.Multiline(key='MESSEGES',s=(18,5), autoscroll=True, reroute_stdout=False, write_only=True)],
+            [sg.Multiline(key='MESSEGES',s=(23,5), autoscroll=True, reroute_stdout=False, write_only=True)],
+            [sg.Checkbox('H',key='HSV_H',tooltip='h from hsv on cam 1')],
             ]
 
     plot_options=['DEPTH','X_HOLD','Y_HOLD','YAW','PITCH','ROLL']
@@ -99,6 +100,7 @@ def main():
             sg.Button('I+'),sg.Button('I-'),
             sg.Button('D+'),sg.Button('D-'),
             sg.Text('Prc:'),sg.Input(key='PID_Mul',default_text='3.0',size=(4,1)),
+            sg.Button('S',key='SAVE_PID'),
             ],
         [ sg.Canvas(key="-CANVAS-", size=(300,200)), sg.Canvas(key="-TRACE-CANVAS-", size=(300,300))]]
 
@@ -121,7 +123,7 @@ def main():
     window = sg.Window("ROV Viewer", 
             layout, finalize=True, 
             element_justification='left', 
-            font='Helvetica 16',
+            font='Helvetica 12',
             size=(1920,1080))
     #window['-MAIN-IMAGE-'].bind('<Button-1>','')
     plotter = Plotter(window["-CANVAS-"].TKCanvas)
@@ -200,6 +202,10 @@ def main():
                 mul=1/mul
             sg.cprint('sending pid',c='black on white')
             rovCommander.update_pid(plot_type,event[0],mul)
+        if event=='SAVE_PID':
+            plot_type=values['-PLOT-TYPE-']
+            sg.cprint('sending saving pid',c='black on white')
+            rovCommander.save_pid(plot_type)
 
         if (cnt%(1000//20))==0:
             rovCommander.heartbit()
