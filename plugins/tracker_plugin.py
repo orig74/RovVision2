@@ -54,6 +54,8 @@ async def recv_and_process():
                     st.reset(data['click_pt'])
                 if data['cmd']=='clear_freqs':
                     st.set_clear_freqs(data['data'],relative=data['rel'])
+                if data['cmd']=='lock_max':
+                    st.reset_max()
 
             if topic==zmq_topics.topic_axes:
                 jm.update_axis(data)

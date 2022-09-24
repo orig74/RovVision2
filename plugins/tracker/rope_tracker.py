@@ -63,6 +63,13 @@ class StereoTrack():
         self.last_res=None
         self.ref_point=None #first valid pt after reset
 
+    def reset_max(self):
+        self.ofx=self.disparity_offset
+        #self.rope_track_state = None #'max','min',None
+        self.rope_track_state = 'max' #'max','min',None
+        self.last_res=None
+        self.ref_point=None #first valid pt after reset
+
     def __track_left_im(self,imgl):
         shape=imgl.shape
         self.shape=shape

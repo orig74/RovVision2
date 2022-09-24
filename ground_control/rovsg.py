@@ -90,6 +90,7 @@ def main():
                 sg.Text('Pxy:'),
                 sg.Input(key='Pxy',default_text='0.03',size=(4,1))
                 ],
+            [sg.Button('ML',tooltip='tracker max lock')] 
             ]
 
     yaw_source_options=['VNAV','DVL']
@@ -223,6 +224,8 @@ def main():
             else:
                 rovCommander.vertical_object_unlock()
 
+        if event=='ML':
+            rovCommander.lock_max()
 
         if (cnt%(1000//20))==0:
             rovCommander.heartbit()
