@@ -73,7 +73,8 @@ def main():
     track_thread = TrackThread(rov_comander=rovCommander,rov_data_handler=rovHandler,printer=printer)
     im_size = (960,600) 
     if scale_screen:
-        im_size = (int(im_size[0]*scale_screen),int(im_size[1]*scale_screen))
+        #im_size = (int(im_size[0]*scale_screen),int(im_size[1]*scale_screen))
+        im_size = (616,514)
     row1_layout = [[
         sg.Graph(im_size, graph_bottom_left=(0, im_size[1]), graph_top_right=(im_size[0],0) ,key="-MAIN-IMAGE-",
             change_submits=True,
@@ -147,7 +148,7 @@ def main():
             layout, finalize=True, 
             element_justification='left', 
             font='Helvetica 9' if scale_screen else 'Helvetica 12',
-            size=(1600,900) if scale_screen else (1920,1080))
+            size=(1600,860) if scale_screen else (1920,1080))
             #size=(1600,900))
     #window['-MAIN-IMAGE-'].bind('<Button-1>','')
     plotter = Plotter(window["-CANVAS-"].TKCanvas)
@@ -173,11 +174,12 @@ def main():
             rovCommander.lock(x,y)
 
         frameId, rawImgs = rovHandler.getNewImages()
-        if scale_screen and rawImgs is not None:
+        if 0 and  scale_screen and rawImgs is not None:
             sy,sx=rawImgs[0].shape[:2]
             sx=int(sx*scale_screen)
             sy=int(sy*scale_screen)
-            rawImgs = [cv2.resize(im,(sx,sy)) for im in rawImgs[:2]]
+            #rawImgs = [cv2.resize(im,(sx,sy)) for im in rawImgs[:2]]
+            print('>>>>',sx,sy)
 
         if rawImgs is not None:
             image_shape=rawImgs[0].shape
