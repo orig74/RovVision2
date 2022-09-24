@@ -298,8 +298,8 @@ class rovDataHandler(object):
                             self.telemtry['dvl_deadrecon']=dvl_data
             
 
-            if self.data_file_fd is not None:
-                pickle.dump([topic,data],self.data_file_fd,-1)
+                    if self.data_file_fd is not None:
+                        pickle.dump([topic,data],self.data_file_fd,-1)
 
 
     def next(self):
