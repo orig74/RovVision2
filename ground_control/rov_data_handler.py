@@ -16,6 +16,7 @@ print('===is sim ',config.is_sim)
 vid_zmq = config.is_sim and config.sim_type=='PB'
 if not vid_zmq:
     from gst import init_gst_reader,get_imgs,set_files_fds,get_files_fds,save_main_camera_stream
+    init_gst_reader(2)
 
 class rovCommandHandler(object):
     def __init__(self):
