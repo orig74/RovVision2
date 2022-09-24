@@ -5,8 +5,10 @@ import pybullet as pb
 import pybullet_data
 sys.path.append('..')
 sys.path.append('../utils')
+sys.path.append('../hw')
 sys.path.append('unreal_proxy')
 import zmq
+from dvl import parse_line
 import struct
 import cv2,os
 import numpy as np
@@ -18,10 +20,15 @@ import config
 import dill
 from numpy import sin,cos
 
-zmq_sub=utils.subscribe([zmq_topics.topic_thrusters_comand],zmq_topics.topic_thrusters_comand_port)
+subs_socks=[]
+subs_socks.append(utils.subscribe([zmq_topics.topic_thrusters_comand],zmq_topics.topic_thrusters_comand_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_dvl_cmd],zmq_topics.topic_controller_port))
+
 zmq_pub=utils.publisher(zmq_topics.topic_camera_port)
+zmq_pub_ts = utils.publisher(zmq_topics.topic_camera_ts_port)
 pub_imu = utils.publisher(zmq_topics.topic_imu_port)
 pub_depth = utils.publisher(zmq_topics.topic_depth_port)
+pub_dvl = utils.publisher(zmq_topics.topic_dvl_port)
 
 pub_sonar = utils.publisher(zmq_topics.topic_sonar_port)
 cvshow=0
@@ -131,17 +138,24 @@ def main():
     curr_u = np.zeros(6)
     current_command = np.zeros(8)
 
+    dvl_offset=np.zeros(3)
+    dvl_angle_offsets=np.zeros(3)
+    dvl_cmd=None
+
     if render==pb.GUI:
         boxId = getrov()
 
     while keep_running:
         tic_cycle = time.time()
-        while len(zmq.select([zmq_sub],[],[],0.001)[0])>0:
-            data = zmq_sub.recv_multipart()
+        socks = zmq.select(subs_socks,[],[],0.001)[0]
+        for sock in socks:
+            data = sock.recv_multipart()
             topic=data[0]
             if topic==zmq_topics.topic_thrusters_comand:
                 _,current_command=pickle.loads(data[1])
                 current_command=[i*1.3 for i in current_command]
+            if topic==zmq_topics.topic_dvl_cmd:
+                dvl_cmd=data[1]
 
         next_q,next_u=get_next_state(curr_q,curr_u,current_command,dt,lamb)
         next_q,next_u=next_q.flatten(),next_u.flatten()
@@ -209,7 +223,7 @@ def main():
             else:
                 zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),imgl.tostring(),imgr.tostring()])
             time.sleep(0.001) 
-            zmq_pub.send_multipart([zmq_topics.topic_stereo_camera_ts,pickle.dumps((frame_cnt,time.time()))]) #for sync
+            zmq_pub_ts.send_multipart([zmq_topics.topic_stereo_camera_ts,pickle.dumps((frame_cnt,time.time(),time.time()))]) #for sync
                 
             #get depth image
             depthImg=depthImg[::4,::4]
@@ -220,7 +234,8 @@ def main():
             depthImg[depthImg>5000]=np.nan
             max_range=np.nanmax(depthImg)
             #print('sonar::',min_range,max_range)
-            pub_sonar.send_multipart([zmq_topics.topic_sonar,pickle.dumps([min_range,max_range])])
+            tosend = pickle.dumps({'ts':time.time(), 'sonar':[(min_range + max_range) / 2, 1.0]})
+            pub_sonar.send_multipart([zmq_topics.topic_sonar,tosend])
 
             if cvshow:
                 cv2.imshow('depth',img_show)
@@ -246,6 +261,34 @@ def main():
                     u3*cos(q4)*cos(q5) - u4*sin(q5))
             pub_imu.send_multipart([zmq_topics.topic_imu,pickle.dumps(imu)])
             pub_depth.send_multipart([zmq_topics.topic_depth,pickle.dumps({'ts':tic,'depth':curr_q[2]})])
+
+            if cnt%1==0:
+                vx,vy,vz = curr_u[:3]
+                #simulate dvl messgaes
+                yaw_off=-dvl_angle_offsets[0]#-np.pi/2
+                c,s = np.cos(yaw_off),np.sin(yaw_off)
+                vx,vy = vx*c-vy*s,vx*s+vy*c
+                vel_msg='wrz,{},{},{},y,1.99,0.006,3.65e-05;3.39e-06;7.22e-06;3.39e-06;2.46e-06;-8.5608e-07;7.223e-06;-8.560e-07;3.2363e-06,1550139816188624,1550139816447957,188.80,0*XX\r\n'.format(vx,vy,vz).encode()
+                pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':vel_msg})])
+                d=parse_line(vel_msg)
+                pub_dvl.send_multipart([zmq_topics.topic_dvl_vel, pickle.dumps(d)])
+
+            if cnt%1==0:
+                x,y,z=curr_q[:3]-dvl_offset
+                yaw_off=-dvl_angle_offsets[0]#-np.pi/2
+                c,s = np.cos(yaw_off),np.sin(yaw_off)
+                x,y = x*c-y*s,x*s+y*c
+
+                pos_msg='wrp,1550139816.178,{},{},{},{},2.5,-3.7,-62.5,0*XX\r\n'.\
+                        format(x,y,z,100).encode()
+                pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':pos_msg})])
+        
+        if dvl_cmd is not None:
+            if dvl_cmd==b'wcr\n':
+                print('got dvl reset')
+                dvl_offset=curr_q[:3]
+                dvl_angle_offsets=curr_q[3:]
+            dvl_cmd=None
 
 
         time.sleep(0.010)

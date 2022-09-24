@@ -19,6 +19,15 @@ from joy_mix import Joy_map
 from config_pid_dvl import pos_pids
 from pid import PID
 
+
+AUTOSCAN_PATH = 5 * [np.array([5.0, 0.0, 0.0]),
+                 np.array([0.0, 0.5, 0.0]),
+                 np.array([-5.0, 0.0, 0.0]),
+                 np.array([0.0, 0.5, 0.0])]
+AUTO_VELOCITY = 0.2
+AUTO_TARGET_THRESH = 0.1
+
+
 async def recv_and_process():
     keep_running=True
     target_pos=np.zeros(3)
@@ -30,6 +39,10 @@ async def recv_and_process():
     dvl_last_vel=None
     dvl_last_pos=None
     last_vel_report=time.time()
+
+    prev_target=None
+    prev_ts=time.time()
+    path_vec_idx=0
 
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.005)[0]
@@ -57,19 +70,19 @@ async def recv_and_process():
 
             if topic==zmq_topics.topic_dvl_raw:
                 dd=parse_line(data['dvl_raw'])
-                if dd['type']=='deadreacon':
+                if dd and dd['type']=='deadreacon':
                     dvl_last_pos=dd
-                if dd['type']=='vel' and dd['valid']==b'y':
+                if dd and dd['type']=='vel' and dd['valid']==b'y':
                     dvl_last_vel=dd
                     last_vel_report=time.time()
                 if dvl_last_pos and dvl_last_vel:
                     cmds=[0]*3
                     for ind in range(len(pids)):
                         pid_states=['RX_HOLD','RY_HOLD','RZ_HOLD']
-                        if pid_states[ind] not in system_state['mode'] \
+                        if pid_states[ind] not in system_state['mode'] and 'AUTONAV' not in system_state['mode'] \
                                 or pids[ind] is None or \
-                                (pid_states[ind]=='RX_HOLD' and abs(jm.joy_mix()['fb'])>0.1) or \
-                                (pid_states[ind]=='RY_HOLD' and abs(jm.joy_mix()['lr'])>0.1):
+                                (pid_states[ind]=='RX_HOLD' and abs(jm.joy_mix()['fb'])>0.1 and 'AUTONAV' not in system_state['mode']) or \
+                                (pid_states[ind]=='RY_HOLD' and abs(jm.joy_mix()['lr'])>0.1 and 'AUTONAV' not in system_state['mode']):
                             pids[ind] = PID(**pos_pids[ind])
                             target_pos[ind]=dvl_last_pos['xyz'[ind]]
                         elif dvl_last_vel['valid']==b'y':
@@ -78,7 +91,6 @@ async def recv_and_process():
                             ts=time.time()
                             debug_pid = {'P':pids[ind].p,'I':pids[ind].i,'D':pids[ind].d,'C':cmds[ind],'T':target_pos[ind],'N':x, 'R':v, 'TS':ts}
                             pub_sock.send_multipart([zmq_topics.topic_pos_hold_pid_fmt%ind, pickle.dumps(debug_pid,-1)])
-                    
                     thruster_cmd = mixer.mix(cmds[2],-cmds[1],-cmds[0],0,0,0,0,0)
                     thrusters_source.send_pyobj(['pos',time.time(),thruster_cmd])
 
@@ -91,6 +103,25 @@ async def recv_and_process():
 
             if topic==zmq_topics.topic_system_state:
                 _,system_state=data
+
+            # Autoscan position interpolation
+            if 'AUTONAV' in system_state['mode']:
+                dt = time.time() - prev_ts
+                prev_ts = time.time()
+                cur_path_vec = AUTOSCAN_PATH[path_vec_idx]
+                vec_length = np.linalg.norm(cur_path_vec)
+                target_pos += dt * AUTO_VELOCITY * cur_path_vec / vec_length
+                target_err = prev_target + cur_path_vec - target_pos
+                if np.linalg.norm(target_err) < AUTO_TARGET_THRESH:
+                    print(path_vec_idx)
+                    prev_target += cur_path_vec
+                    path_vec_idx += 1
+                    if path_vec_idx == len(AUTOSCAN_PATH):
+                        path_vec_idx = 0
+            else:
+                path_vec_idx = 0
+                prev_ts = time.time()
+                prev_target = target_pos.copy()
 
         await asyncio.sleep(0.001)
  

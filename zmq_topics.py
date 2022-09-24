@@ -16,8 +16,10 @@ topic_camera_servo=b'camera_servo'
 #topic_camera_right=b'topic_camera_right'
 topic_stereo_camera=b'topic_stereo_camera'
 topic_stereo_camera_ts=b'topic_stereo_camera_ts'
+topic_camera_telem=b'topic_camera_telem'
 topic_camera_port=7789
 topic_camera_ts_port=17789
+topic_camera_telem_port=17790
 
 topic_stereo_camera_calib=b'topic_stereo_camera_calib'
 topic_camera_calib_port=8890
@@ -74,6 +76,7 @@ topic_hw_stats=b'topic_hw_stats'
 topic_hw_stats_port=10103
 
 topic_dvl_raw=b'topic_dvl_raw'
+topic_dvl_vel = b'topic_vel'
 topic_dvl_port=13295
 
 topic_dvl_cmd=b'topic_dvl_cmd'

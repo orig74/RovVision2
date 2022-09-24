@@ -19,7 +19,7 @@ int thruster_dirs[8] = {-1, -1, 1, 1, -1, 1, 1, -1};
 #define THRUSTERS_CURRENT_PIN_1 35
 #define THRUSTERS_CURRENT_PIN_2 34
 
-#define SENSOR_UPDATE_FPS 5
+#define SENSOR_UPDATE_FPS 10
 #define SENSOR_EVENT_MICROS (1000000/SENSOR_UPDATE_FPS)
 
 #define SERIAL_BAUDRATE 500000
@@ -96,6 +96,7 @@ void setup() {
   Serial.begin(SERIAL_BAUDRATE);
   Wire.begin();
 
+  esp_task_wdt_reset();
   esp_task_wdt_init(WDT_TIMEOUT, true); //enable panic so ESP32 restarts
   esp_task_wdt_add(NULL); //add current thread to WDT watch
   

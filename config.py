@@ -22,7 +22,7 @@ if rov_type==4:
     cam_resx,cam_resy=616*2,514*2
     cam_res_rgbx,cam_res_rgby=616,514
 
-cam_fps=5
+cam_fps=10
 send_modulo=1
 
 #gstreamer

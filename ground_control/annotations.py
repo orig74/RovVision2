@@ -11,6 +11,9 @@ if config.tracker=='rope':
 elif config.tracker=='local':
     from tracker import tracker
 import hw_stats_tools
+sys.path.append('../hw')
+from dvl import parse_line
+import math
 
 prev_fps_time=time.time()
 prev_frame_cnt = None
@@ -100,6 +103,10 @@ def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
     if zmq_topics.topic_lights in message_dict:
         lights=message_dict[zmq_topics.topic_lights]
         cv2.putText(img,'L'+str(lights),(sy(670+360),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+    if zmq_topics.topic_dvl_vel in message_dict:
+        dd = message_dict[zmq_topics.topic_dvl_vel]
+        avg_vel = math.sqrt(dd['vx']**2 + dd['vy']**2 + dd['vz']**2)
+        cv2.putText(img,'VEL: '+str(round(avg_vel, 2)),(sy(670+120),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
 
 def draw_mono(img,message_dict,fmt_cnt_l):
     global prev_fps_time, prev_frame_cnt, cfps

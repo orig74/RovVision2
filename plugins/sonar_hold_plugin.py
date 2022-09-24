@@ -21,6 +21,7 @@ async def recv_and_process():
     keep_running=True
     pitch,roll=0,0
     target_range=0
+    s_range=None
     pid=None
     ab=None
     rate=0

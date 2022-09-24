@@ -67,6 +67,8 @@ async def recv_and_process():
                         togle_mode('RY_HOLD')
                     if jm.Rz_hold_event():
                         togle_mode('RZ_HOLD')
+                    if jm.auto_nav_event():
+                        togle_mode('AUTONAV')
                     if jm.cam_calib_event():
                         togle_mode('CAM_CALIB')
                     if jm.image_rect_event():

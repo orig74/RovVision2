@@ -94,6 +94,9 @@ class Joy_map:
     def Rz_hold_event(self):
         return self.__test_togle(self._blue) and self.__left_shift()
 
+    def auto_nav_event(self):
+        return self.__right_shift() and self.__left_shift()
+
     def cam_calib_event(self):
         return self.__test_togle(self._right_stick_click) and self.__right_shift()
 

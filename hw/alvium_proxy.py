@@ -8,6 +8,7 @@ import queue
 import time
 from vimba import *
 import numpy as np
+import random
 import cv2
 import sys
 from datetime import datetime
@@ -22,19 +23,20 @@ subs_socks.append(utils.subscribe([ zmq_topics.topic_record_state ],zmq_topics.t
 subs_socks.append(utils.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
 socket_pub = utils.publisher(zmq_topics.topic_camera_port)
 socket_pub_ts = utils.publisher(zmq_topics.topic_camera_ts_port)
+socket_pub_telem = utils.publisher(zmq_topics.topic_camera_telem_port)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--debug", help="Show frames with opencv", action='store_true')
 args = parser.parse_args()
 
-CAM_IDS = ['DEV_000F315DAB37', 'DEV_000F315DB084', 'DEV_000F315DAB68'] # 
+CAM_IDS = ['DEV_000F315DAB37', 'DEV_000F315DAB68']#, 'DEV_000F315DB084'] # 
 MASTER_CAM_ID = CAM_IDS[0]
 NUM_CAMS = len(CAM_IDS)
 
 # Min exposure time: 32us
 CAM_EXPOSURE_US = None #10000
-CAM_EXPOSURE_MAX = 10000    # us
-CAM_EXPOSURE_MIN = 32
+CAM_EXPOSURE_MAX = 20000 #2000    # us
+CAM_EXPOSURE_MIN = 2000  #32
 
 IMG_SIZE_BYTES = 5065984
 
@@ -98,7 +100,8 @@ class AlviumMultiCam(threading.Thread):
             with vimba_ctx:
                 # Construct FrameProducer threads for all detected cameras
                 for cam in vimba_ctx.get_all_cameras():
-                    self.producers[cam.get_id()] = FrameProducer(cam, self.frame_queue)
+                    if cam.get_id() in CAM_IDS:
+                        self.producers[cam.get_id()] = FrameProducer(cam, self.frame_queue)
 
                 # Start FrameProducer threads
                 with self.producers_lock:
@@ -220,33 +223,18 @@ class AlviumMultiCam(threading.Thread):
                                 break
                             frames_left -= 1
 
-                        # Print device stats
-                        if loop_cnt % 800 == 0:
-                            for k, prod in self.producers.items():
-                                try:
-                                    temp = prod.cam.get_feature_by_name('DeviceTemperature').get()
-                                    print("{} Temp: {} degrees C".format(k, round(temp, 2)))
-                                except:
-                                    print("Get cam temp failed!")
-                                #frame_start_ts = prod.cam.get_feature_by_name('TimestampLatchValue').get()
-                                #print("{} ts: {}".format(k, frame_start_ts))
-                            print()
-
-                        # Update slave exposure, white-balance, gain from master
-                        # if loop_cnt % 100 == 0 and MASTER_CAM_ID in self.producers:
-                        #     with self.producers_lock:
-                        #         master_cam = self.producers[MASTER_CAM_ID].cam
-                        #         if master_cam.is_streaming():
-                        #             #print(master_cam.__dir__())
-                        #             exposure = master_cam.get_feature_by_name('ExposureTimeAbs').get()
-                        #             gain = master_cam.get_feature_by_name('Gain').get()
-                        #             #wh_balance = master_cam.get_feature_by_name('BalanceRatioAbs').get()
-                        #             slave_cams = [prod.cam for k, prod in self.producers.items() if k != MASTER_CAM_ID]
-                        #             for slave in slave_cams:
-                        #                 if slave.is_streaming():
-                        #                     slave.get_feature_by_name('ExposureTimeAbs').set(exposure)
-                        #                     slave.get_feature_by_name('Gain').set(gain)
-                        #                     #slave.get_feature_by_name('BalanceRatioAbs').set(wh_balance)
+                        # Get device stats
+                        if loop_cnt % 400 == 0:
+                            cam_key = random.choice(list(self.producers.keys()))
+                            cam = self.producers[cam_key].cam
+                            temp = cam.get_feature_by_name('DeviceTemperature').get()
+                            exposure = cam.get_feature_by_name('ExposureTimeAbs').get()
+                            gain = cam.get_feature_by_name('Gain').get()
+                            balance = cam.get_feature_by_name('BalanceRatioAbs').get()
+                            print("{} Temp: {} degrees C".format(cam_key, round(temp, 2)))
+                            to_send = {'ID': cam_key, 'Temp': temp, 'Exp_us': exposure, 'Gain': gain, 'WB': balance}
+                            socket_pub_telem.send_multipart([zmq_topics.topic_camera_telem,
+                                                             pickle.dumps((time.time(),to_send))])
 
                         while (time.time() - prev_loop_time < 1 / self.loop_fps):
                             time.sleep(0.001)
