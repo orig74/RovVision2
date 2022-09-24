@@ -32,6 +32,8 @@ from plttk import Plotter
 from plttk_tracer import Plotter as TracePlotter
 
 import zmq_topics
+from farm_track_thread import FarmTrack as TrackThread
+
 
 
 def img_to_tk(img,shrink=1,h_hsv=False):
@@ -66,6 +68,7 @@ def printer(text,color=None):
 def main():
     rovHandler = rovDataHandler(None,printer=printer)
     rovCommander = rovCommandHandler()
+    track_thread = TrackThread(rov_comander=rovCommander,rov_data_handler=rovHandler,printer=printer)
     im_size = (960,600) 
     row1_layout = [[
         sg.Graph(im_size, graph_bottom_left=(0, im_size[1]), graph_top_right=(im_size[0],0) ,key="-MAIN-IMAGE-",
@@ -90,7 +93,13 @@ def main():
                 sg.Text('Pxy:'),
                 sg.Input(key='Pxy',default_text='0.03',size=(4,1))
                 ],
-            [sg.Button('ML',tooltip='tracker max lock')] 
+            [ 
+                sg.Button('Ml',tooltip='tracker max lock'),
+                sg.Button('Ms',tooltip='mission start'),
+                sg.Checkbox('Ma',key='AUTO_NEXT',enable_events=True,tooltip='auto next',default=False),
+                sg.Button('Mn',tooltip='mission next'),
+                sg.Checkbox('Mp',key='MISSION_PAUSE',enable_events=False,tooltip='pause mission',default=True)
+                ] 
             ]
 
     yaw_source_options=['VNAV','DVL']
@@ -224,11 +233,23 @@ def main():
             else:
                 rovCommander.vertical_object_unlock()
 
-        if event=='ML':
+        if event=='Ml':
             rovCommander.lock_max()
 
         if (cnt%(1000//20))==0:
             rovCommander.heartbit()
+
+        if event=='Ms':
+            track_thread.start()
+
+        if event=='Ma':
+            track_thread.auto_next=values['Ma']
+
+        if event=='Mn':
+            track_thread.do_next()
+
+        if not values['MISSION_PAUSE']:
+            track_thread.run()
         
         cnt+=1
 

@@ -5,11 +5,10 @@ class FarmTrack(object):
     def __init__(self,iterations=1,rov_comander=None,rov_data_handler=None,printer=None):
         self.printer=printer
         self.auto_next=False
-        self.horizontal_slide=-3.0
+        self.horizontal_slide=3.0
         self.range_to_target=0.29
-        self.target_depth_up=3
-        self.target_depth_down=10
-        self.pause=False
+        self.target_depth_up=0.5
+        self.target_depth_down=2.0
         self.rov_comander=rov_comander
         self.rov_data_handler=rov_data_handler
         self.reset()
@@ -21,6 +20,7 @@ class FarmTrack(object):
         self.current_y_command=0
         self.current_x_command=0
         self.current_depth_command=self.target_depth_up
+        self.last_run=time.time()
 
     def start(self):
         self.state_ind=1
@@ -29,20 +29,35 @@ class FarmTrack(object):
     def do_next(self):
         self.done_step=True
 
-    def pause(self,x):
-        self.pause=x
-
     def __inc_step(self):
         self.state_ind+=1
         self.state_ind=self.state_ind%len(states)
         self.printer('state is: '+states[self.state_ind])
         self.done_step=self.auto_next
 
+    def __taget_depth_achived(self):
+        dh=self.rov_data_handler
+        return abs(dh.get_depth()-dh.get_target_depth())<0.1
+
+    def __target_xy_achived(self,tresh=0.1):
+        dh=self.rov_data_handler
+        xy=dh.get_pos_xy()
+        txy=dh.get_target_xy()
+        return abs(xy[0]-txy[0])<tresh and abs(xy[1]-txy[1])
+
     def run(self):
+        tic=time.time()
+        if tic-self.last_run<0.5:
+            return
+        self.last_run=tic
+
+        #self.printer(f'>>>> depth {dh.get_depth():.2f}')
+        #self.printer(f'>>>> target depth {dh.get_target_depth():.2f}')
+        #self.printer(f'>>>> xy {dh.get_pos_xy()}')
+        #self.printer(f'>>>> target_xy {dh.get_target_xy()}')
+
         if states[self.state_ind]=='stabilize':
-            if not self.pause:
-                pass
-            if self.rov_data_handler.vertical_lock_state()=='locked' and self.done_step:
+            if self.__target_xy_achived() and self.done_step:
                 self.__inc_step()
                 if states[self.state_ind]=='slide':
                     self.rov_comander.vertical_object_unlock()
@@ -53,7 +68,7 @@ class FarmTrack(object):
                     self.rov_comander.depth_command(self.target_depth_up,relative=False)
 
         if states[self.state_ind].startswith('go'):
-            if self.rov_data_handler.arrived_target_depth() and self.done_step:
+            if self.__taget_depth_achived() and self.done_step:
                 self.__inc_step()
                 self.rov_comander.vertical_object_lock()
 

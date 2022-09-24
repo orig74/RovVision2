@@ -224,7 +224,18 @@ class rovDataHandler(object):
                 draw_seperate(images[0],images[1],self.telemtry)
                
     def get_pos_xy(self):
-        pass 
+        ldata=self.telemtry['dvl_deadrecon'] 
+        ret=(ldata['x'],ldata['y'])
+        return ret
+
+    def get_target_xy(self):
+        target_xy=[0,0]
+        for i in [0,1]:
+            pb=self.plot_buffers[zmq_topics.topic_pos_hold_pid_fmt%i]
+            target_xy[i]=pb.get_last('T')
+            if target_xy[i] is None:
+                target_xy[i]=0
+        return target_xy
 
     def get_track_range(self):
         if zmq_topics.topic_tracker in self.telemtry:
@@ -239,13 +250,10 @@ class rovDataHandler(object):
                 return trdata['dy']
 
     def get_depth(self):
-        pass
-
-    def get_target_xy(self):
-        pass
+        return self.telemtry[zmq_topics.topic_depth]['depth']
 
     def get_target_depth(self):
-        pass
+        return self.telemtry.get(zmq_topics.topic_depth_hold_pid,{}).get('T',0)
  
     def process_telem(self):
         message_dict={}
