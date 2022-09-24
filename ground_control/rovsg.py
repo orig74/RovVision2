@@ -34,7 +34,9 @@ from plttk_tracer import Plotter as TracePlotter
 import zmq_topics
 
 
-def img_to_tk(img,shrink=1):
+def img_to_tk(img,shrink=1,h_hsv=False):
+    if h_hsv:
+        img=cv2.cvtColor(img, cv2.COLOR_BGR2HSV)[:,:,0]
     if shrink==1:
         img = Image.fromarray(img)
     else:
@@ -160,7 +162,7 @@ def main():
                 #window["-MAIN-IMAGE-"].Images[last_im]=img_to_tk(rawImgs[0])
             
             #last_im=window["-MAIN-IMAGE-"].draw_image(data=img_to_tk3(rawImgs[0]),location=(0,0))#im_size[1]))
-            last_im=draw_image(window["-MAIN-IMAGE-"],img_to_tk(rawImgs[0]))#im_size[1]))
+            last_im=draw_image(window["-MAIN-IMAGE-"],img_to_tk(rawImgs[0],h_hsv=values['HSV_H']))#im_size[1]))
             window["-IMAGE-1-"].update(data=img_to_tk(rawImgs[1],1))
  
         if event == "Arm-Disarm":
