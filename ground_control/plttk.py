@@ -5,7 +5,7 @@ import numpy as np
 
 class Plotter(object):
     def __init__(self,canvas):
-        self.figure1 = Figure(figsize=(8,6), dpi=100)
+        self.figure1 = Figure(figsize=(6,6), dpi=100)
         self.ax1 = self.figure1.add_subplot(211)
         self.ax2 = self.figure1.add_subplot(212)
         self.canvas = FigureCanvasTkAgg(self.figure1, master=canvas)

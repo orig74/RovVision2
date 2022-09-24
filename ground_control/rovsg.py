@@ -34,6 +34,8 @@ from plttk_tracer import Plotter as TracePlotter
 import zmq_topics
 from farm_track_thread import FarmTrack as TrackThread
 
+scale_screen=0.8
+#scale_screen=None
 
 
 def img_to_tk(img,shrink=1,h_hsv=False):
@@ -70,6 +72,8 @@ def main():
     rovCommander = rovCommandHandler()
     track_thread = TrackThread(rov_comander=rovCommander,rov_data_handler=rovHandler,printer=printer)
     im_size = (960,600) 
+    if scale_screen:
+        im_size = (int(im_size[0]*scale_screen),int(im_size[1]*scale_screen))
     row1_layout = [[
         sg.Graph(im_size, graph_bottom_left=(0, im_size[1]), graph_top_right=(im_size[0],0) ,key="-MAIN-IMAGE-",
             change_submits=True,
@@ -121,7 +125,8 @@ def main():
             sg.Text('Prc:'),sg.Input(key='PID_Mul',default_text='3.0',size=(4,1)),
             sg.Button('S',key='SAVE_PID'),
             ],
-        [ sg.Canvas(key="-CANVAS-", size=(300,200)), sg.Canvas(key="-TRACE-CANVAS-", size=(300,300))]]
+        #[ sg.Canvas(key="-CANVAS-", size=(300,200)), sg.Canvas(key="-TRACE-CANVAS-", size=(300,300))]]
+        [ sg.Canvas(key="-CANVAS-", size=(10,20)), sg.Canvas(key="-TRACE-CANVAS-", size=(20,20))]]
 
     row2_layout = [[
             #sg.Canvas(key="-CANVAS-", size=(500,500)),
@@ -138,12 +143,12 @@ def main():
     ]
 
     
-
     window = sg.Window("ROV Viewer", 
             layout, finalize=True, 
             element_justification='left', 
-            font='Helvetica 12',
-            size=(1920,1080))
+            font='Helvetica 9' if scale_screen else 'Helvetica 12',
+            size=(1600,900) if scale_screen else (1920,1080))
+            #size=(1600,900))
     #window['-MAIN-IMAGE-'].bind('<Button-1>','')
     plotter = Plotter(window["-CANVAS-"].TKCanvas)
     trace_plotter = TracePlotter(window["-TRACE-CANVAS-"].TKCanvas)
@@ -168,6 +173,11 @@ def main():
             rovCommander.lock(x,y)
 
         frameId, rawImgs = rovHandler.getNewImages()
+        if scale_screen and rawImgs is not None:
+            sy,sx=rawImgs[0].shape[:2]
+            sx=int(sx*scale_screen)
+            sy=int(sy*scale_screen)
+            rawImgs = [cv2.resize(im,(sx,sy)) for im in rawImgs[:2]]
 
         if rawImgs is not None:
             image_shape=rawImgs[0].shape
