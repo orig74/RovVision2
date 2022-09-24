@@ -2,6 +2,8 @@ import pybullet as pb
 import pybullet_data
 import numpy as np
 import cv2
+from numpy import random
+random.seed(0)
 
 def set_random_objects():
     random.seed(0)
@@ -20,21 +22,27 @@ def set_random_objects():
                     print('fail to load object',x,y)
                 #pb.resetBasePositionAndOrientation(obj,(x,y,z),pb.getQuaternionFromEuler((0,0,0,)))
 
+def rand(x,scl=0.03):
+    return random.normal(x,scl)
+
 def gen_rope(x,y):
     ret=[]
-    meshScale = np.ones(3)*0.2
+    dia=1.75*2
+    scl=1/dia*0.3
+    meshScale = np.array([scl,0.2,scl]) #30 cm width
     for i in range(20):
-        vfo=pb.getQuaternionFromEuler(np.deg2rad([90, 0, i*30]))
-        visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
-                                        fileName="pybullet_data/mussle_rope_part.obj",
-                                        visualFramePosition=[0,0,0],
-                                        visualFrameOrientation=vfo,
-                                        meshScale=meshScale)#set the center of mass frame (loadURDF sets base link frame) startPos/Ornp.resetBasePositionAndOrientation(boxId, startPos, startOrientation)
-        ret.append(pb.createMultiBody(baseMass=0,
-                          baseInertialFramePosition=[0, 0, 0],
-                          baseVisualShapeIndex=visualShapeId,
-                          basePosition=[x,y,i*1.2],
-                          useMaximalCoordinates=True))
+        for _ in [0,1,2]:
+            vfo=pb.getQuaternionFromEuler(np.deg2rad([90+rand(0,3), rand(0,3), i*30]))
+            visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
+                                            fileName="pybullet_data/mussle_rope_part.obj",
+                                            visualFramePosition=[0,0,0],
+                                            visualFrameOrientation=vfo,
+                                            meshScale=meshScale)#set the center of mass frame (loadURDF sets base link frame) startPos/Ornp.resetBasePositionAndOrientation(boxId, startPos, startOrientation)
+            ret.append(pb.createMultiBody(baseMass=0,
+                              baseInertialFramePosition=[0, 0, 0],
+                              baseVisualShapeIndex=visualShapeId,
+                              basePosition=[rand(x),rand(y),i*1.2],
+                              useMaximalCoordinates=True))
 
     return ret
 

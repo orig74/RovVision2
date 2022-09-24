@@ -11,7 +11,7 @@ ignore_extrema_type=False
 
 pixelwidthx = 960
 pixelwidthy = 600  
-baseline = 0.100 # (240-100)*.1scale in cm from unreal engine
+baseline = 0.065 # (240-100)*.1scale in cm from unreal engine
 focal_length=pixelwidthx/( np.tan(np.deg2rad(fov/2)) *2 )
 camera_pitch=0
 

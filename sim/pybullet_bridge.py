@@ -134,6 +134,15 @@ def resize(img,factor):
     h,w = img.shape[:2]
     return cv2.resize(img,(int(w*factor),int(h*factor)))
 
+def hsv_range_scale(rgbImg,depthImg):
+    hsv = cv2.cvtColor(rgbImg,cv2.COLOR_BGR2HSV)
+    hsv[:,:,0]=(np.clip(10*(1-depthImg),0,1)*hsv[:,:,0].astype('float')).astype('uint8')
+    #hsv[:,:,0]=255
+    rgbImg = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
+    rgbImg = cv2.blur(rgbImg,(3,3))
+    return rgbImg
+
+
 def main():
     cnt=0
     frame_cnt=0
@@ -172,7 +181,7 @@ def main():
         Mdsym, MdsymI=MatDsym2pybullet(*curr_q[:6])
 
         if cnt%frame_ratio==0:
-            bl=0.0 if mono else 0.3
+            bl=0.0 if mono else 0.065
             CM = np.array(pb.computeViewMatrix((0,-0,0),(1,-0,0),(0,-0,-1))).reshape((4,4),order='F')
             #VML= CM @ MdsymI
             VML= CM @ translateM(0,bl,0) @ MdsymI
@@ -191,14 +200,10 @@ def main():
             #cv2.circle(rgbImg,(w//2,h//2),8,(225,255,0),2)
 
             ##experimental
-            if 1:
-                hsv = cv2.cvtColor(rgbImg,cv2.COLOR_BGR2HSV)
-                hsv[:,:,0]=(np.clip(10*(1-depthImg),0,1)*hsv[:,:,0].astype('float')).astype('uint8')
-                #hsv[:,:,0]=255
-                rgbImg = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
+            rgbImg = hsv_range_scale(rgbImg,depthImg)
 
             imgl=resize(rgbImg[:,:,[2,1,0]],1/resize_fact)#inly interested in rgb
-            print('max...',depthImg.max(),depthImg.min())
+            #print('max...',depthImg.max(),depthImg.min())
             #hsv[:,:,0]=
 
             #second camera
@@ -212,6 +217,7 @@ def main():
                     viewMatrix=VMR.flatten('F').tolist(),
                     projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL)
             
+                rgbImg = hsv_range_scale(rgbImg,depthImg)
                 imgr=resize(rgbImg[:,:,[2,1,0]],1/resize_fact) #todo...
 
             if cvshow:
