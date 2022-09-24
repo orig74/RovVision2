@@ -80,7 +80,7 @@ class FarmTrack(object):
             self.rov_comander.go((
                 self.last_rope_xy[0],self.last_rope_xy[1]+self.horizontal_slide),relative=False)
             if self.__target_xy_achived() and self.done_step:
-                dh.lock_max()
+                self.rov_comander.lock_max()
                 self.__inc_step()
         else:
             self.rov_comander.vertical_object_lock(rng=range_to_target,Pxy=Pxy)

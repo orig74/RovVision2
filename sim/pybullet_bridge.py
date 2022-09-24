@@ -270,7 +270,8 @@ def main():
             pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':dvlSim.dvl_pos_msg()})])
             pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':dvlSim.dvl_vel_msg()})])
 
-        time.sleep(0.100)
+        #time.sleep(0.100)
+        time.sleep(0.01)
 
         if cnt%20==0 and imgl is not None:
             print('send...',cnt, imgl.shape, 'fps=%.1f'%(20/(time.time()-last_fps_print)))
