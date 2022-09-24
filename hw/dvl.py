@@ -24,9 +24,6 @@ def check_crc(line):
     data, checksum = line.split(b'*')
     return checksum.strip()==b'XX' or crc(bytes(data)) == int(checksum, 16) #the XX is for sim
 
-subs_socks=[]
-subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_dvl_cmd],zmq_topics.topic_controller_port))
-
 def init_serial(dev=None):
     if dev is None:
         import detect_usb
@@ -83,9 +80,13 @@ def parse_line(line):
     return ret
 
 reset_cmd = b'wcr\n' 
+calibrate_gyro = b'wcg\n' 
+
 
 if __name__=='__main__':
     if len(sys.argv)==1:
+        subs_socks=[]
+        subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_dvl_cmd],zmq_topics.topic_controller_port))
         ser = init_serial()
         pub_dvl = zmq_wrapper.publisher(zmq_topics.topic_dvl_port)
         pub_srange = zmq_wrapper.publisher(zmq_topics.topic_sonar_port)

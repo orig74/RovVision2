@@ -16,8 +16,10 @@ pub_sock = utils.publisher(zmq_topics.topic_controller_port)
 subs_socks=[]
 subs_socks.append(utils.subscribe([zmq_topics.topic_axes,zmq_topics.topic_button],zmq_topics.topic_joy_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_imu],zmq_topics.topic_imu_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_remote_cmd],zmq_topics.topic_remote_cmd_port))
 thruster_sink = utils.pull_sink(zmq_topics.thrusters_sink_port)
 subs_socks.append(thruster_sink)
+
 
 
 async def recv_and_process():
@@ -77,6 +79,33 @@ async def recv_and_process():
                         system_state['arm']=not system_state['arm']
                         if not system_state['arm']:
                             system_state['mode']=[]
+
+                if topic==zmq_topics.topic_remote_cmd:
+                    print('got command',data)
+                    if data['cmd']=='armdisarm':
+                        system_state['arm']=not system_state['arm']
+                        print('system state is:',system_state)
+                        if not system_state['arm']:
+                            system_state['mode']=[] 
+            
+                    if data['cmd']=='depth_hold':
+                        togle_mode('DEPTH_HOLD')
+
+                    if data['cmd']=='att_hold':
+                        togle_mode('ATT_HOLD')
+
+                    if data['cmd']=='heartbit':
+                        last_axes_joy_message_time=time.time()
+
+                    if data['cmd']=='x_hold':
+                        togle_mode('RX_HOLD')
+
+                    if data['cmd']=='y_hold':
+                        togle_mode('RY_HOLD')
+
+                    if data['cmd']=='z_hold':
+                        togle_mode('RZ_HOLD')
+
                            
                 if topic==zmq_topics.topic_axes:
                     last_axes_joy_message_time=time.time()
@@ -103,7 +132,7 @@ async def recv_and_process():
 
         tic=time.time()
         
-        if tic-last_axes_joy_message_time>2.0: #when lost joy signal disarm
+        if tic-last_axes_joy_message_time>4.0: #when lost joy signal disarm
             system_state['arm']=False
         if tic-timer10hz>0:
             timer10hz=tic+1/10.0

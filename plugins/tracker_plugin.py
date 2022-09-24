@@ -49,6 +49,14 @@ async def recv_and_process():
                 if jm.track_lock_event():
                     print('got lock event from joy')
                     st.reset()
+            if topic==zmq_topics.topic_remote_cmd:
+                if data['cmd']=='lock':
+                    st.reset(data['click_pt'])
+                if data['cmd']=='clear_freqs':
+                    st.set_clear_freqs(data['data'],relative=data['rel'])
+                if data['cmd']=='lock_max':
+                    st.reset_max()
+
             if topic==zmq_topics.topic_axes:
                 jm.update_axis(data)
                 if config.tracker=='rope':
@@ -73,6 +81,7 @@ if __name__=='__main__':
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_stereo_camera],zmq_topics.topic_camera_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_axes,zmq_topics.topic_button,zmq_topics.topic_hat],
         zmq_topics.topic_joy_port))
+    subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_remote_cmd],zmq_topics.topic_remote_cmd_port))
 
     ### plugin outputs
     sock_pub=zmq_wrapper.publisher(zmq_topics.topic_tracker_port)

@@ -5,6 +5,7 @@ import asyncio
 import time
 import pickle
 import numpy as np
+import os
 
 sys.path.append('..')
 sys.path.append('../utils')
@@ -39,6 +40,8 @@ async def recv_and_process():
     dvl_last_vel=None
     dvl_last_pos=None
     last_vel_report=time.time()
+    tracker_lock_range=None
+    Pxy=0.1
 
     prev_target=None
     prev_ts=time.time()
@@ -67,7 +70,6 @@ async def recv_and_process():
             if topic==zmq_topics.topic_imu:
                 yaw,pitch,roll=data['yaw'],data['pitch'],data['roll']
 
-
             if topic==zmq_topics.topic_dvl_raw:
                 dd=parse_line(data['dvl_raw'])
                 if dd and dd['type']=='deadreacon':
@@ -84,6 +86,9 @@ async def recv_and_process():
                                 (pid_states[ind]=='RX_HOLD' and abs(jm.joy_mix()['fb'])>0.1 and 'AUTONAV' not in system_state['mode']) or \
                                 (pid_states[ind]=='RY_HOLD' and abs(jm.joy_mix()['lr'])>0.1 and 'AUTONAV' not in system_state['mode']):
                             pids[ind] = PID(**pos_pids[ind])
+                            fname='xyz'[ind]+'_hold_pid.json'
+                            if os.path.isfile(fname):
+                                pids[ind].load(fname)
                             target_pos[ind]=dvl_last_pos['xyz'[ind]]
                         elif dvl_last_vel['valid']==b'y':
                             x,v=dvl_last_pos['xyz'[ind]],dvl_last_vel['v'+'xyz'[ind]]
@@ -93,6 +98,35 @@ async def recv_and_process():
                             pub_sock.send_multipart([zmq_topics.topic_pos_hold_pid_fmt%ind, pickle.dumps(debug_pid,-1)])
                     thruster_cmd = mixer.mix(cmds[2],-cmds[1],-cmds[0],0,0,0,0,0)
                     thrusters_source.send_pyobj(['pos',time.time(),thruster_cmd])
+
+            if topic==zmq_topics.topic_tracker:
+                if data['valid'] and tracker_lock_range is not None:
+                    dx=tracker_lock_range-data['range']
+                    #printer(f">>>dx={dx:.2f},{tracker_lock_range:.2f},{data['range']:.2f}")
+                    dy=data['dy']
+                    target_pos[0]=dvl_last_pos['x']-Pxy*dx
+                    target_pos[1]=dvl_last_pos['y']+Pxy*dy
+
+            if topic==zmq_topics.topic_remote_cmd:
+                if data['cmd']=='go':
+                    pt=data['point']
+                    pt=np.array([pt[0],pt[1],0])
+                    target_pos = target_pos + pt if data['rel'] else pt
+
+                if data['cmd']=='tracker_vert_object_lock':
+                    tracker_lock_range = data['range']
+                    Pxy=data['Pxy']
+                
+                if data['cmd']=='tracker_vert_object_unlock':
+                    tracker_lock_range = None
+
+                if data['cmd']=='exec' and data['script']==os.path.basename(__file__):
+                    try:
+                        exec(data['torun'])
+                    except Exception as E:
+                        print('Error in exec command: ',E,data['torun'])
+
+
 
             if topic==zmq_topics.topic_axes:
                 jm.update_axis(data)
@@ -130,6 +164,11 @@ async def main():
             recv_and_process(),
             )
 
+def printer(txt,c=None):
+    print('printing:',txt)
+    printer_source.send_pyobj({'txt':txt,'c':c})
+
+
 if __name__=='__main__':
     ### plugin inputs
     subs_socks=[]
@@ -139,9 +178,12 @@ if __name__=='__main__':
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_dvl_cmd],zmq_topics.topic_controller_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_dvl_raw],zmq_topics.topic_dvl_port))
+    subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_remote_cmd],zmq_topics.topic_remote_cmd_port))
+    subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_tracker],zmq_topics.topic_tracker_port))
 
     ### plugin outputs
     thrusters_source = zmq_wrapper.push_source(zmq_topics.thrusters_sink_port) 
+    printer_source = zmq_wrapper.push_source(zmq_topics.printer_sink_port)
     
     pub_sock = zmq_wrapper.publisher(zmq_topics.topic_pos_hold_port)
 

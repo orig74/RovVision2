@@ -59,7 +59,10 @@ class Joy_map:
 
 
     def __test_togle(self,b):
-        return self.buttons[b]==1 and self.prev_buttons[b]==0
+        try:
+            return self.buttons[b]==1 and self.prev_buttons[b]==0
+        except Exception as E:
+            print('Error in __test_togle',E)
        
     def __left_shift(self):
         return self.buttons[self._left_shift]

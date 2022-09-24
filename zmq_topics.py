@@ -8,6 +8,7 @@ topic_system_state=b'system_state'
 
 topic_controller_port=topic_thrusters_comand_port=7788
 thrusters_sink_port = 7787
+printer_sink_port = 7445
 topic_lights=b'topic_lights'
 topic_camera_servo=b'camera_servo'
 
@@ -80,3 +81,9 @@ topic_dvl_vel = b'topic_vel'
 topic_dvl_port=13295
 
 topic_dvl_cmd=b'topic_dvl_cmd'
+
+topic_remote_cmd=b'topic_remote_cmd'
+topic_remote_cmd_port=13297
+
+
+topic_volt=b'topic_volt'

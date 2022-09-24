@@ -5,6 +5,7 @@ import asyncio
 import time
 import pickle
 import numpy as np
+import os
 
 sys.path.append('..')
 sys.path.append('../utils')
@@ -56,6 +57,10 @@ async def recv_and_process():
                         pid_y=PID(**yaw_pid)
                         pid_p=PID(**pitch_pid)
                         pid_r=PID(**roll_pid)
+                        for ind,pid in enumerate([pid_y,pid_p,pid_r]):
+                            fname=f'att_{"ypr"[ind]}_pid.json'
+                            if os.path.isfile(fname):
+                                pid.load(fname)
                     else:
                         #if joy and joy['inertial'] and abs(joy['yaw'])<0.05:
                         if joy and abs(joy['yaw']) < config.joy_dtarget_min:
@@ -86,7 +91,7 @@ async def recv_and_process():
                         thrusters_source.send_pyobj(['att',time.time(),thruster_cmd])
                 else:
                     if pid_y is not None:
-                        pid_y.reset(),pid_r.reset(),pid_y.reset()
+                        pid_y.reset(),pid_r.reset(),pid_p.reset()
                     target_att=[yaw,0,0]
                     thrusters_source.send_pyobj(['att',time.time(),mixer.zero_cmd()])
 
@@ -96,6 +101,15 @@ async def recv_and_process():
             if topic==zmq_topics.topic_button:
                 jm.update_buttons(data)
                 #target_depth+=data[jm.ud]
+
+            if topic==zmq_topics.topic_remote_cmd:
+                if data['cmd']=='att':
+                    target_att = np.array(target_att) + data['ypr'] if data['rel'] else np.array(data['ypr'])
+                if data['cmd']=='exec' and data['script']==os.path.basename(__file__):
+                    try:
+                        exec(data['torun'])
+                    except Exception as E:
+                        print('Error in exec command: ',E,data['torun'])
 
             if topic==zmq_topics.topic_system_state:
                 _,system_state=data
@@ -107,6 +121,10 @@ async def main():
             recv_and_process(),
             )
 
+def printer(txt,c=None):
+    print('printing:',txt)
+    printer_source.send_pyobj({'txt':txt,'c':c})
+
 if __name__=='__main__':
     ### plugin inputs
     subs_socks=[]
@@ -114,9 +132,11 @@ if __name__=='__main__':
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_axes,zmq_topics.topic_button],zmq_topics.topic_joy_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_imu],zmq_topics.topic_imu_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
+    subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_remote_cmd],zmq_topics.topic_remote_cmd_port))
 
     ### plugin outputs
     thrusters_source = zmq_wrapper.push_source(zmq_topics.thrusters_sink_port)
+    printer_source = zmq_wrapper.push_source(zmq_topics.printer_sink_port)
     pub_sock = zmq_wrapper.publisher(zmq_topics.topic_att_hold_port)
 
 

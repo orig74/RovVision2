@@ -5,10 +5,8 @@ import pybullet as pb
 import pybullet_data
 sys.path.append('..')
 sys.path.append('../utils')
-sys.path.append('../hw')
 sys.path.append('unreal_proxy')
 import zmq
-from dvl import parse_line
 import struct
 import cv2,os
 import numpy as np
@@ -18,31 +16,41 @@ import ue4_zmq_topics
 import zmq_topics
 import config
 import dill
+import cv2
+from dvl_sim import DVLSim
 from numpy import sin,cos
+from scipy.spatial.transform import Rotation as R
 
-subs_socks=[]
-subs_socks.append(utils.subscribe([zmq_topics.topic_thrusters_comand],zmq_topics.topic_thrusters_comand_port))
-subs_socks.append(utils.subscribe([zmq_topics.topic_dvl_cmd],zmq_topics.topic_controller_port))
+from mussels_scene import getscene
 
+zmq_sub=utils.subscribe([zmq_topics.topic_thrusters_comand],zmq_topics.topic_thrusters_comand_port)
 zmq_pub=utils.publisher(zmq_topics.topic_camera_port)
-zmq_pub_ts = utils.publisher(zmq_topics.topic_camera_ts_port)
 pub_imu = utils.publisher(zmq_topics.topic_imu_port)
 pub_depth = utils.publisher(zmq_topics.topic_depth_port)
 pub_dvl = utils.publisher(zmq_topics.topic_dvl_port)
 
 pub_sonar = utils.publisher(zmq_topics.topic_sonar_port)
+
+dvlSim=DVLSim()
 cvshow=0
 #cvshow=False
-test=1
 
 dill.settings['recurse'] = True
+
+#work arrond https://github.com/uqfoundation/dill/pull/406 suggested for loading python3.7 pickled in python 3.8
+import platform
+if int(platform.python_version_tuple()[1])>=8:
+    dill._dill._reverse_typemap['CodeType'] = dill._dill._create_code
+
 lamb=dill.load(open('../sim/lambda.pkl','rb'))
 current_command=[0 for _ in range(8)] # 8 thrusters
 dt=1/60.0
 #pybullet init
-render = pb.DIRECT # pb.GUI
-#physicsClient = pb.connect(pb.GUI)#or p.DIRECT for non-graphical version
-physicsClient = pb.connect(render)#or p.DIRECT for non-graphical version
+render = pb.GUI if len(sys.argv)>1 and sys.argv[1]=='g' else pb.DIRECT # pb.GUI
+
+physicsClient = pb.connect(render)#or p.DIRECT for non-graphical versio
+pb.setRealTimeSimulation(False)
+pb.setTimeStep(1/10)
 pb.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 pb.setGravity(0,0,-0)
 print('start...')
@@ -50,26 +58,35 @@ planeId = pb.loadURDF("plane.urdf")
 pb.resetBasePositionAndOrientation(planeId,(0,0,-20),pb.getQuaternionFromEuler((0,0,0,)))
 import random
 robj=[]
-def set_random_objects():
-    random.seed(0)
-    for _ in range(400):
-        urdf = "random_urdfs/{0:03d}/{0:03d}.urdf".format(random.randint(1,1000)) 
-        x = (random.random()-0.5)*5
-        y = (random.random()-0.5)*5
-        z = (random.random())*-10
-        obj = pb.loadURDF(urdf,basePosition=[x,y,z],globalScaling=3,baseOrientation=[random.random() for _ in range(4)])
-        robj.append(obj)
-        print('---loading--',urdf,x,y)
-        #pb.resetBasePositionAndOrientation(obj,(x,y,z),pb.getQuaternionFromEuler((0,0,0,)))
-
-set_random_objects()
+#set_random_objects()
 keep_running = True
+
+def MatDsym2pybullet(x,y,z,yaw,pitch,roll):
+    M=np.zeros((4,4))
+    M[:3,:3]=R.from_euler('ZYX',(yaw,pitch,roll),degrees=False).as_matrix()
+    M[:,3]=[x,y,z,1]
+    MI=np.linalg.inv(M)
+    return M,MI
+
+
+def translateQuatfromM(M):
+    quat=R.from_matrix(M[:3,:3]).as_quat()
+    t=M[:3,3]
+    #print('==',t)
+    return t.tolist(),quat.tolist()
+
+def translateM(dx,dy,dz):
+    T=np.eye(4)
+    T[:,3]=(dx,dy,dz,1)
+    return T
+
+
 
 def getrov():
 
     shift = [0, -0.0, 0]
-    meshScale = np.array([0.01, 0.01, 0.01])*0.3
-    vfo=pb.getQuaternionFromEuler(np.deg2rad([90, 0, 0]))
+    meshScale = np.array([0.01, 0.01, 0.01])*0.2
+    vfo=pb.getQuaternionFromEuler(np.deg2rad([-90, 0, 90]))
     visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
                                         fileName="br1.obj",
                                         rgbaColor=[1, 0, 0, 1],
@@ -84,6 +101,7 @@ def getrov():
                           basePosition=[0,0,0],
                           useMaximalCoordinates=True)
     return boxId
+
 
 def _get_next_state(curr_q,curr_u,control,dt,lamb):
     forces=control
@@ -112,25 +130,23 @@ def get_next_state(curr_q,curr_u,control,dt,lamb):
     return next_q,next_u
 
 
-def translateM(M,dx,dy,dz):
-    T = np.zeros((4,4),dtype=float)
-    T[np.diag_indices(4)]=1.0
-    T[0,3]=dx
-    T[1,3]=dy
-    T[2,3]=dz
-    #VM = T @ np.array(M).reshape((4,4)) 
-    VM =  np.array(M).reshape((4,4)) @ T.T
-    VM = VM.flatten().tolist()
-    return VM
-
 def resize(img,factor):
     h,w = img.shape[:2]
     return cv2.resize(img,(int(w*factor),int(h*factor)))
 
+def hsv_range_scale(rgbImg,depthImg):
+    hsv = cv2.cvtColor(rgbImg,cv2.COLOR_BGR2HSV)
+    hsv[:,:,0]=(np.clip(10*(1-depthImg),0,1)*hsv[:,:,0].astype('float')).astype('uint8')
+    #hsv[:,:,0]=255
+    rgbImg = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
+    rgbImg = cv2.blur(rgbImg,(3,3))
+    return rgbImg
+
+
 def main():
     cnt=0
     frame_cnt=0
-    frame_ratio=6 # for 6 sim cycles 1 video frame
+    frame_ratio=1 # for 6 sim cycles 1 video frame
     resize_fact=0.5
     mono=False
     imgl = None
@@ -138,81 +154,73 @@ def main():
     curr_u = np.zeros(6)
     current_command = np.zeros(8)
 
-    dvl_offset=np.zeros(3)
-    dvl_angle_offsets=np.zeros(3)
-    dvl_cmd=None
-
     if render==pb.GUI:
         boxId = getrov()
+    
+    scene = getscene()
+
+    last_fps_print=time.time()
 
     while keep_running:
         tic_cycle = time.time()
-        socks = zmq.select(subs_socks,[],[],0.001)[0]
-        for sock in socks:
-            data = sock.recv_multipart()
+        while len(zmq.select([zmq_sub],[],[],0.001)[0])>0:
+            data = zmq_sub.recv_multipart()
             topic=data[0]
             if topic==zmq_topics.topic_thrusters_comand:
                 _,current_command=pickle.loads(data[1])
                 current_command=[i*1.3 for i in current_command]
             if topic==zmq_topics.topic_dvl_cmd:
-                dvl_cmd=data[1]
+                dvlSim.reset()
 
         next_q,next_u=get_next_state(curr_q,curr_u,current_command,dt,lamb)
         next_q,next_u=next_q.flatten(),next_u.flatten()
         curr_q,curr_u=next_q,next_u
+        dvlSim.update(curr_q,curr_u)
 
         ps={}
-        #print('dsim {:4.2f} {:4.2f} {:4.2f} {:3.1f} {:3.1f} {:3.1f}'.format(*curr_q),current_command)
-        ps['posx'],ps['posy'],ps['posz']=curr_q[:3]
-        yaw,roll,pitch = curr_q[3:]
-        ps['yaw'],ps['roll'],ps['pitch']=np.rad2deg(curr_q[3:])
-        #ps['yaw']=-ps['yaw']
-        #ps['posy']=-ps['posy']
-    #ps['pitch']=-ps['pitch'] 
-        #ps['roll']=-ps['roll']
-        #pub_pos_sim.send_multipart([xzmq_topics.topic_sitl_position_report,pickle.dumps((time.time(),curr_q))])
-        zmq_pub.send_multipart([ue4_zmq_topics.topic_sitl_position_report,pickle.dumps(ps)])
-        px,py,pz=ps['posx'],ps['posy'],ps['posz']
+        Mdsym, MdsymI=MatDsym2pybullet(*curr_q[:6])
 
         if cnt%frame_ratio==0:
-            #print('====',yaw,pitch,roll)
-            #first camera
-            yawd,pitchd,rolld=ps['yaw'],ps['roll'],ps['pitch']
-            VM = pb.computeViewMatrixFromYawPitchRoll((py,px,-pz),-0.1,-yawd,pitchd,rolld,2)
-            if not mono:
-                VML=translateM(VM,0.1,0,0.0)#left camera 0.2 for left 
-            else:
-                VML=VM
-            PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
+            bl=0.0 if mono else 0.065
+            CM = np.array(pb.computeViewMatrix((0,-0,0),(1,-0,0),(0,-0,-1))).reshape((4,4),order='F')
+            #VML= CM @ MdsymI
+            VML= CM @ translateM(0,bl,0) @ MdsymI
+
+            #VM = pb.computeViewMatrixFromYawPitchRoll(pos,0.1,*pb.getEulerFromQuaternion(quat),2)
+            #print('===',len(VML))
+            PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=100)
             w = int(config.cam_res_rgbx*resize_fact)
             h = int(config.cam_res_rgby*resize_fact)
             width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
                 width=w, 
                 height=h,
-                viewMatrix=VML,
-                projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL)
-                    #get images from py bullet
-            imgl=resize(rgbImg[:,:,:3],1/resize_fact)#inly interested in rgb
-            #print('===',imgl.shape)
+                viewMatrix=VML.flatten('F').tolist(),
+                projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL,
+                lightColor=(0,0,1))
+            #cv2.circle(rgbImg,(w//2,h//2),8,(225,255,0),2)
+
+            ##experimental
+            rgbImg = hsv_range_scale(rgbImg,depthImg)
+
+            imgl=resize(rgbImg[:,:,[2,1,0]],1/resize_fact)#inly interested in rgb
+            #print('max...',depthImg.max(),depthImg.min())
+            #hsv[:,:,0]=
 
             #second camera
             if not mono:
-                #VM = pb.computeViewMatrixFromYawPitchRoll((py,px,-pz),1.0,-yawd,pitchd,rolld,2)
-                VMR=translateM(VM,-0.10,0.00,0.0)#left camera 0.2 for left 
+                #CM = np.array(pb.computeViewMatrix((0,bl,0),(1,bl,0),(0,0,-1))).reshape((4,4),order='F')
+                VMR=CM @ translateM(0,-bl,0) @ MdsymI #left camera 0.2 for left 
                 PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
                 width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
                     width=w, 
                     height=h,
-                    viewMatrix=VMR,
+                    viewMatrix=VMR.flatten('F').tolist(),
                     projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL)
-                imgr=resize(rgbImg[:,:,:3],1/resize_fact) #todo...
-                        
+            
+                rgbImg = hsv_range_scale(rgbImg,depthImg)
+                imgr=resize(rgbImg[:,:,[2,1,0]],1/resize_fact) #todo...
 
             if cvshow:
-                #if 'depth' in topic:
-                #    cv2.imshow(topic,img)
-                #else:
-                #cv2.imshow(topic,cv2.resize(cv2.resize(img,(1920/2,1080/2)),(512,512)))
                 imgls = imgl[::2,::2]
                 imgrs = imgr[::2,::2]
                 cv2.imshow('l',imgls)
@@ -223,7 +231,7 @@ def main():
             else:
                 zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),imgl.tostring(),imgr.tostring()])
             time.sleep(0.001) 
-            zmq_pub_ts.send_multipart([zmq_topics.topic_stereo_camera_ts,pickle.dumps((frame_cnt,time.time(),time.time()))]) #for sync
+            zmq_pub.send_multipart([zmq_topics.topic_stereo_camera_ts,pickle.dumps((frame_cnt,time.time()))]) #for sync
                 
             #get depth image
             depthImg=depthImg[::4,::4]
@@ -234,25 +242,20 @@ def main():
             depthImg[depthImg>5000]=np.nan
             max_range=np.nanmax(depthImg)
             #print('sonar::',min_range,max_range)
-            tosend = pickle.dumps({'ts':time.time(), 'sonar':[(min_range + max_range) / 2, 1.0]})
-            pub_sonar.send_multipart([zmq_topics.topic_sonar,tosend])
+            pub_sonar.send_multipart([zmq_topics.topic_sonar,pickle.dumps([min_range,max_range])])
 
             if cvshow:
                 cv2.imshow('depth',img_show)
                 cv2.waitKey(1)
             frame_cnt+=1
 
-            #print('====',px,py,pz,roll,pitch,yaw)
-            #pb.resetBasePositionAndOrientation(boxId,(px,py,pz),pb.getQuaternionFromEuler((roll,pitch,yaw)))
             if render==pb.GUI:
-                pb.resetBasePositionAndOrientation(boxId,(py,px,-pz),pb.getQuaternionFromEuler((roll,-pitch,-yaw+np.radians(0))))
+                tr,qu = translateQuatfromM(Mdsym) 
+                pb.resetBasePositionAndOrientation(boxId,tr,qu)
             ### test
             tic=time.time()
             imu={'ts':tic}
             imu['yaw'],imu['pitch'],imu['roll']=np.rad2deg(curr_q[3:])
-            #rates from dsym notebook
-            #R.ang_vel_in(R).express(R).to_matrix(R)
-            #good video in https://www.youtube.com/watch?v=WZEFoWP0Tzs
             q3,q4,q5=curr_q[3:]
             u3,u4,u5=curr_u[3:]
             imu['rates']=(
@@ -262,38 +265,17 @@ def main():
             pub_imu.send_multipart([zmq_topics.topic_imu,pickle.dumps(imu)])
             pub_depth.send_multipart([zmq_topics.topic_depth,pickle.dumps({'ts':tic,'depth':curr_q[2]})])
 
-            if cnt%1==0:
-                vx,vy,vz = curr_u[:3]
-                #simulate dvl messgaes
-                yaw_off=-dvl_angle_offsets[0]#-np.pi/2
-                c,s = np.cos(yaw_off),np.sin(yaw_off)
-                vx,vy = vx*c-vy*s,vx*s+vy*c
-                vel_msg='wrz,{},{},{},y,1.99,0.006,3.65e-05;3.39e-06;7.22e-06;3.39e-06;2.46e-06;-8.5608e-07;7.223e-06;-8.560e-07;3.2363e-06,1550139816188624,1550139816447957,188.80,0*XX\r\n'.format(vx,vy,vz).encode()
-                pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':vel_msg})])
-                d=parse_line(vel_msg)
-                pub_dvl.send_multipart([zmq_topics.topic_dvl_vel, pickle.dumps(d)])
+        if cnt%5==0:
+            tic=time.time()
+            pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':dvlSim.dvl_pos_msg()})])
+            pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':dvlSim.dvl_vel_msg()})])
 
-            if cnt%1==0:
-                x,y,z=curr_q[:3]-dvl_offset
-                yaw_off=-dvl_angle_offsets[0]#-np.pi/2
-                c,s = np.cos(yaw_off),np.sin(yaw_off)
-                x,y = x*c-y*s,x*s+y*c
+        #time.sleep(0.100)
+        time.sleep(0.01)
 
-                pos_msg='wrp,1550139816.178,{},{},{},{},2.5,-3.7,-62.5,0*XX\r\n'.\
-                        format(x,y,z,100).encode()
-                pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':pos_msg})])
-        
-        if dvl_cmd is not None:
-            if dvl_cmd==b'wcr\n':
-                print('got dvl reset')
-                dvl_offset=curr_q[:3]
-                dvl_angle_offsets=curr_q[3:]
-            dvl_cmd=None
-
-
-        time.sleep(0.010)
         if cnt%20==0 and imgl is not None:
-            print('send...',cnt, imgl.shape)
+            print('send...',cnt, imgl.shape, 'fps=%.1f'%(20/(time.time()-last_fps_print)))
+            last_fps_print=time.time()
         cnt+=1
 
 

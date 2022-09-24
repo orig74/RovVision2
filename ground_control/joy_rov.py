@@ -23,6 +23,7 @@ except pygame.error:
     screen = pygame.display.set_mode((300, 300))
     joystick=None
     axes=None
+    sys.exit(0)
 
 clock = pygame.time.Clock()
 
@@ -58,7 +59,8 @@ while not done:
                 buttons = [joystick.get_button(i) for i in range(n_buttons)]
                 pub(zmq_topics.topic_button,pickle.dumps(buttons))
 
-            if event.type in [pygame.KEYDOWN,pygame.KEYUP]: 
+            if 0 and event.type in [pygame.KEYDOWN,pygame.KEYUP]: 
+                print('got key event')
                 axes_vals = [0 for i in range(8)]
                 buttons = [0 for i in range(10)]
                 #https://www.pygame.org/docs/ref/key.html

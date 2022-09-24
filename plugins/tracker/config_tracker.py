@@ -6,12 +6,13 @@ stereo_corr_params = {'ws':(128,128),'sxl':250+50+200,'sxr':0,'ofx':100 ,'sxl2':
 fov=60.97
 diff_range_valid=1.0
 clear_freqs=5
-max_diff_cols=50
+#max_diff_cols=50
+max_diff_cols=150
 ignore_extrema_type=False
 
 pixelwidthx = 960
 pixelwidthy = 600  
-baseline = 0.100 # (240-100)*.1scale in cm from unreal engine
+baseline = 0.065 # (240-100)*.1scale in cm from unreal engine
 focal_length=pixelwidthx/( np.tan(np.deg2rad(fov/2)) *2 )
 camera_pitch=0
 

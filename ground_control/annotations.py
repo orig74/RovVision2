@@ -137,10 +137,10 @@ def draw_mono(img,message_dict,fmt_cnt_l):
     if zmq_topics.topic_depth in message_dict:
         target_depth = message_dict.get(zmq_topics.topic_depth_hold_pid,{}).get('T',0)
         draw_depth(img,0,0,message_dict[zmq_topics.topic_depth]['depth'],target_depth)
-    if zmq_topics.topic_sonar in message_dict:
-        sonar_rng = message_dict[zmq_topics.topic_sonar]
-        line=' {:>.2f},{:>.2f} SRng'.format(*sonar_rng)
-        cv2.putText(img,line,(sy(450),sx(560+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+    #if zmq_topics.topic_sonar in message_dict:
+    #    sonar_rng = message_dict[zmq_topics.topic_sonar]
+    #    line=' {:>.2f},{:>.2f} SRng'.format(*sonar_rng)
+    #    cv2.putText(img,line,(sy(450),sx(560+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
     if zmq_topics.topic_record_state in message_dict:
         if message_dict[zmq_topics.topic_record_state]:
             cv2.putText(img,'REC',(sy(10),sx(20)), font, 0.7,(0,0,255),2,cv2.LINE_AA)
@@ -160,16 +160,34 @@ def draw_mono(img,message_dict,fmt_cnt_l):
         line='{:>.2f} TRng'.format(rng)
         cv2.putText(img,line,(sy(350),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
 
-    if zmq_topics.topic_volt in message_dict:
-        v=message_dict[zmq_topics.topic_volt]['V']
-        i=message_dict[zmq_topics.topic_volt]['I']
-        line='{:>.2f}V {:>.2f}I'.format(v,i)
-        cv2.putText(img,line,(sy(50),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+    #if zmq_topics.topic_volt in message_dict:
+    #    v=message_dict[zmq_topics.topic_volt]['V']
+    #    i=message_dict[zmq_topics.topic_volt]['I']
+    #    line='{:>.2f}V {:>.2f}I'.format(v,i)
+    #    cv2.putText(img,line,(sy(50),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
 
+    if zmq_topics.topic_telem in message_dict:
+        v=message_dict[zmq_topics.topic_telem]['V']
+        i=message_dict[zmq_topics.topic_telem]['I']
+        leak=message_dict[zmq_topics.topic_telem]['leak']
+        if leak:
+            pos=(90, 90)
+            cv2.circle(img, pos, 52, (0, 0, 255), -1)
+            cv2.putText(img,"LEAK!",(pos[0]-42, pos[1]+10), font, 1.0,(255,255,255),3,cv2.LINE_AA)
+        line='{:>.2f}V {:>.2f}I'.format(v,i)
+        cv2.putText(img,line,(sy(50),sx(600+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+ 
     if zmq_topics.topic_hw_stats in message_dict:
         line=hw_stats_tools.get_hw_str(message_dict[zmq_topics.topic_hw_stats][1])
         cv2.putText(img,line,(sy(670+500),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
-
+    if zmq_topics.topic_thrusters_comand in message_dict:
+        thrst_cmnd = message_dict[zmq_topics.topic_thrusters_comand][1]
+        #try:
+        #    print('drawing thrusters...')
+        draw_thrusters(img, (650, 350), thrst_cmnd)
+        #except Exception as e:
+        #    print('draw_thrusters error',e)
+ 
 from math import cos,sin,pi
 def draw_compass(img,x,y,heading,pitch,roll,rr=50.0):
     font = cv2.FONT_HERSHEY_SIMPLEX

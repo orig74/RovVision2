@@ -43,6 +43,7 @@ thruster_limit=1.0
 
 viewer_blacks=(50,100)
 
+save_modulo=5
 
 if __name__=='__main__':
     #for bash scripts to get state

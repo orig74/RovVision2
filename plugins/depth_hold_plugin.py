@@ -14,8 +14,13 @@ import zmq_wrapper
 import zmq_topics
 from joy_mix import Joy_map
 from config_pid import depth_pid
+import os
 from pid import PID
 from filters import ab_filt
+
+def printer(txt,c=None):
+    print('printing:',txt)
+    printer_source.send_pyobj({'txt':txt,'c':c})
 
 async def recv_and_process():
     keep_running=True
@@ -45,6 +50,8 @@ async def recv_and_process():
                 if 'DEPTH_HOLD' in system_state['mode']:
                     if pid is None:
                         pid=PID(**depth_pid)
+                        if os.path.isfile('depth_pid.json'):
+                            pid.load('depth_pid.json')
                     else:
                         ud_command = pid(depth,target_depth,rate,0)
                         debug_pid = {'P':pid.p,'I':pid.i,'D':pid.d,'C':ud_command,'T':target_depth,'N':depth,'TS':new_depth_ts}
@@ -62,6 +69,21 @@ async def recv_and_process():
                 jm.update_axis(data)
                 if abs(jm.joy_mix()['ud']) > config.joy_dtarget_min:
                     target_depth=depth
+
+            if topic==zmq_topics.topic_remote_cmd:
+                print('=== cmd ===',data)
+                if data['cmd']=='depth':
+                    if data['rel']:
+                        target_depth+=data['depth']
+                    else:
+                        target_depth=data['depth']
+
+                if data['cmd']=='exec' and data['script']==os.path.basename(__file__):
+                    try:
+                        exec(data['torun'])
+                    except Exception as E:
+                        print('Error in exec command: ',E,data['torun'])
+
 
             if topic==zmq_topics.topic_imu:
                 pitch,roll=data['pitch'],data['roll']
@@ -83,9 +105,11 @@ if __name__=='__main__':
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_imu],zmq_topics.topic_imu_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_depth],zmq_topics.topic_depth_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
+    subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_remote_cmd],zmq_topics.topic_remote_cmd_port))
 
     ### plugin outputs
     thrusters_source = zmq_wrapper.push_source(zmq_topics.thrusters_sink_port)
+    printer_source = zmq_wrapper.push_source(zmq_topics.printer_sink_port)
     pub_sock = zmq_wrapper.publisher(zmq_topics.topic_depth_hold_port)
 
 
