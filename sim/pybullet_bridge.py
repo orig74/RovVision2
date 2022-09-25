@@ -184,7 +184,7 @@ def main():
             bl=0.0 if mono else 0.065
             CM = np.array(pb.computeViewMatrix((0,-0,0),(1,-0,0),(0,-0,-1))).reshape((4,4),order='F')
             #VML= CM @ MdsymI
-            VML= CM @ translateM(0,bl,0) @ MdsymI
+            VML= CM @ translateM(0,bl/2,0) @ MdsymI
 
             #VM = pb.computeViewMatrixFromYawPitchRoll(pos,0.1,*pb.getEulerFromQuaternion(quat),2)
             #print('===',len(VML))
@@ -209,7 +209,7 @@ def main():
             #second camera
             if not mono:
                 #CM = np.array(pb.computeViewMatrix((0,bl,0),(1,bl,0),(0,0,-1))).reshape((4,4),order='F')
-                VMR=CM @ translateM(0,-bl,0) @ MdsymI #left camera 0.2 for left 
+                VMR=CM @ translateM(0,-bl/2,0) @ MdsymI #left camera 0.2 for left 
                 PM = pb.computeProjectionMatrixFOV(fov=60.0,aspect=1.0,nearVal=0.1,farVal=1000)
                 width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
                     width=w, 
