@@ -94,6 +94,9 @@ class Plotter(object):
         self.ax1.grid('on')
         self.canvas.draw()
 
+    def center(self):
+        gdata.map_center = gdata.curr_pos[:]
+
     def update_dvl_data(self,ldata,target_pos=None,yaw_deg=None):
         if ldata is not None and ldata['type']=='deadreacon':
             #new_data=True

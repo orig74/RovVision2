@@ -118,7 +118,7 @@ def main():
             ]
 
     plot_options=['DEPTH','X_HOLD','Y_HOLD','YAW','PITCH','ROLL']
-    matplot_column = [
+    matplot_column1 = [
         [sg.Text('Plot Type:'),sg.Combo(plot_options,key='-PLOT-TYPE-',default_value=plot_options[0]),
             sg.Button('P+'),sg.Button('P-'),
             sg.Button('I+'),sg.Button('I-'),
@@ -127,11 +127,19 @@ def main():
             sg.Button('S',key='SAVE_PID'),
             ],
         #[ sg.Canvas(key="-CANVAS-", size=(300,200)), sg.Canvas(key="-TRACE-CANVAS-", size=(300,300))]]
-        [ sg.Canvas(key="-CANVAS-", size=(10,20)), sg.Canvas(key="-TRACE-CANVAS-", size=(20,20))]]
+        [sg.Canvas(key="-CANVAS-", size=(300,300))]
+        ]
+
+    matplot_column2 = [
+        [sg.Button('C',key='CENTER_TRACE',tooltip='center trace')],
+        [sg.Canvas(key="-TRACE-CANVAS-", size=(300,300))]
+        ]
 
     row2_layout = [[
             #sg.Canvas(key="-CANVAS-", size=(500,500)),
-            sg.Column(matplot_column),
+            sg.Column(matplot_column1),
+            sg.VSeperator(),
+            sg.Column(matplot_column2),
             sg.VSeperator(),
             sg.Column(cmd_column,vertical_alignment='top'),
             sg.VSeperator(),
@@ -148,7 +156,7 @@ def main():
             layout, finalize=True, 
             no_titlebar=False,#scale_screen,
             element_justification='left', 
-            font='Helvetica 9' if scale_screen else 'Helvetica 12',
+            font='Helvetica 9' if scale_screen else 'Helvetica 10',
             size=(1600,900) if scale_screen else (1920,1080))
     if scale_screen:
         window.Maximize()
@@ -265,8 +273,8 @@ def main():
 
         if not values['MISSION_PAUSE']:
             track_thread.run(float(values['Lrange']),float(values['Pxy']))
-        
-        cnt+=1
+        if event=='CENTER_TRACE':
+            trace_plotter.center()
 
         if values['-PLOT-TYPE-']=='DEPTH':
             plotter.update_pid(rovHandler.plot_buffers[zmq_topics.topic_depth_hold_pid])
@@ -292,6 +300,7 @@ def main():
         if zmq_topics.topic_imu in rov_telem:
             current_yaw_deg = rov_telem[zmq_topics.topic_imu]['yaw']
 
+        cnt+=1
     window.close()
 if __name__ == "__main__":
     main()
