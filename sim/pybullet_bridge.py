@@ -136,12 +136,19 @@ def resize(img,factor):
 
 def hsv_range_scale(rgbImg,depthImg):
     hsv = cv2.cvtColor(rgbImg,cv2.COLOR_BGR2HSV)
-    hsv[:,:,0]=(np.clip(10*(1-depthImg),0,1)*hsv[:,:,0].astype('float')).astype('uint8')
-    #hsv[:,:,0]=255
-    rgbImg = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
-    rgbImg = cv2.blur(rgbImg,(3,3))
-    return rgbImg
 
+    #from matplotlib import pyplot as plt
+    #plt.imshow(depthImg)
+    #plt.show()
+    #fff
+
+    #hsv[:,:,0]=(np.clip(10*(1-depthImg),0.0,1)*hsv[:,:,0].astype('float')).astype('uint8')
+    hsv[depthImg>0.94,0]=0
+    #hsv[depthImg<0.94,0]=255
+    #hsv[:,:,0]=255
+    rgbImg = cv2.cvtColor(hsv,cv2.COLOR_HSV2RGB)
+    #rgbImg = cv2.blur(rgbImg,(3,3))
+    return rgbImg
 
 def main():
     cnt=0
