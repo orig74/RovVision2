@@ -146,7 +146,7 @@ def main():
     
     window = sg.Window("ROV Viewer", 
             layout, finalize=True, 
-            no_titlebar=scale_screen,
+            no_titlebar=False,#scale_screen,
             element_justification='left', 
             font='Helvetica 9' if scale_screen else 'Helvetica 12',
             size=(1600,900) if scale_screen else (1920,1080))
