@@ -10,8 +10,8 @@ clear_freqs=5
 max_diff_cols=150
 ignore_extrema_type=False
 
-pixelwidthx = 960
-pixelwidthy = 600  
+pixelwidthx = 2464//4
+pixelwidthy = 2056//4  
 baseline = 0.065 # (240-100)*.1scale in cm from unreal engine
 focal_length=pixelwidthx/( np.tan(np.deg2rad(fov/2)) *2 )
 camera_pitch=0

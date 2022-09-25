@@ -7,6 +7,7 @@ camera_setup='stereo' #'mono'
 
 if rov_type==1:
     cam_resx,cam_resy=1920,1200
+    #cam_resx,cam_resy=1280,1024
     cam_res_rgbx,cam_res_rgby=cam_resx//2,cam_resy//2
     reverse_camera_order=True
 if rov_type==2:
@@ -19,8 +20,9 @@ if rov_type==3:
     camera_setup='mono' #'mono'
 if rov_type==4:
     #cam_resx,cam_resy=1280,1024
-    cam_resx,cam_resy=616*2,514*2
-    cam_res_rgbx,cam_res_rgby=616,514
+    #original cam res in beyer format 2464x2056
+    cam_resx,cam_resy=2464//2,2056//2
+    cam_res_rgbx,cam_res_rgby=cam_resx//2,cam_resy//2
 
 cam_fps=10
 send_modulo=1

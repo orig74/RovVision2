@@ -11,6 +11,8 @@ import socket
 import pickle
 import json
 
+from screeninfo import get_monitors
+
 sys.path.append('../onboard')
 sys.path.append('../hw')
 sys.path.append('../utils')
@@ -34,7 +36,7 @@ from plttk_tracer import Plotter as TracePlotter
 import zmq_topics
 from farm_track_thread import FarmTrack as TrackThread
 
-scale_screen=0.8
+scale_screen=get_monitors()[0].width==1600
 #scale_screen=None
 
 
@@ -71,10 +73,8 @@ def main():
     rovHandler = rovDataHandler(None,printer=printer)
     rovCommander = rovCommandHandler()
     track_thread = TrackThread(rov_comander=rovCommander,rov_data_handler=rovHandler,printer=printer)
-    im_size = (960,600) 
-    if scale_screen:
-        #im_size = (int(im_size[0]*scale_screen),int(im_size[1]*scale_screen))
-        im_size = (616,514)
+    #im_size = (960,600) 
+    im_size = (616,514)
     row1_layout = [[
         sg.Graph(im_size, graph_bottom_left=(0, im_size[1]), graph_top_right=(im_size[0],0) ,key="-MAIN-IMAGE-",
             change_submits=True,
@@ -146,9 +146,12 @@ def main():
     
     window = sg.Window("ROV Viewer", 
             layout, finalize=True, 
+            no_titlebar=scale_screen,
             element_justification='left', 
             font='Helvetica 9' if scale_screen else 'Helvetica 12',
-            size=(1600,860) if scale_screen else (1920,1080))
+            size=(1600,900) if scale_screen else (1920,1080))
+    if scale_screen:
+        window.Maximize()
             #size=(1600,900))
     #window['-MAIN-IMAGE-'].bind('<Button-1>','')
     plotter = Plotter(window["-CANVAS-"].TKCanvas)

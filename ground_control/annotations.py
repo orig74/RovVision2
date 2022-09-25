@@ -184,7 +184,7 @@ def draw_mono(img,message_dict,fmt_cnt_l):
         thrst_cmnd = message_dict[zmq_topics.topic_thrusters_comand][1]
         #try:
         #    print('drawing thrusters...')
-        draw_thrusters(img, (650, 350), thrst_cmnd)
+        draw_thrusters(img, (50, 50), thrst_cmnd)
         #except Exception as e:
         #    print('draw_thrusters error',e)
  
