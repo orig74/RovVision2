@@ -5,7 +5,8 @@ class FarmTrack(object):
     def __init__(self,iterations=1,rov_comander=None,rov_data_handler=None,printer=None):
         self.printer=printer
         self.auto_next=False
-        self.horizontal_slide=3.0
+        self.horizontal_slide=2.7
+        self.back_slide=-0.2
         self.target_depth_up=0.5
         self.target_depth_down=1.0
         self.rov_comander=rov_comander
@@ -78,7 +79,7 @@ class FarmTrack(object):
 
         if states[self.state_ind]=='slide':
             self.rov_comander.go((
-                self.last_rope_xy[0],self.last_rope_xy[1]+self.horizontal_slide),relative=False)
+                self.last_rope_xy[0]+self.back_slide,self.last_rope_xy[1]+self.horizontal_slide),relative=False)
             if self.__target_xy_achived() and self.done_step:
                 self.rov_comander.lock_max()
                 self.__inc_step()
