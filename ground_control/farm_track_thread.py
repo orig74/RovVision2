@@ -5,7 +5,7 @@ class FarmTrack(object):
     def __init__(self,iterations=1,rov_comander=None,rov_data_handler=None,printer=None):
         self.printer=printer
         self.auto_next=False
-        self.horizontal_slide=2.7
+        self.horizontal_slide=0.8
         self.back_slide=-0.2
         self.target_depth_up=0.5
         self.target_depth_down=1.0

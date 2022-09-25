@@ -123,7 +123,7 @@ def scale_thrust(control):
 def get_next_state(curr_q,curr_u,control,dt,lamb):
     control = np.clip(control,-1,1)
     forces=scale_thrust(control)
-    currents_vector = [0,0.1,0]
+    currents_vector = [0,0.3,0]
     u_dot_f=lamb(curr_q,curr_u,*forces,*currents_vector).flatten()
     next_q=curr_q+curr_u*dt
     next_u=curr_u+u_dot_f*dt

@@ -73,6 +73,7 @@ def main():
     rovHandler = rovDataHandler(None,printer=printer)
     rovCommander = rovCommandHandler()
     track_thread = TrackThread(rov_comander=rovCommander,rov_data_handler=rovHandler,printer=printer)
+    last_heartbit=time.time()
     #im_size = (960,600) 
     im_size = (616,514)
     row1_layout = [[
@@ -259,7 +260,9 @@ def main():
         if event=='Ml':
             rovCommander.lock_max()
 
-        if (cnt%(1000//20))==0:
+        #if (cnt%(1000//20))==0:
+        if time.time()-last_heartbit>2.0:
+            last_heartbit=time.time()
             rovCommander.heartbit()
 
         if event=='Ms':

@@ -31,8 +31,8 @@ def gen_rope(x,y):
     scl=1/dia*0.3
     meshScale = np.array([scl,0.2,scl]) #30 cm width
     for i in range(20):
-        for _ in [0,1,2]:
-            vfo=pb.getQuaternionFromEuler(np.deg2rad([90+rand(0,3), rand(0,3), i*30]))
+        for _ in range(2):
+            vfo=pb.getQuaternionFromEuler(np.deg2rad([90+rand(0,2), rand(0,2), i*30]))
             visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
                                             fileName="pybullet_data/mussle_rope_part.obj",
                                             visualFramePosition=[0,0,0],
@@ -74,7 +74,7 @@ def getscene():
                           useMaximalCoordinates=True))
     for j in range(2):
         for i in range(5):
-            ret+=gen_rope(2+j*6,i*3)
+            ret+=gen_rope(2+j*3,i*1)
 
     return ret
 
