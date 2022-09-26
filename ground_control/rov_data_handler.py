@@ -123,7 +123,7 @@ class rovCommandHandler(object):
     #pickle.dump([time.time()-start_time,topic,data],joy_log,-1)
 
 class rovDataHandler(object):
-    def __init__(self, rovViewer,printer):
+    def __init__(self, rovViewer,printer,args):
         self.subs_socks=[]
         self.subs_socks.append(utils.subscribe([zmq_topics.topic_thrusters_comand,zmq_topics.topic_system_state, zmq_topics.topic_lights],zmq_topics.topic_controller_port))
         self.subs_socks.append(utils.subscribe([zmq_topics.topic_button, zmq_topics.topic_hat], zmq_topics.topic_joy_port))
@@ -163,6 +163,7 @@ class rovDataHandler(object):
         self.data_file_fd=None
         self.jm=Joy_map()
         self.pub_record_state = utils.publisher(zmq_topics.topic_record_state_port)
+        self.args=args
 
         self.plot_buffers = {
             zmq_topics.topic_depth_hold_pid: CycArr(),
@@ -214,7 +215,7 @@ class rovDataHandler(object):
                     fds=[]
                     #datestr=sensor_gate_data['record_date_str']
                     datestr=self.record_state
-                    save_path=args.data_path+'/'+datestr
+                    save_path=self.args.data_path+'/'+datestr
                     if not os.path.isdir(save_path):
                         os.mkdir(save_path)
                     for i in [0,1]:

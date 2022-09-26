@@ -29,6 +29,13 @@ import image_enc_dec
 import argparse
 import matplotlib.pyplot as plt
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--data_path", help="path for data" , default='../../data')
+parser.add_argument("--pub_data", help="publish data", action='store_true')
+parser.add_argument("--depth", help="Display Depth", action='store_true')
+args = parser.parse_args()
+
+
 from rov_data_handler import rovDataHandler,rovCommandHandler
 from plttk import Plotter
 from plttk_tracer import Plotter as TracePlotter
@@ -70,7 +77,7 @@ def printer(text,color=None):
     sg.cprint(text,c='black on white')
 
 def main():
-    rovHandler = rovDataHandler(None,printer=printer)
+    rovHandler = rovDataHandler(None,printer=printer,args=args)
     rovCommander = rovCommandHandler()
     track_thread = TrackThread(rov_comander=rovCommander,rov_data_handler=rovHandler,printer=printer)
     last_heartbit=time.time()
