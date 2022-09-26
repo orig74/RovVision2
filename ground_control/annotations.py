@@ -153,7 +153,7 @@ def draw_mono(img,message_dict,fmt_cnt_l):
     #    cv2.putText(img,line,(sy(450),sx(560+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
     if zmq_topics.topic_record_state in message_dict:
         if message_dict[zmq_topics.topic_record_state]:
-            cv2.putText(img,'REC',(sy(10),sx(20)), font, 0.7,(0,0,255),2,cv2.LINE_AA)
+            cv2.putText(img,'REC',(sy(10),sx(40)), font, 0.7,(0,0,255),2,cv2.LINE_AA)
     if zmq_topics.topic_system_state in message_dict:
         ss = message_dict[zmq_topics.topic_system_state][1]
         cv2.putText(img,'ARM' if ss['arm'] else 'DISARM' \

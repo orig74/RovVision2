@@ -73,8 +73,14 @@ class rovCommandHandler(object):
     def lights_inc(self,):
         self.pub({'cmd':'lights+'})
 
-    def lights_dec(self,):
+    def lights_dec(self):
         self.pub({'cmd':'lights-'})
+
+#    def start_recording(self):
+#        self.pub({'cmd':'start_recording'})
+#
+#    def start_recording(self):
+#        self.pub({'cmd':'stop_recording'})
 
     def update_pid(self,pid_type,target,mult):
         print('updateing pid ',pid_type,target,mult)
@@ -264,7 +270,15 @@ class rovDataHandler(object):
 
     def get_target_depth(self):
         return self.telemtry.get(zmq_topics.topic_depth_hold_pid,{}).get('T',0)
- 
+
+    def toggle_recording(self):
+        if not self.record_state:
+            self.record_state=datetime.now().strftime('%y%m%d-%H%M%S') 
+        else:
+            self.record_state=False
+        self.pub_record_state.send_multipart([zmq_topics.topic_record_state,pickle.dumps(self.record_state)])
+        self.telemtry[zmq_topics.topic_record_state]=self.record_state
+
     def process_telem(self):
         message_dict={}
 

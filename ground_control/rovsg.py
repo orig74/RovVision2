@@ -110,6 +110,7 @@ def main():
 
     yaw_source_options=['VNAV','DVL']
     config_column = [
+            [sg.Button('REC')],
             [sg.Text('Yaw Source:'),sg.Combo(yaw_source_options,key='YAW_SOURCE',default_value=yaw_source_options[0])],
             [sg.Button('Reset-DVL'),sg.Button('Calib-DVL')],
             [sg.Button('CF+'),sg.Button('CF-')],
@@ -290,6 +291,9 @@ def main():
 
         if event=='Lights-':
             rovCommander.lights_dec()
+
+        if event=='REC':
+            rovHandler.toggle_recording()
 
         if values['-PLOT-TYPE-']=='DEPTH':
             plotter.update_pid(rovHandler.plot_buffers[zmq_topics.topic_depth_hold_pid])
