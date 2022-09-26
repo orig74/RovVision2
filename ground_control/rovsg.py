@@ -279,6 +279,12 @@ def main():
         if event=='CENTER_TRACE':
             trace_plotter.center()
 
+        if event=='Reset-DVL':
+            rovCommander.reset_dvl()
+
+        if event=='Calib-DVL':
+            rovCommander.calib_dvl()
+
         if values['-PLOT-TYPE-']=='DEPTH':
             plotter.update_pid(rovHandler.plot_buffers[zmq_topics.topic_depth_hold_pid])
         

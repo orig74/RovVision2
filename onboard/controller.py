@@ -19,6 +19,11 @@ subs_socks.append(utils.subscribe([zmq_topics.topic_imu],zmq_topics.topic_imu_po
 subs_socks.append(utils.subscribe([zmq_topics.topic_remote_cmd],zmq_topics.topic_remote_cmd_port))
 thruster_sink = utils.pull_sink(zmq_topics.thrusters_sink_port)
 subs_socks.append(thruster_sink)
+printer_source = utils.push_source(zmq_topics.printer_sink_port)
+
+def printer(txt,c=None):
+    print('printing:',txt)
+    printer_source.send_pyobj({'txt':txt,'c':c})
 
 
 
@@ -105,6 +110,14 @@ async def recv_and_process():
 
                     if data['cmd']=='z_hold':
                         togle_mode('RZ_HOLD')
+
+                    if data['cmd']=='dvl_reset':
+                        pub_sock.send_multipart([zmq_topics.topic_dvl_cmd,b'wcr\n'])
+                        printer('controller:\n send dvl reset')
+
+                    if data['cmd']=='dvl_calib':
+                        pub_sock.send_multipart([zmq_topics.topic_dvl_cmd,b'wcg\n'])
+                        printer('controller:\n send dvl calib')
 
                            
                 if topic==zmq_topics.topic_axes:

@@ -64,8 +64,11 @@ class rovCommandHandler(object):
     def vertical_object_lock(self,rng=0.32,Pxy=0.1):
         self.pub({'cmd':'tracker_vert_object_lock','range':rng,'Pxy':Pxy})
 
-    def vertical_object_unlock(self):
-        self.pub({'cmd':'tracker_vert_object_unlock'})
+    def calib_dvl(self):
+        self.pub({'cmd':'dvl_calib'})
+
+    def reset_dvl(self):
+        self.pub({'cmd':'dvl_reset'})
 
     def update_pid(self,pid_type,target,mult):
         print('updateing pid ',pid_type,target,mult)
@@ -103,7 +106,7 @@ class rovCommandHandler(object):
 
            
     def pub(self,data):
-        print('sending command ...',data)
+        #print('sending command ...',data)
         self.pub_sock.send_multipart([zmq_topics.topic_remote_cmd,pickle.dumps(data,protocol=3)])
     #pickle.dump([time.time()-start_time,topic,data],joy_log,-1)
 
