@@ -133,6 +133,10 @@ def draw_mono(img,message_dict,fmt_cnt_l):
     
     if 'dvl_deadrecon' in message_dict:
         dvl_yaw_deg=message_dict['dvl_deadrecon']['yaw']
+        dvl_pos_std=message_dict['dvl_deadrecon']['pos_std']
+        line=f'{dvl_pos_std:03.2f}Dstd'
+        cv2.putText(img,line,(sy(680),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+
     else:
         dvl_yaw_deg=None
 
