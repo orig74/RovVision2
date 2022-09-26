@@ -130,10 +130,16 @@ def draw_mono(img,message_dict,fmt_cnt_l):
         line+=' {:>.2f}Cfps, {:>.2f}Rfps'.format(cfps, cfps / config.save_modulo)
         print('fpsline',line)
         cv2.putText(img,line,(sy(10),sx(560+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+    
+    if 'dvl_deadrecon' in message_dict:
+        dvl_yaw_deg=message_dict['dvl_deadrecon']['yaw']
+    else:
+        dvl_yaw_deg=None
+
     if zmq_topics.topic_imu in message_dict:
         m=message_dict[zmq_topics.topic_imu]
         yaw,pitch,roll=m['yaw'],m['pitch'],m['roll']
-        draw_compass(img,img.shape[1]//2,img.shape[0]//2,yaw,pitch,roll,rr=150.0)
+        draw_compass(img,img.shape[1]//2,img.shape[0]//2,yaw,pitch,roll,rr=150.0,yaw2=dvl_yaw_deg)
     if zmq_topics.topic_depth in message_dict:
         target_depth = message_dict.get(zmq_topics.topic_depth_hold_pid,{}).get('T',0)
         draw_depth(img,0,0,message_dict[zmq_topics.topic_depth]['depth'],target_depth)
@@ -147,14 +153,14 @@ def draw_mono(img,message_dict,fmt_cnt_l):
     if zmq_topics.topic_system_state in message_dict:
         ss = message_dict[zmq_topics.topic_system_state][1]
         cv2.putText(img,'ARM' if ss['arm'] else 'DISARM' \
-                ,(sy(50),sx(20)), font, 0.7,(0,0,255) if ss['arm'] else (0,255,0),2,cv2.LINE_AA)
+                ,(sy(20),sx(20)), font, 0.7,(0,0,255) if ss['arm'] else (0,255,0),2,cv2.LINE_AA)
         modes = sorted(ss['mode'])
         if len(modes)==0:
             modes_str='MANUAL'
         else:
             modes_str=' '.join(modes)
         cv2.putText(img, modes_str\
-                ,(sy(140),sx(15)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+                ,(sy(140),sx(20)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
     if zmq_topics.topic_tracker in message_dict:
         rng  = message_dict[zmq_topics.topic_tracker].get('range_f',-1.0)
         line='{:>.2f} TRng'.format(rng)
@@ -184,12 +190,12 @@ def draw_mono(img,message_dict,fmt_cnt_l):
         thrst_cmnd = message_dict[zmq_topics.topic_thrusters_comand][1]
         #try:
         #    print('drawing thrusters...')
-        draw_thrusters(img, (50, 50), thrst_cmnd)
+        draw_thrusters(img, (40, 32), thrst_cmnd)
         #except Exception as e:
         #    print('draw_thrusters error',e)
  
 from math import cos,sin,pi
-def draw_compass(img,x,y,heading,pitch,roll,rr=50.0):
+def draw_compass(img,x,y,heading,pitch,roll,rr=50.0,yaw2=None):
     font = cv2.FONT_HERSHEY_SIMPLEX
     cv2.putText(img,str(int(heading%360)),(x-12,y+26), font, 0.5,(0,000,255),2,cv2.LINE_AA)
 
@@ -209,13 +215,19 @@ def draw_compass(img,x,y,heading,pitch,roll,rr=50.0):
                 (int(x+cs*(rr-mt)),int(y+si*(rr-mt))),
                 (int(x+cs*rr),int(y+si*rr)),(0,0,255),2)
 
-    t=(heading-90)/180.0*pi
-    cs=cos(t)
-    si=sin(t)
-    mt=3
-    cv2.line(img,
-        (int(x+cs*(rr-mt)),int(y+si*(rr-mt))),
-        (int(x+cs*rr),int(y+si*rr)),(255,255,255),10)
+    yaws = [(heading,(255,255,255))]
+
+    if yaw2 is not None:
+        yaws.append((yaw2,(255,255,0)))
+
+    for __y,col in yaws:
+        t=(__y-90)/180.0*pi
+        cs=cos(t)
+        si=sin(t)
+        mt=3
+        cv2.line(img,
+            (int(x+cs*(rr-mt)),int(y+si*(rr-mt))),
+            (int(x+cs*rr),int(y+si*rr)),col,10)
 
     r=30
     mt=5
