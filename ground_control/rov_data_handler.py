@@ -10,6 +10,7 @@ from joy_mix import Joy_map
 from cyc_array import CycArr
 from dvl import parse_line as dvl_parse_line
 from datetime import datetime
+import time
 
 from zmq import select
 print('===is sim ',config.is_sim)
