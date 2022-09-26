@@ -3,7 +3,7 @@ echo 1
 echo $HEADLESS
 echo 2
 if [ ! -v ROV_TYPE ]; then
-    export ROV_TYPE=1
+    export ROV_TYPE=4
 else
     export ROV_TYPE=$ROV_TYPE
 fi
