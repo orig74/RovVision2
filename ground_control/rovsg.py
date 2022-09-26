@@ -285,6 +285,12 @@ def main():
         if event=='Calib-DVL':
             rovCommander.calib_dvl()
 
+        if event=='Lights+':
+            rovCommander.lights_inc()
+
+        if event=='Lights-':
+            rovCommander.lights_dec()
+
         if values['-PLOT-TYPE-']=='DEPTH':
             plotter.update_pid(rovHandler.plot_buffers[zmq_topics.topic_depth_hold_pid])
         

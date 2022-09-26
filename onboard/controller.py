@@ -119,6 +119,16 @@ async def recv_and_process():
                         pub_sock.send_multipart([zmq_topics.topic_dvl_cmd,b'wcg\n'])
                         printer('controller:\n send dvl calib')
 
+                    if data['cmd']=='lights+':
+                        system_state['lights']=min(5,system_state['lights']+1)
+                        pub_sock.send_multipart([zmq_topics.topic_lights,pickle.dumps(system_state['lights'])])
+                        printer(f"controller:\n lights+ {system_state['lights']}")
+
+                    if data['cmd']=='lights-':
+                        system_state['lights']=max(0,system_state['lights']-1)
+                        pub_sock.send_multipart([zmq_topics.topic_lights,pickle.dumps(system_state['lights'])])
+                        printer(f"controller:\n lights- {system_state['lights']}")
+
                            
                 if topic==zmq_topics.topic_axes:
                     last_axes_joy_message_time=time.time()

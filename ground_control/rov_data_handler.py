@@ -70,6 +70,12 @@ class rovCommandHandler(object):
     def reset_dvl(self):
         self.pub({'cmd':'dvl_reset'})
 
+    def lights_inc(self,):
+        self.pub({'cmd':'lights+'})
+
+    def lights_dec(self,):
+        self.pub({'cmd':'lights-'})
+
     def update_pid(self,pid_type,target,mult):
         print('updateing pid ',pid_type,target,mult)
         pid_type=pid_type.lower()
