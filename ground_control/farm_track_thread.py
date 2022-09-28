@@ -9,6 +9,7 @@ class FarmTrack(object):
         self.back_slide=-0.2
         self.target_depth_up=0.5
         self.target_depth_down=1.0
+        self.minimal_step_time=15
         self.rov_comander=rov_comander
         self.rov_data_handler=rov_data_handler
         self.reset()
@@ -21,6 +22,7 @@ class FarmTrack(object):
         self.current_x_command=0
         self.current_depth_command=self.target_depth_up
         self.last_run=time.time()
+        self.start_step_time=time.time()
 
 
     def start(self):
@@ -30,11 +32,15 @@ class FarmTrack(object):
     def do_next(self):
         self.done_step=True
 
+    def step_time(self):
+        return time.time()-self.start_step_time 
+
     def __inc_step(self):
         self.state_ind+=1
         self.state_ind=self.state_ind%len(states)
         self.printer('state is: '+states[self.state_ind])
         self.done_step=self.auto_next
+        self.start_step_time=time.time()
 
     def __target_depth_achived(self):
         dh=self.rov_data_handler
@@ -65,6 +71,7 @@ class FarmTrack(object):
             return
 
         do_next = self.done_step or self.auto_next
+        do_next = do_next and self.step_time()>self.minimal_step_time
 
         if states[self.state_ind]=='stabilize':
             #self.printer(f'M: xy_ach: {self.__target_xy_achived()} done_st: {self.done_step}')
@@ -91,8 +98,6 @@ class FarmTrack(object):
             #self.printer(f'M: d_ach: {self.__target_depth_achived()} done_st: {self.done_step}')
             if self.__target_depth_achived() and do_next:
                 self.__inc_step()
-                self.rov_comander.lock_max()
-                self.rov_comander.vertical_object_lock(rng=range_to_target,Pxy=Pxy)
 
         elif states[self.state_ind]=='slide':
             if self.__target_xy_achived() and do_next:
