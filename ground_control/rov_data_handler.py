@@ -65,6 +65,9 @@ class rovCommandHandler(object):
     def vertical_object_lock(self,rng=0.32,Pxy=0.1):
         self.pub({'cmd':'tracker_vert_object_lock','range':rng,'Pxy':Pxy})
 
+    def vertical_object_unlock(self):
+        self.pub({'cmd':'tracker_vert_object_unlock'})
+
     def calib_dvl(self):
         self.pub({'cmd':'dvl_calib'})
 

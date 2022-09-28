@@ -276,8 +276,9 @@ def main():
         if event=='Ms':
             track_thread.start()
 
-        if event=='Ma':
-            track_thread.auto_next=values['Ma']
+        if event=='AUTO_NEXT':
+            track_thread.auto_next=values['AUTO_NEXT']
+            printer(f'set auto next to {track_thread.auto_next}')
 
         if event=='Mn':
             track_thread.do_next()
