@@ -266,6 +266,8 @@ def main():
             else:
                 rovCommander.vertical_object_unlock()
 
+        window['V_LOCK'](rovCommander.vertical_object_lock_state)
+
         if event=='Ml':
             rovCommander.lock_max()
 

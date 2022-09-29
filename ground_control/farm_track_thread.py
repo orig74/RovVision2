@@ -18,13 +18,17 @@ class FarmTrack(object):
         #self.target_depth_up=0.5
         #self.target_depth_down=1.0
         #self.minimal_step_time=15
-        for k,v in mission_vars_default:
-            self.__dict__[k]=v
+        self.set_params(mission_vars_default)
 
         self.rov_comander=rov_comander
         self.rov_data_handler=rov_data_handler
         self.printer=printer
         self.reset()
+
+    def set_params(self,mission_vars):
+        for k,v in mission_vars:
+            self.__dict__[k]=v
+
 
     def reset(self):
         self.state_ind=0
@@ -35,6 +39,7 @@ class FarmTrack(object):
         self.current_depth_command=self.target_depth_up
         self.last_run=time.time()
         self.start_step_time=time.time()
+        self.rov_comander.vertical_object_unlock()
 
     def get_state(self):
         return states[self.state_ind]

@@ -22,6 +22,7 @@ if not vid_zmq:
 class rovCommandHandler(object):
     def __init__(self):
         self.pub_sock=utils.publisher(zmq_topics.topic_remote_cmd_port)
+        self.vertical_object_lock_state=False
 
     def armdisarm(self):
         self.pub({'cmd':'armdisarm'})
@@ -64,9 +65,11 @@ class rovCommandHandler(object):
 
     def vertical_object_lock(self,rng=0.32,Pxy=0.1):
         self.pub({'cmd':'tracker_vert_object_lock','range':rng,'Pxy':Pxy})
+        self.vertical_object_lock_state=True
 
     def vertical_object_unlock(self):
         self.pub({'cmd':'tracker_vert_object_unlock'})
+        self.vertical_object_lock_state=False
 
     def calib_dvl(self):
         self.pub({'cmd':'dvl_calib'})
