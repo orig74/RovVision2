@@ -112,7 +112,8 @@ def main():
                 sg.Checkbox('Ma',key='AUTO_NEXT',enable_events=True,tooltip='auto next',default=False),
                 sg.Button('Mn',tooltip='mission next'),
                 sg.Checkbox('Mp',key='MISSION_PAUSE',enable_events=False,tooltip='pause mission',default=True)
-                ] 
+                ],
+            [sg.Text('MState:'),sg.Text('WAIT',key='MSTATE')]
             ]
 
     yaw_source_options=['VNAV','DVL']
@@ -279,12 +280,15 @@ def main():
         if event=='AUTO_NEXT':
             track_thread.auto_next=values['AUTO_NEXT']
             printer(f'set auto next to {track_thread.auto_next}')
+            
 
         if event=='Mn':
             track_thread.do_next()
 
         if not values['MISSION_PAUSE']:
             track_thread.run(float(values['Lrange']),float(values['Pxy']))
+            window['MSTATE'](track_thread.get_state())
+
         if event=='CENTER_TRACE':
             trace_plotter.center()
 

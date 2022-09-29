@@ -1,17 +1,29 @@
 import time
 states = ['wait_start','stabilize','go_down','stabilize','slide','stabilize','go_up','stabilize','slide','stabilize']
 
+mission_vars_default=[
+    ('auto_next',False),
+    ('horizontal_slide',0.8),
+    ('back_slide',-0.2),
+    ('target_depth_up',0.5),
+    ('target_depth_down',1.0),
+    ('minimal_step_time',15),
+    ]
+
 class FarmTrack(object):
     def __init__(self,iterations=1,rov_comander=None,rov_data_handler=None,printer=None):
-        self.printer=printer
-        self.auto_next=False
-        self.horizontal_slide=0.8
-        self.back_slide=-0.2
-        self.target_depth_up=0.5
-        self.target_depth_down=1.0
-        self.minimal_step_time=15
+        #self.auto_next=False
+        #self.horizontal_slide=0.8
+        #self.back_slide=-0.2
+        #self.target_depth_up=0.5
+        #self.target_depth_down=1.0
+        #self.minimal_step_time=15
+        for k,v in mission_vars_default:
+            self.__dict__[k]=v
+
         self.rov_comander=rov_comander
         self.rov_data_handler=rov_data_handler
+        self.printer=printer
         self.reset()
 
     def reset(self):
@@ -24,6 +36,9 @@ class FarmTrack(object):
         self.last_run=time.time()
         self.start_step_time=time.time()
 
+    def get_state(self):
+        return states[self.state_ind]
+    
 
     def start(self):
         self.state_ind=0
