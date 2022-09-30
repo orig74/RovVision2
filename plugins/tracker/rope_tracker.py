@@ -15,7 +15,7 @@ from filters import ab_filt
 track_params = config.track_params
 stereo_corr_params = config.stereo_corr_params
 from camera_tools import get_stereo_cameras,triangulate
-from rope_detect import rope_detect 
+from rope_detect import rope_detect,rope_global_extrema 
 
 
 show_hsv=False
@@ -51,6 +51,7 @@ class StereoTrack():
         self.dx_filt=None
         self.rope_debug=None
         self.clear_freqs=config.clear_freqs
+        self.last_imgl=None
         self.reset()
 
     def reset(self,pt=None):
@@ -64,13 +65,23 @@ class StereoTrack():
         self.ref_point=None #first valid pt after reset
 
     def reset_max(self):
-        self.ofx=self.disparity_offset
+        #self.ofx=self.disparity_offset
         #self.rope_track_state = None #'max','min',None
         self.rope_track_state = 'max' #'max','min',None
         self.last_res=None
         self.ref_point=None #first valid pt after reset
+        shape=self.shape
+        cx  = shape[1]//2+self.ofx
+        cy  = shape[0]//2
+        ret=rope_global_extrema(self.rope_track_state, cy-100,200, 
+                treshhold(self.last_imgl),clear_freqs=self.clear_freqs)
 
+        if ret is not None:
+           self.rope_track_state, col,self.rope_debug=ret
+           self.ofx = col-shape[1]//2
+ 
     def __track_left_im(self,imgl):
+        self.last_imgl=imgl
         shape=imgl.shape
         self.shape=shape
         cx  = shape[1]//2+self.ofx

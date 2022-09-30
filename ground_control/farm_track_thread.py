@@ -1,26 +1,48 @@
 import time
 states = ['wait_start','stabilize','go_down','stabilize','slide','stabilize','go_up','stabilize','slide','stabilize']
 
+mission_vars_default=[
+    ('horizontal_slide',0.8),
+    ('back_slide',-0.2),
+    ('target_depth_up',0.5),
+    ('target_depth_down',1.0),
+    ('minimal_step_time',15),
+    ]
+
 class FarmTrack(object):
     def __init__(self,iterations=1,rov_comander=None,rov_data_handler=None,printer=None):
-        self.printer=printer
         self.auto_next=False
-        self.horizontal_slide=0.8
-        self.back_slide=-0.2
-        self.target_depth_up=0.5
-        self.target_depth_down=1.0
+        #self.horizontal_slide=0.8
+        #self.back_slide=-0.2
+        #self.target_depth_up=0.5
+        #self.target_depth_down=1.0
+        #self.minimal_step_time=15
+        self.set_params(mission_vars_default)
+
         self.rov_comander=rov_comander
         self.rov_data_handler=rov_data_handler
+        self.printer=printer
         self.reset()
 
-    def reset(self):
-        self.state_ind=0
-        self.done_step=self.auto_next
-        self.iter=0
-        self.current_y_command=0
-        self.current_x_command=0
-        self.current_depth_command=self.target_depth_up
-        self.last_run=time.time()
+    def set_params(self,mission_vars):
+        for k,v in mission_vars:
+            self.__dict__[k]=v
+
+
+    #def reset(self):
+    #    self.state_ind=0
+    #    self.done_step=self.auto_next
+    #    self.iter=0
+    #    self.current_y_command=0
+    #    self.current_x_command=0
+    #    self.current_depth_command=self.target_depth_up
+    #    self.last_run=time.time()
+    #    self.start_step_time=time.time()
+    #    self.rov_comander.vertical_object_unlock()
+
+    def get_state(self):
+        return states[self.state_ind]
+    
 
     def start(self):
         self.state_ind=0
@@ -29,21 +51,28 @@ class FarmTrack(object):
     def do_next(self):
         self.done_step=True
 
+    def step_time(self):
+        return time.time()-self.start_step_time 
+
     def __inc_step(self):
         self.state_ind+=1
         self.state_ind=self.state_ind%len(states)
         self.printer('state is: '+states[self.state_ind])
         self.done_step=self.auto_next
+        self.start_step_time=time.time()
 
     def __target_depth_achived(self):
         dh=self.rov_data_handler
-        return abs(dh.get_depth()-dh.get_target_depth())<0.1
+        return abs(dh.get_depth()-dh.get_target_depth())<0.2
 
-    def __target_xy_achived(self,tresh=0.1):
+    def __target_xy_achived(self,tresh=0.2):
         dh=self.rov_data_handler
         xy=dh.get_pos_xy()
         txy=dh.get_target_xy()
-        return abs(xy[0]-txy[0])<tresh and abs(xy[1]-txy[1])<tresh
+        dx = abs(xy[0]-txy[0])
+        dy = abs(xy[1]-txy[1])
+        self.printer(f'dxdy {dx:.2f} {dy:.2f}')
+        return dx<tresh and dy<tresh
 
     def run(self,range_to_target,Pxy):
         dh=self.rov_data_handler
@@ -60,32 +89,44 @@ class FarmTrack(object):
         if states[self.state_ind]=='wait_start':
             return
 
+        do_next = self.done_step or self.auto_next
+        do_next = do_next and self.step_time()>self.minimal_step_time
+
         if states[self.state_ind]=='stabilize':
-            self.printer(f'M: xy_ach: {self.__target_xy_achived()} done_st: {self.done_step}')
-            if self.__target_xy_achived() and self.done_step:
+            #self.printer(f'M: xy_ach: {self.__target_xy_achived()} done_st: {self.done_step}')
+            if self.__target_xy_achived() and do_next:
                 self.__inc_step()
                 if states[self.state_ind]=='slide':
+                    self.printer('going slide')
+                    self.last_rope_xy=dh.get_pos_xy()
                     self.rov_comander.vertical_object_unlock()
+                    self.rov_comander.go((
+                        self.last_rope_xy[0]+self.back_slide,self.last_rope_xy[1]+self.horizontal_slide),relative=False)
                 if states[self.state_ind]=='go_down':
+                    self.printer('going down')
+                    self.rov_comander.lock_max()
+                    self.rov_comander.vertical_object_lock(rng=range_to_target,Pxy=Pxy)
                     self.rov_comander.depth_command(self.target_depth_down,relative=False)
                 if states[self.state_ind]=='go_up':
+                    self.printer('going up')
+                    self.rov_comander.lock_max()
+                    self.rov_comander.vertical_object_lock(rng=range_to_target,Pxy=Pxy)
                     self.rov_comander.depth_command(self.target_depth_up,relative=False)
 
-        if states[self.state_ind].startswith('go'):
-            self.printer(f'M: d_ach: {self.__target_depth_achived()} done_st: {self.done_step}')
-            if self.__target_depth_achived() and self.done_step:
+        elif states[self.state_ind].startswith('go'):
+            #self.printer(f'M: d_ach: {self.__target_depth_achived()} done_st: {self.done_step}')
+            if self.__target_depth_achived() and do_next:
                 self.__inc_step()
-                self.rov_comander.vertical_object_lock(rng=range_to_target,Pxy=Pxy)
 
-        if states[self.state_ind]=='slide':
-            self.rov_comander.go((
-                self.last_rope_xy[0]+self.back_slide,self.last_rope_xy[1]+self.horizontal_slide),relative=False)
-            if self.__target_xy_achived() and self.done_step:
-                self.rov_comander.lock_max()
+        elif states[self.state_ind]=='slide':
+            if self.__target_xy_achived() and do_next:
                 self.__inc_step()
-        else:
-            self.rov_comander.vertical_object_lock(rng=range_to_target,Pxy=Pxy)
-            self.last_rope_xy=dh.get_pos_xy()
+                self.rov_comander.lock_max()
+                self.rov_comander.vertical_object_lock(rng=range_to_target,Pxy=Pxy)
+        #else:
+        #    self.rov_comander.vertical_object_lock(rng=range_to_target,Pxy=Pxy)
+        #:w
+        #self.last_rope_xy=dh.get_pos_xy()
             
 
 
