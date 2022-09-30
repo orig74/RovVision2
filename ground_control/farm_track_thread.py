@@ -1,4 +1,5 @@
 import time
+import json
 states = ['wait_start','stabilize','go_down','stabilize','slide','stabilize','go_up','stabilize','slide','stabilize']
 
 mission_vars_default=[
@@ -29,20 +30,28 @@ class FarmTrack(object):
             self.__dict__[k]=v
 
 
-    #def reset(self):
-    #    self.state_ind=0
-    #    self.done_step=self.auto_next
-    #    self.iter=0
+    def reset(self):
+        self.state_ind=0
+        self.done_step=self.auto_next
+        self.iter=0
     #    self.current_y_command=0
     #    self.current_x_command=0
     #    self.current_depth_command=self.target_depth_up
-    #    self.last_run=time.time()
-    #    self.start_step_time=time.time()
+        self.last_run=time.time()
+        self.start_step_time=time.time()
     #    self.rov_comander.vertical_object_unlock()
 
     def get_state(self):
         return states[self.state_ind]
-    
+
+    def save_params(self,fname):
+        js=json.dumps({k:self.__dict__[k] for k,_ in mission_vars_default},indent=4)
+        open(fname,'wb').write(js.encode())
+
+    def load_params(self,fname):
+        js=json.loads(open(fname,'rb').read().strip())
+        for key in js:
+            setattr(self,key,js[key])
 
     def start(self):
         self.state_ind=0

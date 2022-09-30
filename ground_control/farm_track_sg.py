@@ -1,8 +1,9 @@
 import farm_track_thread as ft
 import PySimpleGUI as sg
-def get_layout(cols=2):
+def get_layout(farm_obj,cols=2):
     ret=[[]]
-    for k,v in ft.mission_vars_default:
+    for k,_ in ft.mission_vars_default:
+        v=farm_obj.__dict__[k]
         if len(ret[-1])==(2*cols):
             ret.append([])
         if type(v) in [float,int]:

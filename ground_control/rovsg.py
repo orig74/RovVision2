@@ -43,6 +43,7 @@ from plttk_tracer import Plotter as TracePlotter
 import zmq_topics
 from farm_track_thread import FarmTrack as TrackThread
 import farm_track_sg as TrackThreadSG
+track_thread_file='farm_track_params.json'
 scale_screen=get_monitors()[0].width==1600
 #scale_screen=None
 
@@ -80,6 +81,11 @@ def main():
     rovHandler = rovDataHandler(None,printer=printer,args=args)
     rovCommander = rovCommandHandler()
     track_thread = TrackThread(rov_comander=rovCommander,rov_data_handler=rovHandler,printer=printer)
+
+    if os.path.isfile(track_thread_file):
+        track_thread.load_params(track_thread_file)
+
+
     last_heartbit=time.time()
     #im_size = (960,600) 
     im_size = (616,514)
@@ -115,7 +121,8 @@ def main():
                 ],
             [sg.Text('MState:'),sg.Text('WAIT',key='MSTATE')],
             ]
-    cmd_column+=TrackThreadSG.get_layout()
+    cmd_column+=TrackThreadSG.get_layout(track_thread)
+    cmd_column+=[[sg.Button('Save',key='MISSION_SAVE',tooltip='save mission params')]]
 
     yaw_source_options=['VNAV','DVL']
     config_column = [
@@ -280,6 +287,10 @@ def main():
         if event=='Ms':
             track_thread.set_params(TrackThreadSG.get_layout_values(values))
             track_thread.start()
+
+        if event=='MISSION_SAVE':
+            track_thread.set_params(TrackThreadSG.get_layout_values(values))
+            track_thread.save_params(track_thread_file)
 
         if event=='AUTO_NEXT':
             track_thread.auto_next=values['AUTO_NEXT']
