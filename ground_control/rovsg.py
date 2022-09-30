@@ -42,7 +42,7 @@ from plttk_tracer import Plotter as TracePlotter
 
 import zmq_topics
 from farm_track_thread import FarmTrack as TrackThread
-
+import farm_track_sg as TrackThreadSG
 scale_screen=get_monitors()[0].width==1600
 #scale_screen=None
 
@@ -113,8 +113,9 @@ def main():
                 sg.Button('Mn',tooltip='mission next'),
                 sg.Checkbox('Mp',key='MISSION_PAUSE',enable_events=False,tooltip='pause mission',default=True)
                 ],
-            [sg.Text('MState:'),sg.Text('WAIT',key='MSTATE')]
+            [sg.Text('MState:'),sg.Text('WAIT',key='MSTATE')],
             ]
+    cmd_column+=TrackThreadSG.get_layout()
 
     yaw_source_options=['VNAV','DVL']
     config_column = [
@@ -277,6 +278,7 @@ def main():
             rovCommander.heartbit()
 
         if event=='Ms':
+            track_thread.set_params(TrackThreadSG.get_layout_values(values))
             track_thread.start()
 
         if event=='AUTO_NEXT':
@@ -289,7 +291,7 @@ def main():
 
         if not values['MISSION_PAUSE']:
             track_thread.run(float(values['Lrange']),float(values['Pxy']))
-            window['MSTATE'](track_thread.get_state())
+            window['MSTATE'](track_thread.get_state(),text_color='white',background_color='black')
 
         if event=='CENTER_TRACE':
             trace_plotter.center()
