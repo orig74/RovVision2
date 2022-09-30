@@ -86,7 +86,7 @@ def set_files_fds(fds):
 def get_imgs():
     global images
     for i in range(len(images)):
-        if len(select.select([ gst_pipes[i] ],[],[],0.005)[0])>0 :
+        while len(select.select([ gst_pipes[i] ],[],[],0.005)[0])>0 :
             data=b''
             while len(data)<sx*sy*3:
                 data+=os.read(gst_pipes[i],sx*sy*3-len(data))
