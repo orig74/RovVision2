@@ -146,7 +146,7 @@ def hsv_range_scale(rgbImg,depthImg):
     hsv[depthImg>0.94,0]=0
     #hsv[depthImg<0.94,0]=255
     #hsv[:,:,0]=255
-    rgbImg = cv2.cvtColor(hsv,cv2.COLOR_HSV2RGB)
+    rgbImg = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
     #rgbImg = cv2.blur(rgbImg,(3,3))
     return rgbImg
 
@@ -209,7 +209,8 @@ def main():
             ##experimental
             rgbImg = hsv_range_scale(rgbImg,depthImg)
 
-            imgl=resize(rgbImg[:,:,[2,1,0]],1/resize_fact)#inly interested in rgb
+            imgl=resize(rgbImg,1/resize_fact)#inly interested in rgb
+            #imgl=resize(rgbImg[:,:,[2,1,0]],1/resize_fact)#inly interested in rgb
             #print('max...',depthImg.max(),depthImg.min())
             #hsv[:,:,0]=
 
@@ -225,7 +226,8 @@ def main():
                     projectionMatrix=PM,renderer = pb.ER_BULLET_HARDWARE_OPENGL)
             
                 rgbImg = hsv_range_scale(rgbImg,depthImg)
-                imgr=resize(rgbImg[:,:,[2,1,0]],1/resize_fact) #todo...
+                #imgr=resize(rgbImg[:,:,[2,1,0]],1/resize_fact) #todo...
+                imgr=resize(rgbImg,1/resize_fact) #todo...
 
             if cvshow:
                 imgls = imgl[::2,::2]
