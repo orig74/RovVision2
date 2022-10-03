@@ -35,7 +35,7 @@ NUM_CAMS = len(CAM_IDS)
 
 # Min exposure time: 32us
 CAM_EXPOSURE_US = None #10000
-CAM_EXPOSURE_MAX = 20000 #2000    # us
+CAM_EXPOSURE_MAX = 10000 #2000    # us
 CAM_EXPOSURE_MIN = 200  #32
 
 IMG_SIZE_BYTES = 5065984
@@ -197,11 +197,11 @@ class AlviumMultiCam(threading.Thread):
                                             pickle.dumps((total_syncd_frames,prev_syncd_trig_ts,time.time()))])
                                         if args.debug and total_syncd_frames%1==0:
                                             if self.debug_cam_idx == 3:
-                                                frame_bgr_0 = cv2.cvtColor(current_frames[CAM_IDS[0]], cv2.COLOR_BayerBG2BGR)
-                                                frame_bgr_1 = cv2.cvtColor(current_frames[CAM_IDS[1]], cv2.COLOR_BayerBG2BGR)
-                                                frame_bgr_2 = cv2.cvtColor(current_frames[CAM_IDS[2]], cv2.COLOR_BayerBG2BGR)
-                                                frame_bgr = frame_bgr_0.astype(np.float32) + frame_bgr_1.astype(np.float32) + frame_bgr_2.astype(np.float32)
-                                                frame_bgr = (255 * frame_bgr / np.max(frame_bgr)).astype(np.uint8)
+                                                #frame_bgr_0 = cv2.cvtColor(current_frames[CAM_IDS[0]], cv2.COLOR_BayerBG2BGR)
+                                                #frame_bgr_1 = cv2.cvtColor(current_frames[CAM_IDS[1]], cv2.COLOR_BayerBG2BGR)
+                                                #frame_bgr_2 = cv2.cvtColor(current_frames[CAM_IDS[2]], cv2.COLOR_BayerBG2BGR)
+                                                #frame_bgr = frame_bgr_0.astype(np.float32) + frame_bgr_1.astype(np.float32) #+ frame_bgr_2.astype(np.float32)
+                                                frame_bgr = rgbl_rs + rgbr_rs #(255 * frame_bgr / np.max(frame_bgr)).astype(np.uint8)
                                             else:
                                                 debug_cam_key = CAM_IDS[min(self.debug_cam_idx, NUM_CAMS-1)]
                                                 frame_bgr = cv2.cvtColor(current_frames[debug_cam_key], cv2.COLOR_BayerBG2BGR)
