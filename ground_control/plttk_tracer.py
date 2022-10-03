@@ -105,8 +105,12 @@ class Plotter(object):
             #print('===',ret)
             gdata.trace_hist.add(ret)
             gdata.curr_pos=ret
-            yaw_rad = np.radians(ldata['yaw'] if yaw_deg is None else yaw_deg)
+            self.yaw_rad = np.radians(ldata['yaw'] if yaw_deg is None else yaw_deg)
+            self.target_pos=target_pos
 
+    def redraw(self):
+
+            yaw_rad=self.yaw_rad
             ch=np.cos(yaw_rad-np.pi/2)
             sh=np.sin(yaw_rad-np.pi/2)
 
@@ -118,10 +122,10 @@ class Plotter(object):
             self.hdl_arrow.remove()
             self.hdl_arrow = self.ax1.arrow(gdata.curr_pos[0],gdata.curr_pos[1],ch*0.005,-sh*0.005,width=0.1,alpha=0.1)
 
-            if target_pos is None:
-                target_pos=(0,0)
-            self.hdl_target_pos[0].set_ydata(target_pos[1])
-            self.hdl_target_pos[0].set_xdata(target_pos[0])
+            if self.target_pos is None:
+                self.target_pos=(0,0)
+            self.hdl_target_pos[0].set_ydata(self.target_pos[1])
+            self.hdl_target_pos[0].set_xdata(self.target_pos[0])
 
 
             cx,cy = gdata.map_center[:2]

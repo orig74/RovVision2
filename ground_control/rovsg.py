@@ -43,6 +43,7 @@ from plttk_tracer import Plotter as TracePlotter
 import zmq_topics
 from farm_track_thread import FarmTrack as TrackThread
 import farm_track_sg as TrackThreadSG
+track_thread_file='farm_track_params.json'
 scale_screen=get_monitors()[0].width==1600
 #scale_screen=None
 
@@ -80,6 +81,11 @@ def main():
     rovHandler = rovDataHandler(None,printer=printer,args=args)
     rovCommander = rovCommandHandler()
     track_thread = TrackThread(rov_comander=rovCommander,rov_data_handler=rovHandler,printer=printer)
+
+    if os.path.isfile(track_thread_file):
+        track_thread.load_params(track_thread_file)
+
+
     last_heartbit=time.time()
     #im_size = (960,600) 
     im_size = (616,514)
@@ -115,7 +121,8 @@ def main():
                 ],
             [sg.Text('MState:'),sg.Text('WAIT',key='MSTATE')],
             ]
-    cmd_column+=TrackThreadSG.get_layout()
+    cmd_column+=TrackThreadSG.get_layout(track_thread)
+    cmd_column+=[[sg.Button('Save',key='MISSION_SAVE',tooltip='save mission params')]]
 
     yaw_source_options=['VNAV','DVL']
     config_column = [
@@ -183,8 +190,12 @@ def main():
     current_yaw_deg=0
     target_xy=[0,0]
     sg.cprint_set_output_destination(window, 'MESSEGES')
+
+    last_plot_pids=time.time()
+    last_plot_dvl =time.time()
     while True:
-        event, values = window.read(timeout=20) #10 mili timeout
+        cycle_tic=time.time()
+        event, values = window.read(timeout=2) #10 mili timeout
         if event == "Exit" or event == sg.WIN_CLOSED:
             break
 
@@ -194,7 +205,7 @@ def main():
             y=y/image_shape[0]
             print('---click--',x,y)
             rovCommander.lock(x,y)
-
+        tic1=time.time()
         frameId, rawImgs = rovHandler.getNewImages()
         if 0 and  scale_screen and rawImgs is not None:
             sy,sx=rawImgs[0].shape[:2]
@@ -203,6 +214,7 @@ def main():
             #rawImgs = [cv2.resize(im,(sx,sy)) for im in rawImgs[:2]]
             print('>>>>',sx,sy)
 
+        tic2=time.time()
         if rawImgs is not None:
             image_shape=rawImgs[0].shape
             #print('===',time.time(),rawImgs[0].shape)
@@ -215,6 +227,7 @@ def main():
             #last_im=window["-MAIN-IMAGE-"].draw_image(data=img_to_tk3(rawImgs[0]),location=(0,0))#im_size[1]))
             last_im=draw_image(window["-MAIN-IMAGE-"],img_to_tk(rawImgs[0],h_hsv=values['HSV_H']))#im_size[1]))
             window["-IMAGE-1-"].update(data=img_to_tk(rawImgs[1],1))
+            #print(f'=== tk images took {(time.time()-tic1)*1000:.1f} msec, grab  {(time.time()-tic2)*1000:.1f} msec')
  
         if event == "Arm-Disarm":
             rovCommander.armdisarm()
@@ -281,6 +294,10 @@ def main():
             track_thread.set_params(TrackThreadSG.get_layout_values(values))
             track_thread.start()
 
+        if event=='MISSION_SAVE':
+            track_thread.set_params(TrackThreadSG.get_layout_values(values))
+            track_thread.save_params(track_thread_file)
+
         if event=='AUTO_NEXT':
             track_thread.auto_next=values['AUTO_NEXT']
             printer(f'set auto next to {track_thread.auto_next}')
@@ -321,21 +338,34 @@ def main():
             target_xy[i]=pb.get_last('T')
             if target_xy[i] is None:
                 target_xy[i]=0
-        for p_type,pb in [\
-                ('YAW',zmq_topics.topic_att_hold_yaw_pid),
-                ('PITCH',zmq_topics.topic_att_hold_pitch_pid),
-                ('ROLL',zmq_topics.topic_att_hold_roll_pid)]:
-            if values['-PLOT-TYPE-']==p_type:
-                plotter.update_pid(rovHandler.plot_buffers[pb])
+        tic=time.time()
+        if time.time()-last_plot_pids>0.3:
+            last_plot_pids=time.time()
+            for p_type,pb in [\
+                    ('YAW',zmq_topics.topic_att_hold_yaw_pid),
+                    ('PITCH',zmq_topics.topic_att_hold_pitch_pid),
+                    ('ROLL',zmq_topics.topic_att_hold_roll_pid)]:
+                if values['-PLOT-TYPE-']==p_type:
+                    plotter.update_pid(rovHandler.plot_buffers[pb])
 
         rovHandler.next()
+
         rov_telem=rovHandler.getTelemtry()
-        if 'dvl_deadrecon' in rov_telem:
+        if 'dvl_deadrecon' in rov_telem :
             trace_plotter.update_dvl_data(rov_telem['dvl_deadrecon'],target_pos=target_xy[::-1],yaw_deg=current_yaw_deg)
+        if time.time()-last_plot_dvl>0.3:
+            last_plot_dvl=time.time()
+            trace_plotter.redraw()
+
         if zmq_topics.topic_imu in rov_telem:
             current_yaw_deg = rov_telem[zmq_topics.topic_imu]['yaw']
+        if 0:
+            print(f'=== took {(time.time()-tic)*1000:.1f} msec')
 
         cnt+=1
+        if 0:
+            print(f'=== tk images took {(time.time()-cycle_tic)*1000:.1f} msec')
+
     window.close()
 if __name__ == "__main__":
     main()
