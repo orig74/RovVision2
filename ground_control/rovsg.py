@@ -359,7 +359,7 @@ def main():
 
         if zmq_topics.topic_imu in rov_telem:
             current_yaw_deg = rov_telem[zmq_topics.topic_imu]['yaw']
-        if 1:
+        if 0:
             print(f'=== took {(time.time()-tic)*1000:.1f} msec')
 
         cnt+=1
