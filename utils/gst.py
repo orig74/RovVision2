@@ -89,7 +89,10 @@ def get_imgs():
         while len(select.select([ gst_pipes[i] ],[],[],0.005)[0])>0 :
             data=b''
             while len(data)<sx*sy*3:
-                data+=os.read(gst_pipes[i],sx*sy*3-len(data))
+                try:
+                    data+=os.read(gst_pipes[i],sx*sy*3-len(data))
+                except BlockingIOError:
+                    time.sleep(0.001)
             try:
                 images[i] = np.fromstring(data,'uint8').reshape([sy,sx,3])[:,:,::-1].copy()
             except:
