@@ -231,7 +231,7 @@ class StereoTrack():
             return False,0,0,0,0
         pt_r_x,pt_r_y,s_snr=ret
         #print('snr',s_snr)
-        if s_snr<3:
+        if s_snr<2:
             print('droped by snr',s_snr)
             valid=False
 
@@ -294,6 +294,7 @@ class StereoTrack():
         if self.rope_debug is not None:
             res['rope_debug']=self.rope_debug
         self.last_res=res
+        print(f'==== {dx:.1f},{dy:.1f},{dz:.1f}')
         return res
 
 

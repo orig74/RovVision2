@@ -10,6 +10,7 @@ import sys
 import socket
 import pickle
 import json
+import traceback
 
 from screeninfo import get_monitors
 
@@ -149,7 +150,7 @@ def main():
         ]
 
     matplot_column2 = [
-        [sg.Button('C',key='CENTER_TRACE',tooltip='center trace')],
+        [sg.Button('cnt',key='CENTER_TRACE',tooltip='center trace'),sg.Button('clr',key='CLEAR_TRACE',tooltip='clear trace')],
         [sg.Canvas(key="-TRACE-CANVAS-", size=(300,300))]
         ]
 
@@ -194,177 +195,185 @@ def main():
     last_plot_pids=time.time()
     last_plot_dvl =time.time()
     while True:
-        cycle_tic=time.time()
-        event, values = window.read(timeout=2) #10 mili timeout
-        if event == "Exit" or event == sg.WIN_CLOSED:
-            break
+        try:
+            cycle_tic=time.time()
+            event, values = window.read(timeout=2) #10 mili timeout
+            if event == "Exit" or event == sg.WIN_CLOSED:
+                break
 
-        if image_shape is not None and event.startswith('-MAIN'):
-            x,y=values['-MAIN-IMAGE-']
-            x=x/image_shape[1]
-            y=y/image_shape[0]
-            print('---click--',x,y)
-            rovCommander.lock(x,y)
-        tic1=time.time()
-        frameId, rawImgs = rovHandler.getNewImages()
-        if 0 and  scale_screen and rawImgs is not None:
-            sy,sx=rawImgs[0].shape[:2]
-            sx=int(sx*scale_screen)
-            sy=int(sy*scale_screen)
-            #rawImgs = [cv2.resize(im,(sx,sy)) for im in rawImgs[:2]]
-            print('>>>>',sx,sy)
+            if image_shape is not None and event.startswith('-MAIN'):
+                x,y=values['-MAIN-IMAGE-']
+                x=x/image_shape[1]
+                y=y/image_shape[0]
+                print('---click--',x,y)
+                rovCommander.lock(x,y)
+            tic1=time.time()
+            frameId, rawImgs = rovHandler.getNewImages()
+            if 0 and  scale_screen and rawImgs is not None:
+                sy,sx=rawImgs[0].shape[:2]
+                sx=int(sx*scale_screen)
+                sy=int(sy*scale_screen)
+                #rawImgs = [cv2.resize(im,(sx,sy)) for im in rawImgs[:2]]
+                print('>>>>',sx,sy)
 
-        tic2=time.time()
-        if rawImgs is not None:
-            image_shape=rawImgs[0].shape
-            #print('===',time.time(),rawImgs[0].shape)
-            #print(rawImgs[0].shape)
-            if last_im is not None:
-                #window["-MAIN-IMAGE-"].delete_figure(last_im)
-                window["-MAIN-IMAGE-"].erase()
-                #window["-MAIN-IMAGE-"].Images[last_im]=img_to_tk(rawImgs[0])
+            tic2=time.time()
+            if rawImgs is not None:
+                image_shape=rawImgs[0].shape
+                #print('===',time.time(),rawImgs[0].shape)
+                #print(rawImgs[0].shape)
+                if last_im is not None:
+                    #window["-MAIN-IMAGE-"].delete_figure(last_im)
+                    window["-MAIN-IMAGE-"].erase()
+                    #window["-MAIN-IMAGE-"].Images[last_im]=img_to_tk(rawImgs[0])
+                
+                #last_im=window["-MAIN-IMAGE-"].draw_image(data=img_to_tk3(rawImgs[0]),location=(0,0))#im_size[1]))
+                last_im=draw_image(window["-MAIN-IMAGE-"],img_to_tk(rawImgs[0],h_hsv=values['HSV_H']))#im_size[1]))
+                window["-IMAGE-1-"].update(data=img_to_tk(rawImgs[1],1))
+                #print(f'=== tk images took {(time.time()-tic1)*1000:.1f} msec, grab  {(time.time()-tic2)*1000:.1f} msec')
+     
+            if event == "Arm-Disarm":
+                rovCommander.armdisarm()
+            if event == "Depth-Hold":
+                rovCommander.depth_hold()
+            if event == sym_down:
+                rovCommander.depth_command(float(values['Target-Depth']))
+            if event == sym_up:
+                rovCommander.depth_command(-float(values['Target-Depth']))
+            if event == 'Att-hold':
+                rovCommander.att_hold()
+            if event == 'CF+':
+                rovCommander.clear_freqs(1)
+            if event == 'CF-':
+                rovCommander.clear_freqs(-1)
+            if event == 'X-hold':
+                rovCommander.x_hold()
+            if event == 'Y-hold':
+                rovCommander.y_hold()
+            if event == 'Z-hold':
+                rovCommander.z_hold()
+            if event == sym_fwd:
+                rovCommander.go((float(values['Target-X']),0,0))
+            if event == sym_back:
+                rovCommander.go((-float(values['Target-X']),0,0))
+            if event == sym_right:
+                rovCommander.go((0,float(values['Target-Y']),0))
+            if event == sym_left:
+                rovCommander.go((0,-float(values['Target-Y']),0))
+            if event == sym_yaw_left:
+                rovCommander.att_cmd((-float(values['DeltaYawD']),0,0))
+            if event == sym_yaw_right:
+                rovCommander.att_cmd((float(values['DeltaYawD']),0,0))
+            if event in ['P+','P-','I+','I-','D-','D+']:
+                plot_type=values['-PLOT-TYPE-']
+                mul=float(values['PID_Mul'].strip())/100+1.0
+                if event[1]=='-':
+                    mul=1/mul
+                sg.cprint('sending pid',c='black on white')
+                rovCommander.update_pid(plot_type,event[0],mul)
+            if event=='SAVE_PID':
+                plot_type=values['-PLOT-TYPE-']
+                sg.cprint('sending saving pid',c='black on white')
+                rovCommander.save_pid(plot_type)
+
+            if event=='V_LOCK':
+                printer(f"got v_lock {values['V_LOCK']}")
+                if values['V_LOCK']:
+                    rovCommander.vertical_object_lock(rng=float(values['Lrange']),Pxy=float(values['Pxy']))
+                else:
+                    rovCommander.vertical_object_unlock()
+
+            window['V_LOCK'](rovCommander.vertical_object_lock_state)
+
+            if event=='Ml':
+                rovCommander.lock_max()
+
+            #if (cnt%(1000//20))==0:
+            if time.time()-last_heartbit>2.0:
+                last_heartbit=time.time()
+                rovCommander.heartbit()
+
+            if event=='Ms':
+                track_thread.set_params(TrackThreadSG.get_layout_values(values))
+                track_thread.start()
+
+            if event=='MISSION_SAVE':
+                track_thread.set_params(TrackThreadSG.get_layout_values(values))
+                track_thread.save_params(track_thread_file)
+
+            if event=='AUTO_NEXT':
+                track_thread.auto_next=values['AUTO_NEXT']
+                printer(f'set auto next to {track_thread.auto_next}')
+                
+
+            if event=='Mn':
+                track_thread.do_next()
+
+            if not values['MISSION_PAUSE']:
+                track_thread.run(float(values['Lrange']),float(values['Pxy']))
+                window['MSTATE'](track_thread.get_state(),text_color='white',background_color='black')
+
+            if event=='CENTER_TRACE':
+                trace_plotter.center()
+
+            if event=='CLEAR_TRACE':
+                trace_plotter.clear_trace()
+
+            if event=='Reset-DVL':
+                rovCommander.reset_dvl()
+
+            if event=='Calib-DVL':
+                rovCommander.calib_dvl()
+
+            if event=='Lights+':
+                rovCommander.lights_inc()
+
+            if event=='Lights-':
+                rovCommander.lights_dec()
+
+            if event=='REC':
+                rovHandler.toggle_recording()
+
+            if values['-PLOT-TYPE-']=='DEPTH':
+                plotter.update_pid(rovHandler.plot_buffers[zmq_topics.topic_depth_hold_pid])
             
-            #last_im=window["-MAIN-IMAGE-"].draw_image(data=img_to_tk3(rawImgs[0]),location=(0,0))#im_size[1]))
-            last_im=draw_image(window["-MAIN-IMAGE-"],img_to_tk(rawImgs[0],h_hsv=values['HSV_H']))#im_size[1]))
-            window["-IMAGE-1-"].update(data=img_to_tk(rawImgs[1],1))
-            #print(f'=== tk images took {(time.time()-tic1)*1000:.1f} msec, grab  {(time.time()-tic2)*1000:.1f} msec')
- 
-        if event == "Arm-Disarm":
-            rovCommander.armdisarm()
-        if event == "Depth-Hold":
-            rovCommander.depth_hold()
-        if event == sym_down:
-            rovCommander.depth_command(float(values['Target-Depth']))
-        if event == sym_up:
-            rovCommander.depth_command(-float(values['Target-Depth']))
-        if event == 'Att-hold':
-            rovCommander.att_hold()
-        if event == 'CF+':
-            rovCommander.clear_freqs(1)
-        if event == 'CF-':
-            rovCommander.clear_freqs(-1)
-        if event == 'X-hold':
-            rovCommander.x_hold()
-        if event == 'Y-hold':
-            rovCommander.y_hold()
-        if event == 'Z-hold':
-            rovCommander.z_hold()
-        if event == sym_fwd:
-            rovCommander.go((float(values['Target-X']),0,0))
-        if event == sym_back:
-            rovCommander.go((-float(values['Target-X']),0,0))
-        if event == sym_right:
-            rovCommander.go((0,float(values['Target-Y']),0))
-        if event == sym_left:
-            rovCommander.go((0,-float(values['Target-Y']),0))
-        if event == sym_yaw_left:
-            rovCommander.att_cmd((-float(values['DeltaYawD']),0,0))
-        if event == sym_yaw_right:
-            rovCommander.att_cmd((float(values['DeltaYawD']),0,0))
-        if event in ['P+','P-','I+','I-','D-','D+']:
-            plot_type=values['-PLOT-TYPE-']
-            mul=float(values['PID_Mul'].strip())/100+1.0
-            if event[1]=='-':
-                mul=1/mul
-            sg.cprint('sending pid',c='black on white')
-            rovCommander.update_pid(plot_type,event[0],mul)
-        if event=='SAVE_PID':
-            plot_type=values['-PLOT-TYPE-']
-            sg.cprint('sending saving pid',c='black on white')
-            rovCommander.save_pid(plot_type)
-
-        if event=='V_LOCK':
-            printer(f"got v_lock {values['V_LOCK']}")
-            if values['V_LOCK']:
-                rovCommander.vertical_object_lock(rng=float(values['Lrange']),Pxy=float(values['Pxy']))
-            else:
-                rovCommander.vertical_object_unlock()
-
-        window['V_LOCK'](rovCommander.vertical_object_lock_state)
-
-        if event=='Ml':
-            rovCommander.lock_max()
-
-        #if (cnt%(1000//20))==0:
-        if time.time()-last_heartbit>2.0:
-            last_heartbit=time.time()
-            rovCommander.heartbit()
-
-        if event=='Ms':
-            track_thread.set_params(TrackThreadSG.get_layout_values(values))
-            track_thread.start()
-
-        if event=='MISSION_SAVE':
-            track_thread.set_params(TrackThreadSG.get_layout_values(values))
-            track_thread.save_params(track_thread_file)
-
-        if event=='AUTO_NEXT':
-            track_thread.auto_next=values['AUTO_NEXT']
-            printer(f'set auto next to {track_thread.auto_next}')
-            
-
-        if event=='Mn':
-            track_thread.do_next()
-
-        if not values['MISSION_PAUSE']:
-            track_thread.run(float(values['Lrange']),float(values['Pxy']))
-            window['MSTATE'](track_thread.get_state(),text_color='white',background_color='black')
-
-        if event=='CENTER_TRACE':
-            trace_plotter.center()
-
-        if event=='Reset-DVL':
-            rovCommander.reset_dvl()
-
-        if event=='Calib-DVL':
-            rovCommander.calib_dvl()
-
-        if event=='Lights+':
-            rovCommander.lights_inc()
-
-        if event=='Lights-':
-            rovCommander.lights_dec()
-
-        if event=='REC':
-            rovHandler.toggle_recording()
-
-        if values['-PLOT-TYPE-']=='DEPTH':
-            plotter.update_pid(rovHandler.plot_buffers[zmq_topics.topic_depth_hold_pid])
-        
-        for i,p_type in [(0,'X_HOLD'),(1,'Y_HOLD')]:
-            pb=rovHandler.plot_buffers[zmq_topics.topic_pos_hold_pid_fmt%i]
-            if values['-PLOT-TYPE-']==p_type:
-                plotter.update_pid(pb)
-            target_xy[i]=pb.get_last('T')
-            if target_xy[i] is None:
-                target_xy[i]=0
-        tic=time.time()
-        if time.time()-last_plot_pids>0.3:
-            last_plot_pids=time.time()
-            for p_type,pb in [\
-                    ('YAW',zmq_topics.topic_att_hold_yaw_pid),
-                    ('PITCH',zmq_topics.topic_att_hold_pitch_pid),
-                    ('ROLL',zmq_topics.topic_att_hold_roll_pid)]:
+            for i,p_type in [(0,'X_HOLD'),(1,'Y_HOLD')]:
+                pb=rovHandler.plot_buffers[zmq_topics.topic_pos_hold_pid_fmt%i]
                 if values['-PLOT-TYPE-']==p_type:
-                    plotter.update_pid(rovHandler.plot_buffers[pb])
+                    plotter.update_pid(pb)
+                target_xy[i]=pb.get_last('T')
+                if target_xy[i] is None:
+                    target_xy[i]=0
+            tic=time.time()
+            if time.time()-last_plot_pids>0.3:
+                last_plot_pids=time.time()
+                for p_type,pb in [\
+                        ('YAW',zmq_topics.topic_att_hold_yaw_pid),
+                        ('PITCH',zmq_topics.topic_att_hold_pitch_pid),
+                        ('ROLL',zmq_topics.topic_att_hold_roll_pid)]:
+                    if values['-PLOT-TYPE-']==p_type:
+                        plotter.update_pid(rovHandler.plot_buffers[pb])
 
-        rovHandler.next()
+            rovHandler.next()
 
-        rov_telem=rovHandler.getTelemtry()
-        if 'dvl_deadrecon' in rov_telem :
-            trace_plotter.update_dvl_data(rov_telem['dvl_deadrecon'],target_pos=target_xy[::-1],yaw_deg=current_yaw_deg)
-        if time.time()-last_plot_dvl>0.3:
-            last_plot_dvl=time.time()
-            trace_plotter.redraw()
+            rov_telem=rovHandler.getTelemtry()
+            if 'dvl_deadrecon' in rov_telem :
+                trace_plotter.update_dvl_data(rov_telem['dvl_deadrecon'],target_pos=target_xy[::-1],yaw_deg=current_yaw_deg)
+            if time.time()-last_plot_dvl>0.3:
+                last_plot_dvl=time.time()
+                trace_plotter.redraw()
 
-        if zmq_topics.topic_imu in rov_telem:
-            current_yaw_deg = rov_telem[zmq_topics.topic_imu]['yaw']
-        if 0:
-            print(f'=== took {(time.time()-tic)*1000:.1f} msec')
+            if zmq_topics.topic_imu in rov_telem:
+                current_yaw_deg = rov_telem[zmq_topics.topic_imu]['yaw']
+            if 0:
+                print(f'=== took {(time.time()-tic)*1000:.1f} msec')
 
-        cnt+=1
-        if 0:
-            print(f'=== tk images took {(time.time()-cycle_tic)*1000:.1f} msec')
+            cnt+=1
+            if 0:
+                print(f'=== tk images took {(time.time()-cycle_tic)*1000:.1f} msec')
+        except Exception as E:
+            print('*'*100)
+            traceback.print_exc(file=sys.stdout)
+            time.sleep(0.1)
 
     window.close()
 if __name__ == "__main__":

@@ -55,6 +55,7 @@ async def recv_and_process():
                 print('got dvl command ',ret[1])
                 if ret[1]==reset_cmd:
                     print('got dvl reset cmd')
+                    dvl_last_pos=None
                     if dvl_last_pos is not None:
                         for ind in range(len(pids)):
                             pids[ind] = PID(**pos_pids[ind])
@@ -104,8 +105,10 @@ async def recv_and_process():
                     dx=tracker_lock_range-data['range']
                     #printer(f">>>dx={dx:.2f},{tracker_lock_range:.2f},{data['range']:.2f}")
                     dy=data['dy']
-                    target_pos[0]=dvl_last_pos['x']-Pxy*dx
-                    target_pos[1]=dvl_last_pos['y']+Pxy*dy
+                    #target_pos[0]=dvl_last_pos['x']-Pxy*dx
+                    #target_pos[1]=dvl_last_pos['y']+Pxy*dy
+                    target_pos[0]-=Pxy*dx
+                    target_pos[1]+=Pxy*dy
 
             if topic==zmq_topics.topic_remote_cmd:
                 if data['cmd']=='go':

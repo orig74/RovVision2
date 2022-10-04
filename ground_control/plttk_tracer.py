@@ -20,6 +20,9 @@ class CycArr():
     def __len__(self):
         return len(self.buf)
 
+    def clear(self):
+        self.buf=[]
+
 
 class Data:
     def reset(self):
@@ -96,6 +99,9 @@ class Plotter(object):
 
     def center(self):
         gdata.map_center = gdata.curr_pos[:]
+        
+    def clear_trace(self):
+        gdata.pos_hist.clear() 
 
     def update_dvl_data(self,ldata,target_pos=None,yaw_deg=None):
         if ldata is not None and ldata['type']=='deadreacon':
