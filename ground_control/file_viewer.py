@@ -1,4 +1,4 @@
-# vim: tabstop=8 expandtoriab shiftwidth=4 softtabstop=4
+# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 #
 # to copy data.pkl
 # sim:
@@ -98,7 +98,7 @@ if __name__=='__main__':
         else:
             images,fcnt=reader.__next__()
             from_buff=False
-            #print('fnum in image',fcnt)
+            print('fnum in image',fcnt)
             while fcnt>-1:
                 try:
                     ret=pickle.load(fd)
@@ -110,6 +110,10 @@ if __name__=='__main__':
                     socket_pub.send_multipart([ret[0],pickle.dumps(ret[1])])
                 if ret[0]==topics.topic_button:
                     print('got',ret[0],ret[1])
+                if ret[0]==topics.topic_stereo_camera_ts:
+                    msg=ret[1]
+                    if msg[0]>=fcnt:
+                        break
                 if ret[0]==topics.topic_viewer_data:
                     msg=ret[1]
                     if msg['frame_cnt'][1]>=fcnt:
