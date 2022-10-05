@@ -11,6 +11,7 @@ mission_vars_default=[
     ('minimal_step_time',15),
     ('vertical_step',0.1),
     ('slide_step',0.1),
+    ('max_iters',3),
     ]
 
 class FarmTrack(object):
@@ -68,7 +69,10 @@ class FarmTrack(object):
     def __inc_step(self):
         self.state_ind+=1
         self.state_ind=self.state_ind%len(states)
-        self.printer('state is: '+states[self.state_ind])
+        if self.state_ind==0 and self.iter<self.max_iters:
+            self.state_ind+=1
+            self.iter+=1
+        self.printer(f'{self.iter} state is: {states[self.state_ind]}')
         self.done_step=self.auto_next
         self.start_step_time=time.time()
 
