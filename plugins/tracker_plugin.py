@@ -21,9 +21,14 @@ if config.tracker=='rope':
 elif config.tracker=='local':
     from tracker import tracker
 
+def printer(txt,c=None):
+    print('printing:',txt)
+    printer_source.send_pyobj({'txt':txt,'c':c})
+
+
 async def recv_and_process():
     keep_running=True
-    st=tracker.StereoTrack()
+    st=tracker.StereoTrack(printer=printer)
     jm=Joy_map()
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.005)[0]
@@ -56,6 +61,11 @@ async def recv_and_process():
                     st.set_clear_freqs(data['data'],relative=data['rel'])
                 if data['cmd']=='lock_max':
                     st.reset_max()
+                if data['cmd']=='track_conf':
+                    if data['rope_grey_func']=='hsv':
+                        st.set_rope_detect_hsv()
+                    if data['rope_grey_func']=='grey':
+                        st.set_rope_detect_grey(chan=data['chan'])
 
             if topic==zmq_topics.topic_axes:
                 jm.update_axis(data)
@@ -80,8 +90,10 @@ if __name__=='__main__':
     subs_socks=[]
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_stereo_camera],zmq_topics.topic_camera_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_axes,zmq_topics.topic_button,zmq_topics.topic_hat],
-        zmq_topics.topic_joy_port))
+    zmq_topics.topic_joy_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_remote_cmd],zmq_topics.topic_remote_cmd_port))
+    printer_source = zmq_wrapper.push_source(zmq_topics.printer_sink_port)
+
 
     ### plugin outputs
     sock_pub=zmq_wrapper.publisher(zmq_topics.topic_tracker_port)

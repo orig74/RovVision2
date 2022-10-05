@@ -23,11 +23,11 @@ hsv_wait=False
 
 if show_hsv:
     cv2.namedWindow('hsv',cv2.WINDOW_NORMAL)
-def toh(im):
-    ret= cv2.cvtColor(im,cv2.COLOR_BGR2HSV_FULL)[:,:,0].copy()
+def toh(im,chan=0):
+    ret= cv2.cvtColor(im,cv2.COLOR_BGR2HSV_FULL)[:,:,chan].copy()
     return ret
-def togrey(im):
-    return im[:,:,2]
+def togrey(im,chan=2):
+    return im[:,:,chan]
 
 
 def treshhold(ret):
@@ -39,7 +39,7 @@ def generate_stereo_cameras():
     return get_stereo_cameras(config.focal_length,(config.pixelwidthx,config.pixelwidthy),config.baseline,config.camera_pitch)
 
 class StereoTrack():
-    def __init__(self):
+    def __init__(self,printer=None):
         self.disparity_offset = config.track_offx
         self.stereo_wx,self.stereo_wy = stereo_corr_params['ws']
         self.stereo_sxl = stereo_corr_params['sxl']
@@ -52,7 +52,22 @@ class StereoTrack():
         self.rope_debug=None
         self.clear_freqs=config.clear_freqs
         self.last_imgl=None
+        self.rope_grey_func=toh
+        self.rope_grey_chan=0
+        self.corr_grey_func=togrey
+        self.corr_grey_chan=2
+        self.printer=printer
         self.reset()
+
+    def set_rope_detect_hsv(self):
+        self.rope_grey_func=toh
+        self.rope_grey_chan=0
+        self.printer('rope track to hsv (h)')
+    def set_rope_detect_grey(self,chan=None):
+        if chan is not None:
+            self.rope_grey_chan=chan
+        self.rope_grey_func=togrey
+        self.printer('rope track to grey cahn='+'RGB'[self.rope_grey_chan])
 
     def reset(self,pt=None):
         if pt is None:
@@ -136,8 +151,8 @@ class StereoTrack():
 
         corrs=[]
         try:
-            corr_search=togrey(imgr[u2:d2,l2:r2,:].copy())
-            corr_pat=togrey(imgl[u1:d1,l1:r1,:]).copy()
+            corr_search=self.corr_grey_func(imgr[u2:d2,l2:r2,:].copy(),self.corr_grey_chan)
+            corr_pat=self.corr_grey_func(imgl[u1:d1,l1:r1,:].copy(),self.corr_grey_chan)
             corr = cv2.matchTemplate(corr_search,corr_pat,cv2.TM_CCOEFF_NORMED)
         except Exception as E:
             print('Error corr exception',E)
@@ -214,7 +229,7 @@ class StereoTrack():
         #imgr1b=imgr[:,:,2].copy()
 
         #im_grey_to_track = imgl[:,:,2].copy()
-        im_grey_to_track = toh(imgl)
+        im_grey_to_track = self.rope_grey_func(imgl,self.rope_grey_chan)
 
 
         if show_hsv:
@@ -294,7 +309,7 @@ class StereoTrack():
         if self.rope_debug is not None:
             res['rope_debug']=self.rope_debug
         self.last_res=res
-        print(f'==== {dx:.1f},{dy:.1f},{dz:.1f}')
+        #print(f'==== {dx:.1f},{dy:.1f},{dz:.1f}')
         return res
 
 

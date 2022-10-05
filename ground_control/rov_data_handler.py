@@ -83,6 +83,12 @@ class rovCommandHandler(object):
     def lights_dec(self):
         self.pub({'cmd':'lights-'})
 
+    def set_rope_tracker_to_hsv(self):
+        self.pub({'cmd':'track_conf','rope_grey_func':'hsv'})
+
+    def set_rope_tracker_to_grey(self,chan):
+        self.pub({'cmd':'track_conf','rope_grey_func':'grey','chan':chan})
+
 #    def start_recording(self):
 #        self.pub({'cmd':'start_recording'})
 #

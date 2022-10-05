@@ -128,12 +128,15 @@ def main():
     yaw_source_options=['VNAV','DVL']
     config_column = [
             [sg.Button('REC')],
-            [sg.Text('Yaw Source:'),sg.Combo(yaw_source_options,key='YAW_SOURCE',default_value=yaw_source_options[0])],
+            #[sg.Text('Yaw Source:'),sg.Combo(yaw_source_options,key='YAW_SOURCE',default_value=yaw_source_options[0])],
             [sg.Button('Reset-DVL'),sg.Button('Calib-DVL')],
             [sg.Button('CF+'),sg.Button('CF-')],
             [sg.Button('Lights+'),sg.Button('Lights-')],
-            [sg.Multiline(key='MESSEGES',s=(23,5), autoscroll=True, reroute_stdout=False, write_only=True)],
+            [sg.Multiline(key='MESSEGES',s=(23,5) if scale_screen else (32,8), autoscroll=True, reroute_stdout=False, write_only=True)],
             [sg.Checkbox('H',key='HSV_H',tooltip='h from hsv on cam 1')],
+            [sg.Button('RTG',key='ROPE_TO_GREY',tooltip='detect rope from grey image channel'),
+                sg.Combo(list('RGB'),key='CHANNEL',default_value='B'),
+                sg.Button('RTHSV',key='ROPE_TO_HSV',tooltip='detect rope from hsv image channel (h)')],
             ]
 
     plot_options=['DEPTH','X_HOLD','Y_HOLD','YAW','PITCH','ROLL']
@@ -335,6 +338,11 @@ def main():
 
             if values['-PLOT-TYPE-']=='DEPTH':
                 plotter.update_pid(rovHandler.plot_buffers[zmq_topics.topic_depth_hold_pid])
+
+            if event=='ROPE_TO_GREY':
+                rovCommander.set_rope_tracker_to_grey(chan='RGB'.index(values['CHANNEL']))
+            if event=='ROPE_TO_HSV':
+                rovCommander.set_rope_tracker_to_hsv()
             
             for i,p_type in [(0,'X_HOLD'),(1,'Y_HOLD')]:
                 pb=rovHandler.plot_buffers[zmq_topics.topic_pos_hold_pid_fmt%i]
