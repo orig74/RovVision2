@@ -3,6 +3,7 @@ class DVLSim(object):
     def __init__(self):
         self.dvl_angle_offsets=np.zeros(3)
         self.dvl_offset=np.zeros(3)
+        self.dvl_yaw_drift=0
 
     def update(self,curr_q,curr_u):
         self.curr_q,self.curr_u=curr_q,curr_u
@@ -10,6 +11,7 @@ class DVLSim(object):
     def dvl_vel_msg(self):
         curr_u=self.curr_u
         vx,vy,vz = curr_u[:3]
+        _y,_p,_r=self.curr_q[3:]
         #simulate dvl messgaes
         yaw_off=-self.dvl_angle_offsets[0]#-np.pi/2
         c,s = np.cos(yaw_off),np.sin(yaw_off)
@@ -20,18 +22,20 @@ class DVLSim(object):
     def dvl_pos_msg(self):
         curr_q=self.curr_q
         x,y,z=curr_q[:3]-self.dvl_offset
+        _y,_p,_r=self.curr_q[3:]
         yaw_off=-self.dvl_angle_offsets[0]#-np.pi/2
         c,s = np.cos(yaw_off),np.sin(yaw_off)
         x,y = x*c-y*s,x*s+y*c
 
-        pos_msg='wrp,1550139816.178,{},{},{},{},2.5,-3.7,-62.5,0*XX\r\n'.\
-                format(x,y,z,100).encode()
+        pos_msg='wrp,1550139816.178,{},{},{},{},2.5,-3.7,{},0*XX\r\n'.\
+                format(x,y,z,100,np.rad2deg(yaw_off+_y)%360).encode()
         return pos_msg
 
     def reset(self): #command b'wcr\n'
         print('got dvl reset')
         self.dvl_offset=self.curr_q[:3]
         self.dvl_angle_offsets=self.curr_q[3:]
+        self.dvl_yaw_drift=0
 
 
 

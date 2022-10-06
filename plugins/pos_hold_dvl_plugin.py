@@ -28,7 +28,6 @@ AUTOSCAN_PATH = 5 * [np.array([5.0, 0.0, 0.0]),
 AUTO_VELOCITY = 0.2
 AUTO_TARGET_THRESH = 0.1
 
-
 async def recv_and_process():
     keep_running=True
     target_pos=np.zeros(3)
@@ -93,6 +92,16 @@ async def recv_and_process():
                             target_pos[ind]=dvl_last_pos['xyz'[ind]]
                         elif dvl_last_vel['valid']==b'y':
                             x,v=dvl_last_pos['xyz'[ind]],dvl_last_vel['v'+'xyz'[ind]]
+                            tetha = -np.radians(dvl_last_pos['yaw'])
+                            c=np.cos(tetha)
+                            s=np.sin(tetha)
+                            if ind==0: #xrot #should do it more cleanly
+                                x=dvl_last_pos['x']*c-dvl_last_pos['y']*s
+                                v=dvl_last_vel['vx']*c-dvl_last_vel['vy']*s
+                            if ind==1: #vrot
+                                x=dvl_last_pos['x']*s+dvl_last_pos['y']*c
+                                v=dvl_last_vel['vx']*s+dvl_last_vel['vy']*c
+
                             cmds[ind] = -pids[ind](x,target_pos[ind],v)
                             ts=time.time()
                             debug_pid = {'P':pids[ind].p,'I':pids[ind].i,'D':pids[ind].d,'C':cmds[ind],'T':target_pos[ind],'N':x, 'R':v, 'TS':ts}
