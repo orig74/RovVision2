@@ -147,6 +147,7 @@ class Data:
     def reset(self):
         self.curr_pos=None
         self.pos_hist = CycArr()
+        self.yaw_hist = CycArr()
         self.trace_hist = CycArr(500)
         self.heading_rot = None
         self.map_center = (0,0)
@@ -223,6 +224,9 @@ def update_graph(axes):
                             gdata.heading_rot=tin_data['yaw']
                             ch=np.cos(np.radians(tin_data['yaw']-90))
                             sh=np.sin(np.radians(tin_data['yaw']-90))
+
+                            gdata.yaw_hist.add((ldata['yaw'],tin_data['yaw'],ldata['yaw']-tin_data['yaw']))
+                            print('[[[[[[[[[[[[[[ ',tin_data['yaw'])
                         #else:
                         #    gdata.heading_rot=0
                     if ldata is not None and ldata['type']=='transducer':
@@ -269,6 +273,15 @@ def update_graph(axes):
             ax3.set_xlim(len(xs)-100,len(xs))
             ax3.set_ylim(0,30)
 
+        xs = np.arange(len(gdata.yaw_hist))
+        if len(gdata.yaw_hist.buf)>0:
+            rarr = np.array(gdata.yaw_hist.buf)
+            for i in [0,1,2]:
+                hdl_yaws[i][0].set_xdata(xs)
+                hdl_yaws[i][0].set_ydata((rarr[:,i]%360)-180)
+            ax4.set_xlim(len(xs)-100,len(xs))
+            ax4.set_ylim(-180,180)
+
         #import pdb;pdb.set_trace()
         #axes.figure.canvas.draw()
         fig.canvas.draw()
@@ -311,6 +324,7 @@ plt.legend(list('xyz'))
 plt.xlabel('[frame]')
 plt.ylabel('[m/frame]')
 hdl_trace = [ax2.plot([1],'-r'),ax2.plot([1],'-g'),ax2.plot([1],'-b')]
+plt.grid('on')
 
 ax3=plt.subplot2grid((3,2), (2,0))
 plt.title('ground range')
@@ -318,6 +332,15 @@ hdl_range  = [ax3.plot([1],[1],'-') for _ in range(4) ]
 plt.xlabel('[frame]')
 plt.ylabel('[m]')
 plt.grid('on')
+
+ax4=plt.subplot2grid((3,2), (1,0))
+plt.title('YAW')
+plt.legend(['dvl','imu'])
+plt.xlabel('[frame]')
+#plt.ylabel('[m/frame]')
+hdl_yaws = [ax4.plot([1],'-r'),ax4.plot([1],'-g'),ax4.plot([1],'b.')]
+plt.grid('on')
+
 
 
 
