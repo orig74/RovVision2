@@ -30,9 +30,12 @@ def togrey(im,chan=2):
     return im[:,:,chan]
 
 
-def treshhold(ret):
+def treshhold_hsv(ret):
     _,ret= cv2.threshold(ret,50,255,cv2.THRESH_TOZERO_INV)
     return ret*3
+
+def treshhold_grey(ret):
+    return ret
 
 
 def generate_stereo_cameras():
@@ -53,6 +56,7 @@ class StereoTrack():
         self.clear_freqs=config.clear_freqs
         self.last_imgl=None
         self.rope_grey_func=toh
+        self.treshhold=treshhold_hsv
         self.rope_grey_chan=0
         self.corr_grey_func=togrey
         self.corr_grey_chan=2
@@ -62,11 +66,13 @@ class StereoTrack():
     def set_rope_detect_hsv(self):
         self.rope_grey_func=toh
         self.rope_grey_chan=0
+        self.treshhold=treshhold_hsv
         self.printer('rope track to hsv (h)')
     def set_rope_detect_grey(self,chan=None):
         if chan is not None:
             self.rope_grey_chan=chan
         self.rope_grey_func=togrey
+        self.treshhold=treshhold_grey
         self.printer('rope track to grey cahn='+'RGB'[self.rope_grey_chan])
 
     def reset(self,pt=None):
@@ -89,7 +95,7 @@ class StereoTrack():
         cx  = shape[1]//2+self.ofx
         cy  = shape[0]//2
         ret=rope_global_extrema(self.rope_track_state, cy-100,200, 
-                treshhold(self.last_imgl),clear_freqs=self.clear_freqs)
+                self.treshhold(self.last_imgl),clear_freqs=self.clear_freqs)
 
         if ret is not None:
            self.rope_track_state, col,self.rope_debug=ret
@@ -104,7 +110,7 @@ class StereoTrack():
         
 
         ret=rope_detect(cx,self.rope_track_state, cy-100,200, 
-                treshhold(imgl),clear_freqs=self.clear_freqs, max_diff_cols=config.max_diff_cols)
+                self.treshhold(imgl),clear_freqs=self.clear_freqs, max_diff_cols=config.max_diff_cols)
         if ret is not None:
            self.rope_track_state, col,self.rope_debug=ret
            self.ofx = col-shape[1]//2
