@@ -132,6 +132,8 @@ class Plotter(object):
             if self.target_pos is None:
                 self.target_pos=(0,0)
 
+            ch=np.cos(-yaw_rad+np.pi/2)
+            sh=np.sin(-yaw_rad+np.pi/2)
             x,y = self.target_pos[:2]
             x,y = x*ch-y*sh,x*sh+y*ch
             
