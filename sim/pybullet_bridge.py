@@ -23,6 +23,7 @@ from scipy.spatial.transform import Rotation as R
 
 from mussels_scene import getscene
 
+zmq_controller=utils.subscribe([zmq_topics.topic_dvl_cmd],zmq_topics.topic_controller_port)
 zmq_sub=utils.subscribe([zmq_topics.topic_thrusters_comand],zmq_topics.topic_thrusters_comand_port)
 zmq_pub=utils.publisher(zmq_topics.topic_camera_port)
 pub_imu = utils.publisher(zmq_topics.topic_imu_port)
@@ -123,7 +124,7 @@ def scale_thrust(control):
 def get_next_state(curr_q,curr_u,control,dt,lamb):
     control = np.clip(control,-1,1)
     forces=scale_thrust(control)
-    currents_vector = [0,0.3,0]
+    currents_vector = [0,0.0,0]
     u_dot_f=lamb(curr_q,curr_u,*forces,*currents_vector).flatten()
     next_q=curr_q+curr_u*dt
     next_u=curr_u+u_dot_f*dt

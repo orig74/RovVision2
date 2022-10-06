@@ -27,7 +27,10 @@ def toh(im,chan=0):
     ret= cv2.cvtColor(im,cv2.COLOR_BGR2HSV_FULL)[:,:,chan].copy()
     return ret
 def togrey(im,chan=2):
-    return im[:,:,chan]
+    ret=im[:,:,chan%3]
+    if chan>3:
+        ret=255-ret
+    return ret
 
 
 def treshhold_hsv(ret):
@@ -73,7 +76,7 @@ class StereoTrack():
             self.rope_grey_chan=chan
         self.rope_grey_func=togrey
         self.treshhold=treshhold_grey
-        self.printer('rope track to grey cahn='+'RGB'[self.rope_grey_chan])
+        self.printer('rope track to grey cahn='+'RGBrgb'[self.rope_grey_chan])
 
     def reset(self,pt=None):
         if pt is None:

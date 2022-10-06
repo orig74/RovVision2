@@ -135,7 +135,7 @@ def main():
             [sg.Multiline(key='MESSEGES',s=(23,5) if scale_screen else (32,8), autoscroll=True, reroute_stdout=False, write_only=True)],
             [sg.Checkbox('H',key='HSV_H',tooltip='h from hsv on cam 1')],
             [sg.Button('RTG',key='ROPE_TO_GREY',tooltip='detect rope from grey image channel'),
-                sg.Combo(list('RGB'),key='CHANNEL',default_value='B'),
+                sg.Combo(list('RGBrgb'),key='CHANNEL',default_value='B'),
                 sg.Button('RTHSV',key='ROPE_TO_HSV',tooltip='detect rope from hsv image channel (h)')],
             ]
 
@@ -340,7 +340,7 @@ def main():
                 plotter.update_pid(rovHandler.plot_buffers[zmq_topics.topic_depth_hold_pid])
 
             if event=='ROPE_TO_GREY':
-                rovCommander.set_rope_tracker_to_grey(chan='RGB'.index(values['CHANNEL']))
+                rovCommander.set_rope_tracker_to_grey(chan='RGBrgb'.index(values['CHANNEL']))
             if event=='ROPE_TO_HSV':
                 rovCommander.set_rope_tracker_to_hsv()
             

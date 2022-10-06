@@ -101,7 +101,7 @@ class FarmTrack(object):
         txy=dh.get_target_xy()
         dx = abs(xy[0]-txy[0])
         dy = abs(xy[1]-txy[1])
-        #self.printer(f'dxdy {dx:.2f} {dy:.2f}')
+        self.printer(f'dxdy {dx:.2f} {dy:.2f} {dx<tresh and dy<tresh}')
         return dx<tresh and dy<tresh
 
 
@@ -121,8 +121,8 @@ class FarmTrack(object):
             return
 
         do_next = self.done_step or self.auto_next
-        do_next = do_next and self.step_time()>self.minimal_step_time
         do_next = do_next and self.__is_stable_xy()
+        do_next = do_next and self.step_time()>self.minimal_step_time
 
         if states[self.state_ind]=='stabilize':
             #self.printer(f'M: xy_ach: {self.__target_xy_achived()} done_st: {self.done_step}')
