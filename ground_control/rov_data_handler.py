@@ -83,8 +83,8 @@ class rovCommandHandler(object):
     def lights_dec(self):
         self.pub({'cmd':'lights-'})
 
-    def set_rope_tracker_to_hsv(self):
-        self.pub({'cmd':'track_conf','rope_grey_func':'hsv'})
+    def set_rope_tracker_to_hsv(self,n=0):
+        self.pub({'cmd':'track_conf','rope_grey_func':'hsv','n':n})
 
     def set_rope_tracker_to_grey(self,chan):
         self.pub({'cmd':'track_conf','rope_grey_func':'grey','chan':chan})
@@ -257,6 +257,16 @@ class rovDataHandler(object):
         ldata=self.telemtry['dvl_deadrecon'] 
         ret=(ldata['x'],ldata['y'])
         return ret
+
+    def get_pos_xy2(self): #shuld be the same as above but some how not BUG
+        target_xy=[0,0]
+        for i in [0,1]:
+            pb=self.plot_buffers[zmq_topics.topic_pos_hold_pid_fmt%i]
+            target_xy[i]=pb.get_last('N')
+            if target_xy[i] is None:
+                target_xy[i]=0
+        return target_xy
+
 
     def get_target_xy(self):
         target_xy=[0,0]
