@@ -24,7 +24,8 @@ hsv_wait=False
 if show_hsv:
     cv2.namedWindow('hsv',cv2.WINDOW_NORMAL)
 def toh(im,chan=0):
-    ret= cv2.cvtColor(im,cv2.COLOR_BGR2HSV_FULL)[:,:,chan].copy()
+    #ret= cv2.cvtColor(im,cv2.COLOR_BGR2HSV_FULL)[:,:,chan].copy()
+    ret= cv2.cvtColor(im,cv2.COLOR_BGR2HSV)[:,:,chan].copy()
     return ret
 def togrey(im,chan=2):
     ret=im[:,:,chan%3]
@@ -33,9 +34,19 @@ def togrey(im,chan=2):
     return ret
 
 
-def treshhold_hsv(ret):
+def _treshhold_hsv(ret):
     _,ret= cv2.threshold(ret,50,255,cv2.THRESH_TOZERO_INV)
     return ret*3
+
+def treshhold_hsv1(ret):
+    #_,rt= cv2.threshold(ret,50,255,cv2.THRESH_TOZERO_INV)
+    return ret
+
+def treshhold_hsv2(ret):
+    #_,ret= cv2.threshold(ret,50,255,cv2.THRESH_TOZERO_INV)
+    return 1-ret
+
+
 
 def treshhold_grey(ret):
     return ret
@@ -59,18 +70,18 @@ class StereoTrack():
         self.clear_freqs=config.clear_freqs
         self.last_imgl=None
         self.rope_grey_func=toh
-        self.treshhold=treshhold_hsv
+        self.treshhold=treshhold_hsv1
         self.rope_grey_chan=0
         self.corr_grey_func=togrey
         self.corr_grey_chan=2
         self.printer=printer
         self.reset()
 
-    def set_rope_detect_hsv(self):
+    def set_rope_detect_hsv(self,n=0):
         self.rope_grey_func=toh
         self.rope_grey_chan=0
-        self.treshhold=treshhold_hsv
-        self.printer('rope track to hsv (h)')
+        self.treshhold=[treshhold_hsv1,treshhold_hsv2][n] 
+        self.printer(f'rope track to hsv (h) {n}')
     def set_rope_detect_grey(self,chan=None):
         if chan is not None:
             self.rope_grey_chan=chan

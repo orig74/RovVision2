@@ -125,7 +125,7 @@ def main():
     cmd_column+=TrackThreadSG.get_layout(track_thread)
     cmd_column+=[[sg.Button('Save',key='MISSION_SAVE',tooltip='save mission params')]]
 
-    yaw_source_options=['VNAV','DVL']
+    #yaw_source_options=['VNAV','DVL']
     config_column = [
             [sg.Button('REC')],
             #[sg.Text('Yaw Source:'),sg.Combo(yaw_source_options,key='YAW_SOURCE',default_value=yaw_source_options[0])],
@@ -134,10 +134,12 @@ def main():
             [sg.Button('Lights+'),sg.Button('Lights-')],
             [sg.Multiline(key='MESSEGES',s=(23,5) if scale_screen else (32,8), autoscroll=True, reroute_stdout=False, write_only=True)],
             [sg.Checkbox('H',key='HSV_H',tooltip='h from hsv on cam 1')],
-            [sg.Button('RTG',key='ROPE_TO_GREY',tooltip='detect rope from grey image channel'),
-                sg.Combo(list('RGBrgb'),key='CHANNEL',default_value='B'),
-                sg.Button('RTHSV',key='ROPE_TO_HSV',tooltip='detect rope from hsv image channel (h)')],
+            [sg.Combo(list('RGBrgb'),key='CHANNEL',enable_events=True ,default_value='B',
+                    tooltip='detect rope from grey image channel'),
+             sg.Combo(list('01'),key='ROPE_TO_HSV',default_value='0',enable_events=True,
+                    tooltip='detect rope from hsv image channel (h) or in h')],
             ]
+            #sg.Button('RTHSV',key='ROPE_TO_HSV',tooltip='detect rope from hsv image channel (h)')],
 
     plot_options=['DEPTH','X_HOLD','Y_HOLD','YAW','PITCH','ROLL']
     matplot_column1 = [
@@ -339,10 +341,10 @@ def main():
             if values['-PLOT-TYPE-']=='DEPTH':
                 plotter.update_pid(rovHandler.plot_buffers[zmq_topics.topic_depth_hold_pid])
 
-            if event=='ROPE_TO_GREY':
+            if event=='CHANNEL':
                 rovCommander.set_rope_tracker_to_grey(chan='RGBrgb'.index(values['CHANNEL']))
             if event=='ROPE_TO_HSV':
-                rovCommander.set_rope_tracker_to_hsv()
+                rovCommander.set_rope_tracker_to_hsv(int(values['ROPE_TO_HSV']))
             
             for i,p_type in [(0,'X_HOLD'),(1,'Y_HOLD')]:
                 pb=rovHandler.plot_buffers[zmq_topics.topic_pos_hold_pid_fmt%i]

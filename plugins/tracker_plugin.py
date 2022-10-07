@@ -63,7 +63,7 @@ async def recv_and_process():
                     st.reset_max()
                 if data['cmd']=='track_conf':
                     if data['rope_grey_func']=='hsv':
-                        st.set_rope_detect_hsv()
+                        st.set_rope_detect_hsv(n=data['n'])
                     if data['rope_grey_func']=='grey':
                         st.set_rope_detect_grey(chan=data['chan'])
 
