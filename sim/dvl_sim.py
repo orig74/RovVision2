@@ -4,9 +4,12 @@ class DVLSim(object):
         self.dvl_angle_offsets=np.zeros(3)
         self.dvl_offset=np.zeros(3)
         self.dvl_yaw_drift=0
+        self.dvl_xy_drift=np.array([0.001,0.001])
+        self.cnt=0
 
     def update(self,curr_q,curr_u):
         self.curr_q,self.curr_u=curr_q,curr_u
+        self.cnt+=1
 
     def dvl_vel_msg(self):
         curr_u=self.curr_u
@@ -26,6 +29,9 @@ class DVLSim(object):
         yaw_off=-self.dvl_angle_offsets[0]#-np.pi/2
         c,s = np.cos(yaw_off),np.sin(yaw_off)
         x,y = x*c-y*s,x*s+y*c
+        x_,y_=self.dvl_xy_drift*self.cnt
+        x+=x_
+        y+=y_
 
         pos_msg='wrp,1550139816.178,{},{},{},{},2.5,-3.7,{},0*XX\r\n'.\
                 format(x,y,z,100,np.rad2deg(yaw_off+_y)%360).encode()
@@ -36,6 +42,7 @@ class DVLSim(object):
         self.dvl_offset=self.curr_q[:3]
         self.dvl_angle_offsets=self.curr_q[3:]
         self.dvl_yaw_drift=0
+        self.cnt=0
 
 
 

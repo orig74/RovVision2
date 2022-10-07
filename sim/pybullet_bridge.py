@@ -172,14 +172,19 @@ def main():
 
     while keep_running:
         tic_cycle = time.time()
-        while len(zmq.select([zmq_sub],[],[],0.001)[0])>0:
-            data = zmq_sub.recv_multipart()
-            topic=data[0]
-            if topic==zmq_topics.topic_thrusters_comand:
-                _,current_command=pickle.loads(data[1])
-                current_command=[i*1.3 for i in current_command]
-            if topic==zmq_topics.topic_dvl_cmd:
-                dvlSim.reset()
+        while 1:
+            socks=zmq.select([zmq_sub,zmq_controller],[],[],0.001)[0]
+            if len(socks)==0:
+                break
+            for sock in socks:
+                data = sock.recv_multipart()
+                topic=data[0]
+                if topic==zmq_topics.topic_thrusters_comand:
+                    _,current_command=pickle.loads(data[1])
+                    current_command=[i*1.3 for i in current_command]
+                if topic==zmq_topics.topic_dvl_cmd:
+                    print('got dvl reset....')
+                    dvlSim.reset()
 
         next_q,next_u=get_next_state(curr_q,curr_u,current_command,dt,lamb)
         next_q,next_u=next_q.flatten(),next_u.flatten()
