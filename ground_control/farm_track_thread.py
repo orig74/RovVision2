@@ -97,7 +97,7 @@ class FarmTrack(object):
 
     def __is_stable_xy(self,tresh=0.2):
         dh=self.rov_data_handler
-        xy=dh.get_pos_xy()
+        xy=dh.get_pos_xy2()
         txy=dh.get_target_xy()
         dx = abs(xy[0]-txy[0])
         dy = abs(xy[1]-txy[1])
