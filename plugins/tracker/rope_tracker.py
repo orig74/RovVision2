@@ -82,6 +82,7 @@ class StereoTrack():
         self.rope_grey_chan=0
         self.treshhold=[treshhold_hsv1,treshhold_hsv2][n] 
         self.printer(f'rope track to hsv (h) {n}')
+
     def set_rope_detect_grey(self,chan=None):
         if chan is not None:
             self.rope_grey_chan=chan
@@ -106,8 +107,8 @@ class StereoTrack():
         self.last_res=None
         self.ref_point=None #first valid pt after reset
         shape=self.shape
-        cx  = shape[1]//2+self.ofx
-        cy  = shape[0]//2
+        cx = shape[1]//2+self.ofx
+        cy = shape[0]//2
         ret=rope_global_extrema(self.rope_track_state, cy-100,200, 
                 self.treshhold(self.last_imgl),clear_freqs=self.clear_freqs)
 
@@ -119,8 +120,8 @@ class StereoTrack():
         self.last_imgl=imgl
         shape=imgl.shape
         self.shape=shape
-        cx  = shape[1]//2+self.ofx
-        cy  = shape[0]//2
+        cx = shape[1]//2+self.ofx
+        cy = shape[0]//2
         
 
         ret=rope_detect(cx,self.rope_track_state, cy-100,200, 

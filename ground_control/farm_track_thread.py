@@ -22,6 +22,7 @@ class FarmTrack(object):
         self.rov_comander=rov_comander
         self.rov_data_handler=rov_data_handler
         self.printer=printer
+        self.override_do_next=False
         self.reset()
 
     def set_params(self,mission_vars):
@@ -62,6 +63,7 @@ class FarmTrack(object):
 
     def do_next(self):
         self.done_step=True
+        self.override_do_next=True
 
     def step_time(self):
         return time.time()-self.start_step_time 
@@ -75,6 +77,7 @@ class FarmTrack(object):
         self.printer(f'{self.iter} state is: {states[self.state_ind]}')
         self.done_step=self.auto_next
         self.start_step_time=time.time()
+        self.override_do_next=False
 
     def __target_depth_achived(self):
         dh=self.rov_data_handler
@@ -84,6 +87,8 @@ class FarmTrack(object):
         return abs(dh.get_depth()-self.final_target_depth)<0.2
 
     def __target_xy_achived(self,tresh=0.2):
+        if self.override_do_next:
+            return True
         dh=self.rov_data_handler
         xy=dh.get_pos_xy()
         if self.final_target_slide is None:
@@ -104,7 +109,6 @@ class FarmTrack(object):
         self.printer(f'dxdy {dx:.2f} {dy:.2f} {dx<tresh and dy<tresh}')
         return dx<tresh and dy<tresh
 
-
     def run(self,range_to_target,Pxy):
         dh=self.rov_data_handler
         tic=time.time()
@@ -123,11 +127,11 @@ class FarmTrack(object):
         do_next = self.done_step or self.auto_next
         do_next = do_next and self.__is_stable_xy()
         do_next = do_next and self.step_time()>self.minimal_step_time
+        do_next = do_next or self.override_do_next
 
         if states[self.state_ind]=='stabilize':
             #self.printer(f'M: xy_ach: {self.__target_xy_achived()} done_st: {self.done_step}')
             if do_next:
-            #if do_next:
                 self.__inc_step()
                 if states[self.state_ind]=='slide':
                     self.printer('going slide')
