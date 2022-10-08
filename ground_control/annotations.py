@@ -128,7 +128,7 @@ def draw_mono(img,message_dict,fmt_cnt_l):
             prev_frame_cnt = fmt_cnt_l
             prev_fps_time = time.time()
         line+=' {:>.2f}Cfps, {:>.2f}Rfps'.format(cfps, cfps / config.save_modulo)
-        print('fpsline',line)
+        #print('fpsline',line)
         cv2.putText(img,line,(sy(10),sx(560+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
     
     if 'dvl_deadrecon' in message_dict:

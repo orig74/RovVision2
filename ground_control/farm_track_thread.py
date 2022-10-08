@@ -86,18 +86,18 @@ class FarmTrack(object):
         #return abs(dh.get_depth()-dh.get_target_depth())<0.2
         return abs(dh.get_depth()-self.final_target_depth)<0.2
 
-    def __target_xy_achived(self,tresh=0.2):
+    def __target_xy_achived(self,tresh=0.3):
         if self.override_do_next:
             return True
         dh=self.rov_data_handler
-        xy=dh.get_pos_xy()
+        xy=dh.get_pos_xy2()
         if self.final_target_slide is None:
             return False
         #txy=dh.get_target_xy()
         txy=self.final_target_slide
         dx = abs(xy[0]-txy[0])
         dy = abs(xy[1]-txy[1])
-        #self.printer(f'dxdy {dx:.2f} {dy:.2f}')
+        self.printer(f'dslide {dx:.2f} {dy:.2f}')
         return dx<tresh and dy<tresh
 
     def __is_stable_xy(self,tresh=0.2):
@@ -135,7 +135,7 @@ class FarmTrack(object):
                 self.__inc_step()
                 if states[self.state_ind]=='slide':
                     self.printer('going slide')
-                    self.last_rope_xy=dh.get_pos_xy()
+                    self.last_rope_xy=dh.get_pos_xy2()
                     self.rov_comander.vertical_object_unlock()
                     self.final_target_slide=np.array([self.last_rope_xy[0]+self.back_slide,self.last_rope_xy[1]+self.horizontal_slide])
                     self.tmp_target_slide=np.array(self.last_rope_xy)
@@ -164,7 +164,7 @@ class FarmTrack(object):
                 self.__inc_step()
             else:
                 v=self.final_target_depth-self.tmp_target_depth
-                if v<=2*self.vertical_step:
+                if abs(v)<=2*self.vertical_step:
                     self.rov_comander.depth_command(self.final_target_depth,relative=False)
                 else:
                     self.tmp_target_depth+=self.vertical_step*np.sign(v)
@@ -180,7 +180,7 @@ class FarmTrack(object):
             else:
                 v=self.final_target_slide-self.tmp_target_slide
                 v_norm=np.linalg.norm(v)
-                if v_norm<=2*self.slide_step:
+                if v_norm<=self.slide_step:
                     self.rov_comander.go(self.final_target_slide,relative=False)
                 else:
                     self.tmp_target_slide+=self.slide_step*v/v_norm

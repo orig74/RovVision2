@@ -21,9 +21,9 @@ from config_pid_dvl import pos_pids
 from pid import PID
 
 
-AUTOSCAN_PATH = 5 * [np.array([5.0, 0.0, 0.0]),
+AUTOSCAN_PATH = 10 * [np.array([10.0, 0.0, 0.0]),
                  np.array([0.0, 0.5, 0.0]),
-                 np.array([-5.0, 0.0, 0.0]),
+                 np.array([-10.0, 0.0, 0.0]),
                  np.array([0.0, 0.5, 0.0])]
 AUTO_VELOCITY = 0.2
 AUTO_TARGET_THRESH = 0.1

@@ -4,7 +4,7 @@ class DVLSim(object):
         self.dvl_angle_offsets=np.zeros(3)
         self.dvl_offset=np.zeros(3)
         self.dvl_yaw_drift=0
-        self.dvl_xy_drift=np.array([0.001,0.001])
+        self.dvl_xy_drift=np.array([0.00001,0.00001])
         self.cnt=0
 
     def update(self,curr_q,curr_u):
