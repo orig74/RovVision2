@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<robot name="myfirst">
+
+  <material name="blue">
+    <color rgba="0 0 0.8 1"/>
+  </material>
+
+  <material name="white">
+    <color rgba="1 1 1 1"/>
+  </material>
+
+  <material name="semi_white">
+    <color rgba="1 1 1 0.4"/>
+  </material>
+
+  <link name="base_link">
+      
+  </link>
+
+  <link name="cm">
+    <visual>
+      <geometry>
+        <cylinder length="0.4" radius="0.06"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+
+    <inertial>
+      <mass value="10"/>
+      <inertia ixx="0.4" ixy="0.0" ixz="0.0" iyy="0.4" iyz="0.0" izz="0.4"/>
+    </inertial>
+  </link>
+
+    
+  <link name="right_cm1">
+    <visual>
+      <geometry>
+        <cylinder length="0.2" radius="0.03"/>
+      </geometry>
+    <material name="semi_white"/>
+        
+    </visual>
+  </link>
+
+  <link name="left_cm1">
+    <visual>
+      <geometry>
+        <cylinder length="0.2" radius="0.03"/>
+      </geometry>
+    <material name="semi_white"/>
+    </visual>
+
+  </link>
+
+  <joint name="base_to_cm" type="fixed">
+    <parent link="base_link"/>
+    <child link="cm"/>
+    <origin rpy="0 1.5707963267948966 0" xyz="0 0. 0."/>
+  </joint>
+
+    
+  <joint name="base_to_right_cm1" type="fixed">
+    <parent link="cm"/>
+    <child link="right_cm1"/>
+    <origin rpy="0 0 0" xyz="0 0.05 0.2"/>
+  </joint>
+
+  <joint name="base_to_left_cm1" type="fixed">
+    <parent link="cm"/>
+    <child link="left_cm1"/>
+    <origin rpy="0 0 0" xyz="0 -0.05 0.2"/>
+  </joint>
+
+</robot>
