@@ -21,11 +21,13 @@ tmux set -g pane-border-status top
 
 ################## sim part
 new_4_win
-run 1 sim pybullet_bridge.py
+run 1 sim "pybullet_bridge2.py g"
+#run 1 sim "pybullet_bridge.py"
 tmux select-pane -t 2
 
 sleep 1
 
+wmctrl -r "Bullet Phys" -t 1
 ################## onboard part
 source run_onboard.sh
 sleep 1
@@ -35,7 +37,7 @@ if [ ! -v HEADLESS ]; then
     source run_ground_control.sh
 fi
 tmux select-window -t 0
-run 3 sim depth_image_view.py
+#run 3 sim depth_image_view.py
 #tmux set -g mouse on
 tmux att
 

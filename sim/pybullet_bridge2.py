@@ -28,7 +28,7 @@ import pickle
 import zmq_wrapper as utils
 import zmq_topics
 import config
-from dvl_sim import vel_msg
+from dvl_sim import vel_msg,pos_msg
 from numpy import sin,cos
 from scipy.spatial.transform import Rotation as Rot
 
@@ -64,28 +64,9 @@ robj=[]
 #set_random_objects()
 keep_running = True
 
-
-def __getrov():
-    shift = [0, -0.0, 0]
-    meshScale = np.array([0.01, 0.01, 0.01])*0.2
-    vfo=pb.getQuaternionFromEuler(np.deg2rad([-90, 0, 90]))
-    visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
-                                        fileName="br1g.obj",
-                                        rgbaColor=[1, 0, 0, 1],
-                                        specularColor=[0.4, .4, 0],
-                                        visualFramePosition=[0,0,0],
-                                        visualFrameOrientation=vfo,
-                                        meshScale=meshScale)#set the center of mass frame (loadURDF sets base link frame) startPos/Ornp.resetBasePositionAndOrientation(boxId, startPos, startOrientation)
-    boxId=pb.createMultiBody(baseMass=1,
-                          baseInertialFramePosition=[0, 0, 0],
-                          baseCollisionShapeIndex=1,
-                          baseVisualShapeIndex=visualShapeId,
-                          basePosition=[0,0,0],
-                          useMaximalCoordinates=True)
-    return boxId
-
+rov_base_ori = Rot.from_euler('ZYX',[0,0,0],degrees=True)
 def getrov():
-    boxId = pb.loadURDF('./brov.urdf', useMaximalCoordinates=False,flags=0)
+    boxId = pb.loadURDF('./brov.urdf', baseOrientation = rov_base_ori.as_quat(),useMaximalCoordinates=False,flags=pb.URDF_MAINTAIN_LINK_ORDER)
     pb.changeDynamics(boxId,-1,linearDamping=5,angularDamping=5)
     return boxId
 
@@ -112,22 +93,30 @@ def hsv_range_scale(rgbImg,depthImg):
 
 #https://www.3dgep.com/understanding-the-view-matrix/#The_View_Matrix
 def getCameraViewMat(bindex,link):
-    pos,ori=pb.getLinkState(bindex,link,0,1)[:2]
-    print(';;;',link,pos,Rot.from_quat(ori).as_euler('ZYX',degrees=True))
-    Rmat = np.diag(np.ones(4))
-    #r=Rot.from_rotvec(-np.pi/2 * np.array([0, 0, 1])).as_matrix()
-    Rmat[:3,:3] = Rot.from_quat(ori).as_matrix().T# @ r
-    Rmat[3,3]=1
-    TR = np.diag(np.ones(4))
-    TR[3,:3]=-np.array(pos)
-    return Rmat@TR
+    pos,ori=pb.getLinkState(bindex,link,0,1)[0:2]
+    #print(';;;',link,pos,Rot.from_quat(ori).as_euler('ZYX',degrees=True))
+    R=Rot.from_quat(ori).as_matrix()
+    up=(R @ np.array([[0,0,1]]).T).flatten() 
+    eye=pos
+    target = (R @ np.array([[10,0,0]]).T).flatten()
+    Rmat = pb.computeViewMatrix(eye,target,up)
+    Rmat=np.array(Rmat).reshape((4,-1))
+    return Rmat
 
 grip=False
-
+fps=10
+imu_fps=100
+dvl_pos_fps=5
+dvl_vel_fps=10
+print_fps=0.5
 def main():
+    def ratio(x):
+        return cnt%int(1/sim_step/x)==0
     cnt=0
     frame_cnt=0
-    frame_ratio=20 # for 5 sim cycles 1 video frame
+    frame_ratio=int(1/sim_step/fps) # for 5 sim cycles 1 video frame
+    imu_ratio=int(1/sim_step/imu_fps)
+
     resize_fact=0.5
     mono=False
     cvshow=False
@@ -147,10 +136,10 @@ def main():
     sim_start=time.time()
     while keep_running:
         tic_cycle = time.time()
-        while 1:
+        if 1:
             socks=zmq.select([zmq_sub,zmq_controller],[],[],0.001)[0]
-            if len(socks)==0:
-                break
+            #if len(socks)==0:
+            #    break
             for sock in socks:
                 data = sock.recv_multipart()
                 topic=data[0]
@@ -170,29 +159,30 @@ def main():
         #print('==0',pb.getLinkState(boxId,0,1,1)[0])
         #print('==2',pb.getLinkState(boxId,1,0,1)[0])
         #print('==3',pb.getLinkState(boxId,2,0,1)[0])
-        if cnt%frame_ratio==0:
+        if ratio(frame_ratio):
             PM = pb.computeProjectionMatrixFOV(fov=fov,aspect=1.0,nearVal=0.01,farVal=100)
             w = int(config.cam_res_rgbx*resize_fact)
             h = int(config.cam_res_rgby*resize_fact)
 
-            VML = getCameraViewMat(boxId,1)
+            VML = getCameraViewMat(boxId,0)
             width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
                 width=w, 
                 height=h,
                 viewMatrix=VML.flatten('C').tolist(),
-                projectionMatrix=PM,renderer=pb.ER_BULLET_HARDWARE_OPENGL,
-                lightColor=(0,0,1))
+                lightColor=(0,0,1),
+                projectionMatrix=PM,renderer=pb.ER_BULLET_HARDWARE_OPENGL)
             rgbImg = hsv_range_scale(rgbImg,depthImg)
             imgl=resize(rgbImg,1/resize_fact)#inly interested in rgb
             #second camera
             if not mono:
-                VML = getCameraViewMat(boxId,2)
+                VML = getCameraViewMat(boxId,1)
                 width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
                     width=w, 
                     height=h,
                     viewMatrix=VML.flatten('C').tolist(),
-                    projectionMatrix=PM,renderer=pb.ER_BULLET_HARDWARE_OPENGL,
-                    lightColor=(0,0,1))
+                    lightColor=(0,0,1),
+                    projectionMatrix=PM,renderer=pb.ER_BULLET_HARDWARE_OPENGL)
+                rgbImg = hsv_range_scale(rgbImg,depthImg)
                 imgr=resize(rgbImg,1/resize_fact) #todo...
 
             if cvshow:
@@ -201,13 +191,13 @@ def main():
                 cv2.imshow('l',imgls)
                 cv2.imshow('r',imgrs)
                 cv2.waitKey(1)
+            
             if mono:
-                zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),imgl.tostring()])
+                zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),imgl.tostring()],copy=False)
             else:
-                zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),imgl.tostring(),imgr.tostring()])
-            time.sleep(0.001) 
+                zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),imgl.tostring(),imgr.tostring()],copy=False)
             zmq_pub.send_multipart([zmq_topics.topic_stereo_camera_ts,pickle.dumps((frame_cnt,time.time()))]) #for sync
-                
+            
             #get depth image
             depthImg=depthImg[::4,::4]
             min_range=depthImg.min() 
@@ -224,13 +214,14 @@ def main():
                 cv2.waitKey(1)
             frame_cnt+=1
 
-            if grip:# or render==pb.GUI:
-                tr,qu = translateQuatfromM(Mdsym) 
-                pb.resetBasePositionAndOrientation(boxId,tr,qu)
-            ### test
-            tic=time.time()
-            imu={'ts':tic}
-            #imu rotated by 180 arround x axis
+        #if grip:# or render==pb.GUI:
+        #    tr,qu = translateQuatfromM(Mdsym) 
+        #    pb.resetBasePositionAndOrientation(boxId,tr,qu)
+        #### test
+        tic=time.time()
+        imu={'ts':tic}
+        #imu rotated by 180 arround x axis
+        if ratio(imu_ratio):
             imu['yaw'],imu['pitch'],imu['roll']=np.deg2rad([-yaw,-pitch,roll])
             wx,wy,wz=vel_rot_in_body
             imu['rates']=[wx,-wy,-wz]            
@@ -238,14 +229,17 @@ def main():
 
             pub_depth.send_multipart([zmq_topics.topic_depth,pickle.dumps({'ts':tic,'depth':start_depth-pos_com[2]})])
 
-            if 1:
-                pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps(\
-                        {'ts':tic,'dvl_raw':vel_msg(*vel_linear_in_body,sim_time)})])
+        if ratio(dvl_vel_fps):
+            pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps(
+                    {'ts':tic,'dvl_raw':vel_msg(*vel_linear_in_body,sim_time)})])
+        if ratio(dvl_pos_fps):
+            pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps(
+                    {'ts':tic,'dvl_raw':pos_msg(pos_com[0],-pos_com[1],-pos_com[2],-yaw)})])
 
         #time.sleep(0.100)
 
-        if cnt%20==0 and imgl is not None:
-            print('send...',cnt, imgl.shape, 'fps=%.1f'%(20/(time.time()-last_fps_print)))
+        if ratio(print_fps) and imgl is not None:
+            print('send...',cnt, imgl.shape, 'step/sec=%.1f'%(20/(time.time()-last_fps_print)))
             last_fps_print=time.time()
         
         s2=np.sqrt(2)
@@ -265,25 +259,29 @@ def main():
 #         |  8     7  |             X--------X   |
 #         X-----------X            7          8
 #        4             3
-
-        for i,(x,y) in enumerate([
-                [1,1],
-                [1,-1],
-                [-1,-1],
-                [-1,1]
-                ]):
-            pb.applyExternalForce(boxId,-1,[0,0,current_command[i]],[x*b/2,y*a/2,h/2],pb.LINK_FRAME)
-            c=current_command[i+4]
-            pb.applyExternalForce(boxId,-1, [x*s2*c,y*s2*c,0] ,[x,y,-h/2],pb.LINK_FRAME)
-        cnt+=1
+        if 1:
+            for i,(x,y) in enumerate([
+                    [1,1],
+                    [1,-1],
+                    [-1,-1],
+                    [-1,1]
+                    ]):
+                pb.applyExternalForce(boxId,-1,[0,0,current_command[i]],[x*b/2,y*a/2,h/2],pb.LINK_FRAME)
+                c=current_command[i+4]
+                pb.applyExternalForce(boxId,-1, [x*s2*c,y*s2*c,0] ,[x,y,-h/2],pb.LINK_FRAME)
         pb.stepSimulation()
         sim_time=cnt*sim_step
         real_time = time.time()-sim_start
         rt_delta=sim_time-real_time
         if rt_delta>0:
-            print('sleeping',rt_delta)
+            #print('sleeping',rt_delta)
             time.sleep(rt_delta)
-
+        else:
+            time.sleep(0.001)
+        cnt+=1
+        cycle_time=time.time()-tic_cycle
+        if cycle_time>0.1:
+            print(cnt,'very slow cycle_time',cycle_time)
 
        
 if __name__ == '__main__':
