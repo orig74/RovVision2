@@ -87,6 +87,7 @@ class Plotter(object):
         self.canvas.get_tk_widget().pack(side="top", fill="both", expand=1)
         self.initPlots()
         self.runPlotsFlag = True
+        self.yaw_rad=0
         self.rad=4.0
 
     def initPlots(self):

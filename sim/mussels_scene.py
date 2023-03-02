@@ -46,7 +46,7 @@ def gen_rope(x,y):
 
     return ret
 
-def getscene():
+def getscene(rows=2,cols=5):
     ret=[]
     meshScale = np.ones(3)*1
     vfo=pb.getQuaternionFromEuler(np.deg2rad([-90, 0, 0]))
@@ -72,8 +72,8 @@ def getscene():
                           baseVisualShapeIndex=visualShapeId,
                           basePosition=[0,0,0],
                           useMaximalCoordinates=True))
-    for j in range(2):
-        for i in range(5):
+    for j in range(rows):
+        for i in range(cols):
             ret+=gen_rope(2+j*3,i*1)
 
     return ret

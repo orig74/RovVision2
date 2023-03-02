@@ -52,7 +52,7 @@ render = pb.GUI if len(sys.argv)>1 and sys.argv[1]=='g' else pb.DIRECT # pb.GUI
 physicsClient = pb.connect(render)#or p.DIRECT for non-graphical versio
 #pb.setPhysicsEngineParameter(enableFileCaching=0)
 pb.setRealTimeSimulation(False)
-sim_step=1/100
+sim_step=1/200
 pb.setTimeStep(sim_step)
 pb.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 pb.setGravity(0,0,-0.01)
@@ -66,7 +66,7 @@ keep_running = True
 
 rov_base_ori = Rot.from_euler('ZYX',[0,0,0],degrees=True)
 def getrov():
-    boxId = pb.loadURDF('./brov.urdf', baseOrientation = rov_base_ori.as_quat(),useMaximalCoordinates=False,flags=pb.URDF_MAINTAIN_LINK_ORDER)
+    boxId = pb.loadURDF('./brov.urdf', baseOrientation = rov_base_ori.as_quat(),useMaximalCoordinates=False,flags=pb.URDF_MAINTAIN_LINK_ORDER | pb.URDF_USE_INERTIA_FROM_FILE)
     pb.changeDynamics(boxId,-1,linearDamping=5,angularDamping=5)
     return boxId
 
@@ -114,8 +114,7 @@ def main():
         return cnt%int(1/sim_step/x)==0
     cnt=0
     frame_cnt=0
-    frame_ratio=int(1/sim_step/fps) # for 5 sim cycles 1 video frame
-    imu_ratio=int(1/sim_step/imu_fps)
+    
 
     resize_fact=0.5
     mono=False
@@ -126,7 +125,7 @@ def main():
     fov=42
 
     sim_time=0
-    #getscene()
+    getscene(1,1)
     boxId = getrov()
     start_depth=0.5
 
@@ -159,7 +158,7 @@ def main():
         #print('==0',pb.getLinkState(boxId,0,1,1)[0])
         #print('==2',pb.getLinkState(boxId,1,0,1)[0])
         #print('==3',pb.getLinkState(boxId,2,0,1)[0])
-        if ratio(frame_ratio):
+        if ratio(fps):
             PM = pb.computeProjectionMatrixFOV(fov=fov,aspect=1.0,nearVal=0.01,farVal=100)
             w = int(config.cam_res_rgbx*resize_fact)
             h = int(config.cam_res_rgby*resize_fact)
@@ -221,13 +220,14 @@ def main():
         tic=time.time()
         imu={'ts':tic}
         #imu rotated by 180 arround x axis
-        if ratio(imu_ratio):
-            imu['yaw'],imu['pitch'],imu['roll']=np.deg2rad([-yaw,-pitch,roll])
+        if ratio(imu_fps):
+            imu['yaw'],imu['pitch'],imu['roll']=np.rad2deg([-yaw,-pitch,roll])
             wx,wy,wz=vel_rot_in_body
             imu['rates']=[wx,-wy,-wz]            
             pub_imu.send_multipart([zmq_topics.topic_imu,pickle.dumps(imu)])
 
             pub_depth.send_multipart([zmq_topics.topic_depth,pickle.dumps({'ts':tic,'depth':start_depth-pos_com[2]})])
+            #print('send imu',imu)
 
         if ratio(dvl_vel_fps):
             pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps(
@@ -242,11 +242,22 @@ def main():
             print('send...',cnt, imgl.shape, 'step/sec=%.1f'%(20/(time.time()-last_fps_print)))
             last_fps_print=time.time()
         
-        s2=np.sqrt(2)
+        s2=np.sin(45)
         a=0.3
         b=0.4
         h=0.2
-
+        a2=a/2
+        b2=b/2
+        h2=h/2
+        cc=current_command
+        pb.applyExternalForce(boxId,-1,[0,0,-cc[0]],[b2,a2,h2],pb.LINK_FRAME)
+        pb.applyExternalForce(boxId,-1,[0,0,-cc[1]],[b2,-a2,h2],pb.LINK_FRAME)
+        pb.applyExternalForce(boxId,-1,[0,0,-cc[2]],[-b2,-a2,h2],pb.LINK_FRAME)
+        pb.applyExternalForce(boxId,-1,[0,0,-cc[3]],[-b2,a2,h2],pb.LINK_FRAME)
+        pb.applyExternalForce(boxId,-1,[s2*cc[4],-s2*cc[4],0],[b2,a2,-h2],pb.LINK_FRAME)
+        pb.applyExternalForce(boxId,-1,[s2*cc[5],s2*cc[5],0],[b2,-a2,-h2],pb.LINK_FRAME)
+        pb.applyExternalForce(boxId,-1,[s2*cc[6],-s2*cc[6],0],[-b2,-a2,-h2],pb.LINK_FRAME)
+        pb.applyExternalForce(boxId,-1,[s2*cc[7],s2*cc[7],0],[-b2,a2,-h2],pb.LINK_FRAME)
 #        1             2
 #         X ----a---- X
 #         |           |
@@ -259,7 +270,8 @@ def main():
 #         |  8     7  |             X--------X   |
 #         X-----------X            7          8
 #        4             3
-        if 1:
+        
+        if 0:
             for i,(x,y) in enumerate([
                     [1,1],
                     [1,-1],

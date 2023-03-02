@@ -11,7 +11,7 @@ import image_enc_dec
 import cv2
 ############# gst wirite #########
 gst_pipes=None
-use_ffmpeg_for_read=False
+use_ffmpeg_for_read=True
 send_cnt=[0,0]
 def init_gst(sx,sy,npipes):
     global gst_pipes
@@ -187,7 +187,8 @@ def read_image_from_pipe_ff(p, prevcnt=-1):
         #img=np.fromstring(data,'uint8').reshape((sy*3//2,sx))
         img=np.fromstring(data,'uint8')
         img=img.reshape([sy*3//2,sx])
-        img=cv2.cvtColor(img, cv2.COLOR_YUV420p2RGB)
+        #img=cv2.cvtColor(img, cv2.COLOR_YUV420p2RGB)
+        img=cv2.cvtColor(img, cv2.COLOR_YUV420p2BGR)
         #img=cv2.cvtColor(img,cv2.COLOR_YUV2BGR)
         
         #img=img.reshape([sy,sx,3])
