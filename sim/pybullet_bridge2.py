@@ -55,7 +55,7 @@ pb.setRealTimeSimulation(False)
 sim_step=1/200
 pb.setTimeStep(sim_step)
 pb.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
-pb.setGravity(0,0,-0.01)
+pb.setGravity(0,0,0.0)
 print('start...')
 planeId = pb.loadURDF("plane.urdf")
 pb.resetBasePositionAndOrientation(planeId,(0,0,-20),pb.getQuaternionFromEuler((0,0,0,)))
@@ -68,8 +68,13 @@ rov_base_ori = Rot.from_euler('ZYX',[0,0,0],degrees=True)
 def getrov():
     boxId = pb.loadURDF('./brov.urdf', baseOrientation = rov_base_ori.as_quat(),useMaximalCoordinates=False,flags=pb.URDF_MAINTAIN_LINK_ORDER | pb.URDF_USE_INERTIA_FROM_FILE)
     pb.changeDynamics(boxId,-1,linearDamping=5,angularDamping=5)
-    return boxId
+    _link_name_to_index = {pb.getBodyInfo(boxId)[0].decode('UTF-8'):-1,}
+    for _id in range(pb.getNumJoints(boxId)):
+        _name = pb.getJointInfo(boxId, _id)[12].decode('UTF-8')
+        _link_name_to_index[_name] = _id
 
+    #import ipdb;ipdb.set_trace()
+    return boxId,_link_name_to_index
 
 
 from scipy.interpolate import interp1d
@@ -126,7 +131,7 @@ def main():
 
     sim_time=0
     getscene(1,1)
-    boxId = getrov()
+    boxId,link_name_to_index = getrov()
     start_depth=0.5
 
     last_fps_print=time.time()
@@ -242,6 +247,18 @@ def main():
             print('send...',cnt, imgl.shape, 'step/sec=%.1f'%(20/(time.time()-last_fps_print)))
             last_fps_print=time.time()
         
+#        1             2
+#         X ----a---- X
+#         |           |
+#         |  \     /  |          4              3
+#         |  5     6  |           X------------X |
+#    ^x   |           |                          |   z
+#    |    |    TOP    b                          |   ^
+#y<--+    |           |                SIDE      h   |
+#         |  /     \  |                          |
+#         |  8     7  |             X--------X   |
+#         X-----------X            7          8
+#        4             3
         s2=np.sin(45)
         a=0.3
         b=0.4
@@ -258,29 +275,14 @@ def main():
         pb.applyExternalForce(boxId,-1,[s2*cc[5],s2*cc[5],0],[b2,-a2,-h2],pb.LINK_FRAME)
         pb.applyExternalForce(boxId,-1,[s2*cc[6],-s2*cc[6],0],[-b2,-a2,-h2],pb.LINK_FRAME)
         pb.applyExternalForce(boxId,-1,[s2*cc[7],s2*cc[7],0],[-b2,a2,-h2],pb.LINK_FRAME)
-#        1             2
-#         X ----a---- X
-#         |           |
-#         |  \     /  |          4              3
-#         |  5     6  |           X------------X |
-#    ^x   |           |                          |   z
-#    |    |    TOP    b                          |   ^
-#y<--+    |           |                SIDE      h   |
-#         |  /     \  |                          |
-#         |  8     7  |             X--------X   |
-#         X-----------X            7          8
-#        4             3
+
+        boyency_force = (Rot.from_quat(orient_com).as_matrix().T @ np.array([0,0,100]).reshape(-1,1)).flatten()
+        pb.applyExternalForce(boxId,link_name_to_index['COB'],boyency_force,[0,0,0],pb.LINK_FRAME)
+        gravity_force = (Rot.from_quat(orient_com).as_matrix().T @ np.array([0,0,-100]).reshape(-1,1)).flatten()
+        pb.applyExternalForce(boxId,link_name_to_index['COM'],gravity_force,[0,0,0],pb.LINK_FRAME)
+        #boyency force
         
-        if 0:
-            for i,(x,y) in enumerate([
-                    [1,1],
-                    [1,-1],
-                    [-1,-1],
-                    [-1,1]
-                    ]):
-                pb.applyExternalForce(boxId,-1,[0,0,current_command[i]],[x*b/2,y*a/2,h/2],pb.LINK_FRAME)
-                c=current_command[i+4]
-                pb.applyExternalForce(boxId,-1, [x*s2*c,y*s2*c,0] ,[x,y,-h/2],pb.LINK_FRAME)
+       
         pb.stepSimulation()
         sim_time=cnt*sim_step
         real_time = time.time()-sim_start

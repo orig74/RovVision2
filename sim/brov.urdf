@@ -2,8 +2,17 @@
 <robot name="myfirst">
 
   <material name="blue">
-    <color rgba="0 0 0.8 1"/>
+    <color rgba="0 0 0.8 0.7"/>
   </material>
+
+  <material name="solidblue">
+    <color rgba="0 0 1.0 1.0"/>
+  </material>
+
+  <material name="solidred">
+    <color rgba="1.0 0 0.0 1.0"/>
+  </material>
+
 
   <material name="white">
     <color rgba="1 1 1 1"/>
@@ -14,11 +23,25 @@
   </material>
 
   <link name="base_link">
+    <inertial><mass value="0.0025"/><inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/></inertial>
   </link>
   <link name="cam1">
+    <inertial><mass value="0.0025"/><inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/></inertial>
   </link>
   <link name="cam2">
+    <inertial><mass value="0.0025"/><inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/></inertial>
   </link>
+
+  <link name="COB">
+    <inertial><mass value="0.0025"/><inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/></inertial>
+    <visual><geometry><sphere radius="0.01"/></geometry><material name="solidblue"/></visual>
+  </link>
+  <link name="COM">
+    <inertial><mass value="0.0025"/><inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/></inertial>
+    <visual><geometry><sphere radius="0.01"/></geometry><material name="solidred"/></visual>
+  </link>
+
+
 
   <link name="cm">
     <visual>
@@ -68,11 +91,26 @@
 
   </link>
 
+
   <joint name="base_to_cm" type="fixed">
     <parent link="base_link"/>
     <child link="cm"/>
     <origin rpy="0 0 0" xyz="0 0. 0."/>
   </joint>
+
+  <joint name="base_to_cob" type="fixed">
+    <parent link="base_link"/>
+    <child link="COB"/>
+    <origin rpy="0 0 0" xyz="0 0. 0.03"/>
+  </joint>
+
+  <joint name="base_to_com" type="fixed">
+    <parent link="base_link"/>
+    <child link="COM"/>
+    <origin rpy="0 0 0" xyz="0 0. -0.03"/>
+  </joint>
+
+
 
   <joint name="base_to_cam1" type="fixed">
     <parent link="base_link"/>
