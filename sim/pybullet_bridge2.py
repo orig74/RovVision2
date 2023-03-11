@@ -35,7 +35,7 @@ from scipy.spatial.transform import Rotation as Rot
 from mussels_scene import getscene
 
 zmq_controller=utils.subscribe([zmq_topics.topic_dvl_cmd],zmq_topics.topic_controller_port)
-zmq_sub=utils.subscribe([zmq_topics.topic_thrusters_comand],zmq_topics.topic_thrusters_comand_port)
+zmq_sub=utils.subscribe([zmq_topics.topic_thrusters_comand,zmq_topics.topic_gripper_cmd],zmq_topics.topic_thrusters_comand_port)
 zmq_pub=utils.publisher(zmq_topics.topic_camera_port)
 pub_imu = utils.publisher(zmq_topics.topic_imu_port)
 pub_depth = utils.publisher(zmq_topics.topic_depth_port)
@@ -69,12 +69,16 @@ def getrov():
     boxId = pb.loadURDF('./brov.urdf', baseOrientation = rov_base_ori.as_quat(),useMaximalCoordinates=False,flags=pb.URDF_MAINTAIN_LINK_ORDER | pb.URDF_USE_INERTIA_FROM_FILE)
     pb.changeDynamics(boxId,-1,linearDamping=5,angularDamping=5)
     _link_name_to_index = {pb.getBodyInfo(boxId)[0].decode('UTF-8'):-1,}
+    _joint_name_to_index = {}
     for _id in range(pb.getNumJoints(boxId)):
         _name = pb.getJointInfo(boxId, _id)[12].decode('UTF-8')
         _link_name_to_index[_name] = _id
+        _name = pb.getJointInfo(boxId, _id)[1].decode('UTF-8')
+        _joint_name_to_index[_name] = _id
+
 
     #import ipdb;ipdb.set_trace()
-    return boxId,_link_name_to_index
+    return boxId,_link_name_to_index,_joint_name_to_index
 
 
 from scipy.interpolate import interp1d
@@ -131,11 +135,11 @@ def main():
 
     sim_time=0
     getscene(1,1)
-    boxId,link_name_to_index = getrov()
+    boxId,link_name_to_index,joint_name_to_index = getrov()
     start_depth=0.5
 
     last_fps_print=time.time()
-
+    gripper_cmd=0
 
     sim_start=time.time()
     while keep_running:
@@ -151,7 +155,10 @@ def main():
                     _,current_command=pickle.loads(data[1])
                 if topic==zmq_topics.topic_dvl_cmd:
                     print('got dvl reset....')
-
+                if topic==zmq_topics.topic_gripper_cmd:
+                    gripper_cmd=pickle.loads(data[1])
+                    print('gripper command',gripper_cmd)
+ 
         #pos,orient=pb.getBasePositionAndOrientation(boxId)
         #vpos,vspeed=pb.getBaseVelocity(boxId)
         pos_com,orient_com,_,_,_,_,vel_linear,vel_rot=pb.getLinkState(boxId,0,1,1)
@@ -281,6 +288,18 @@ def main():
         gravity_force = (Rot.from_quat(orient_com).as_matrix().T @ np.array([0,0,-100]).reshape(-1,1)).flatten()
         pb.applyExternalForce(boxId,link_name_to_index['COM'],gravity_force,[0,0,0],pb.LINK_FRAME)
         #boyency force
+
+        maxForce = 500
+        pb.setJointMotorControl2(bodyUniqueId=boxId,
+        jointIndex=joint_name_to_index['gripper_right'],
+        controlMode=pb.POSITION_CONTROL,
+        targetPosition = gripper_cmd,
+        force = maxForce)
+        pb.setJointMotorControl2(bodyUniqueId=boxId,
+        jointIndex=joint_name_to_index['gripper_left'],
+        controlMode=pb.POSITION_CONTROL,
+        targetPosition = gripper_cmd,
+        force = maxForce)
         
        
         pb.stepSimulation()

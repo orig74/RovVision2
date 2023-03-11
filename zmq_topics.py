@@ -3,6 +3,7 @@ topic_sitl_position_report=b'position_rep'
 topic_sitl_position_report_port=7755
 
 topic_thrusters_comand=b'thruster_cmd'
+topic_gripper_cmd=b'topic_gripper_cmd'
 #opration modes
 topic_system_state=b'system_state'
 

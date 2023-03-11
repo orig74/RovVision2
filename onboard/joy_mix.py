@@ -153,14 +153,17 @@ class Joy_map:
                 return True
         return False
 
-
+    def gripper(self):
+        if jtype=='xbox':
+            axis=self.axis
+            return (axis[5]+1)/4
+        return False
 
     def joy_mix(self):
         joy_buttons=self.buttons
         axis=self.axis
         jm=Joy_map
         inertial = joy_buttons[jm._right_shift]==1
-        
         fb,lr = (0,0) if joy_buttons[jm._left_shift] else (-axis[jm._right_stick_fwd_bak],axis[jm._right_stick_left_right])
         pitch,roll = (axis[jm._right_stick_fwd_bak],axis[jm._right_stick_left_right]) if joy_buttons[jm._left_shift] else (0,0)
         ret = {'inertial':inertial, 

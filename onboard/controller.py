@@ -149,6 +149,11 @@ async def recv_and_process():
                     if jm.dvl_reset_event():
                         pub_sock.send_multipart([zmq_topics.topic_dvl_cmd,b'wcr\n'])
 
+                    if jm.gripper():
+                        system_state['gripper']=jm.gripper()
+                        pub_sock.send_multipart([zmq_topics.topic_gripper_cmd,pickle.dumps(jm.gripper())])
+                        #print('gripper ', jm.gripper())
+
 
 
 
