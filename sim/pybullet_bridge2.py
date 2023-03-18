@@ -50,6 +50,7 @@ current_command=[0 for _ in range(8)] # 8 thrusters
 render = pb.GUI if len(sys.argv)>1 and sys.argv[1]=='g' else pb.DIRECT # pb.GUI
 #render = pb.GUI
 physicsClient = pb.connect(render)#or p.DIRECT for non-graphical versio
+pb.configureDebugVisualizer(0,0,[0,0,100],rgbBackground=[43/255+0.26,84/255+0.26,132/255+0.26])
 #pb.setPhysicsEngineParameter(enableFileCaching=0)
 pb.setRealTimeSimulation(False)
 sim_step=1/200
@@ -57,8 +58,8 @@ pb.setTimeStep(sim_step)
 pb.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 pb.setGravity(0,0,0)
 print('start...')
-planeId = pb.loadURDF("plane.urdf")
-pb.resetBasePositionAndOrientation(planeId,(0,0,-20),pb.getQuaternionFromEuler((0,0,0,)))
+#planeId = pb.loadURDF("plane.urdf")
+#pb.resetBasePositionAndOrientation(planeId,(0,0,-20),pb.getQuaternionFromEuler((0,0,0,)))
 import random
 robj=[]
 #set_random_objects()
