@@ -32,7 +32,7 @@ from dvl_sim import vel_msg,pos_msg
 from numpy import sin,cos
 from scipy.spatial.transform import Rotation as Rot
 
-from mussels_scene import getscene
+from mussels_scene import MusseleRopesScene as getscene
 
 zmq_controller=utils.subscribe([zmq_topics.topic_dvl_cmd],zmq_topics.topic_controller_port)
 zmq_sub=utils.subscribe([zmq_topics.topic_thrusters_comand,zmq_topics.topic_gripper_cmd],zmq_topics.topic_thrusters_comand_port)
@@ -55,7 +55,7 @@ pb.setRealTimeSimulation(False)
 sim_step=1/200
 pb.setTimeStep(sim_step)
 pb.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
-pb.setGravity(0,0,0.0)
+pb.setGravity(0,0,0)
 print('start...')
 planeId = pb.loadURDF("plane.urdf")
 pb.resetBasePositionAndOrientation(planeId,(0,0,-20),pb.getQuaternionFromEuler((0,0,0,)))
@@ -134,7 +134,7 @@ def main():
     fov=42
 
     sim_time=0
-    getscene(1,1)
+    scene=getscene(1,1)
     boxId,link_name_to_index,joint_name_to_index = getrov()
     start_depth=0.5
 
@@ -159,6 +159,9 @@ def main():
                     gripper_cmd=pickle.loads(data[1])
                     print('gripper command',gripper_cmd)
  
+
+
+        scene.update()
         #pos,orient=pb.getBasePositionAndOrientation(boxId)
         #vpos,vspeed=pb.getBaseVelocity(boxId)
         pos_com,orient_com,_,_,_,_,vel_linear,vel_rot=pb.getLinkState(boxId,0,1,1)

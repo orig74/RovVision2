@@ -157,7 +157,7 @@
 <joint name="gripper_right" type="revolute">
     <parent link="gripper_pole"/>
     <child link="right_finger"/>
-    <limit effort="1000.0" lower="0.0" upper="0.548" velocity="0.5"/>
+    <limit effort="1000.0" lower="0.0" upper="0.748" velocity="0.5"/>
     <axis xyz="0 0 1"/>
     <origin rpy="0 0 -1" xyz="0.21 -0.01 -0.0"/>
 </joint>
@@ -172,7 +172,10 @@
         <material name="blue"/>
     </visual>
           <inertial><mass value="0.0025"/><inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/></inertial>
-  </link>
+   <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.03 0.01 0.01"/></geometry></collision>
+            <contact><rolling_friction value="0.001"/><spinning_friction value="0.001"/></contact>
+
+    </link>
 <joint name="gripper_right2" type="fixed">
     <parent link="right_finger"/>
     <child link="right_finger2"/>
@@ -187,13 +190,16 @@
       </geometry>
         <material name="blue"/>
     </visual>
+      <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.03 0.01 0.01"/></geometry></collision>
           <inertial><mass value="0.0025"/><inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/></inertial>
+            <contact><rolling_friction value="0.001"/><spinning_friction value="0.001"/></contact>
+
   </link>
 
     <joint name="gripper_left" type="revolute" >
     <parent link="gripper_pole"/>
     <child link="left_finger"/>
-    <limit effort="1000.0" lower="0.0" upper="0.548" velocity="0.5"/>
+    <limit effort="1000.0" lower="0.0" upper="0.748" velocity="0.5"/>
     <axis xyz="0 0 1"/>
     <origin rpy="3.1415 0 1" xyz="0.21 0.01 -0.0"/>
 </joint>
@@ -207,6 +213,9 @@
         <material name="blue"/>
     </visual>
           <inertial><mass value="0.0025"/><inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/></inertial>
+      <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.03 0.01 0.01"/></geometry></collision>
+      <contact><rolling_friction value="0.001"/><spinning_friction value="0.001"/></contact>
+ 
   </link>
 <joint name="gripper_left2" type="fixed">
     <parent link="left_finger"/>
@@ -223,6 +232,9 @@
         <material name="blue"/>
     </visual>
           <inertial><mass value="0.0025"/><inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/></inertial>
+      <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.03 0.01 0.01"/></geometry></collision>
+            <contact><rolling_friction value="0.001"/><spinning_friction value="0.001"/></contact>
+
   </link>
     
     

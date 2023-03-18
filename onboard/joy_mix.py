@@ -156,7 +156,7 @@ class Joy_map:
     def gripper(self):
         if jtype=='xbox':
             axis=self.axis
-            return (axis[5]+1)/4
+            return (axis[5]+1)/2
         return False
 
     def joy_mix(self):
