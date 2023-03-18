@@ -64,9 +64,12 @@ robj=[]
 #set_random_objects()
 keep_running = True
 
-rov_base_ori = Rot.from_euler('ZYX',[0,0,0],degrees=True)
 def getrov():
-    boxId = pb.loadURDF('./brov.urdf', baseOrientation = rov_base_ori.as_quat(),useMaximalCoordinates=False,flags=pb.URDF_MAINTAIN_LINK_ORDER | pb.URDF_USE_INERTIA_FROM_FILE)
+    rov_base_ori = Rot.from_euler('ZYX',[0,0,0],degrees=True)
+    rov_base_pos = [0,0,2]
+    boxId = pb.loadURDF('./brov.urdf', 
+            basePosition = rov_base_pos,
+            baseOrientation = rov_base_ori.as_quat(),useMaximalCoordinates=False,flags=pb.URDF_MAINTAIN_LINK_ORDER | pb.URDF_USE_INERTIA_FROM_FILE)
     pb.changeDynamics(boxId,-1,linearDamping=5,angularDamping=5)
     _link_name_to_index = {pb.getBodyInfo(boxId)[0].decode('UTF-8'):-1,}
     _joint_name_to_index = {}
@@ -96,9 +99,12 @@ def resize(img,factor):
 
 def hsv_range_scale(rgbImg,depthImg):
     hsv = cv2.cvtColor(rgbImg,cv2.COLOR_BGR2HSV)
-    hsv[depthImg>0.94,0]=0
+    hsv[depthImg>10.1,0]=0
     rgbImg = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
     return rgbImg
+#def hsv_range_scale(rgbImg,depthImg):
+#    return rgbImg.copy()
+
 
 #https://www.3dgep.com/understanding-the-view-matrix/#The_View_Matrix
 def getCameraViewMat(bindex,link):

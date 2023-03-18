@@ -71,7 +71,7 @@ class MusseleRopesScene(object):
         ret=[]
         meshScale = np.ones(3)*1
         #self.mussle_pos = np.array([1.8,0,0])
-        self.mussle_pos = np.array([0.7,0,0])
+        self.mussle_pos = np.array([1.46,0,2])
         vfo=pb.getQuaternionFromEuler(np.deg2rad([90, 0, 0]))
         visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
                                             fileName="pybullet_data/seabed2.obj",
@@ -95,9 +95,21 @@ class MusseleRopesScene(object):
                               baseVisualShapeIndex=visualShapeId,
                               basePosition=[0,0,0],
                               useMaximalCoordinates=True))
-        for j in range(rows):
-            for i in range(cols):
-                ret+=gen_rope(2+j*3,i*1)
+
+        vfo=pb.getQuaternionFromEuler(np.deg2rad([0, 0, 180]))
+        visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
+                                            fileName="pybullet_data/mussels3Dmodel.obj",
+                                            visualFramePosition=[1.5,0,0],
+                                            visualFrameOrientation=vfo,
+                                            meshScale=meshScale)#set the center of mass frame (loadURDF sets base link frame) startPos/Ornp.resetBasePositionAndOrientation(boxId, startPos, startOrientation)
+        ret.append(pb.createMultiBody(baseMass=0,
+                              baseInertialFramePosition=[0, 0, 0],
+                              baseVisualShapeIndex=visualShapeId,
+                              basePosition=[0,0,0],
+                              useMaximalCoordinates=True))
+        #for j in range(rows):
+        #    for i in range(cols):
+        #        ret+=gen_rope(2+j*3,i*1)
 
         self.mmm=pb.loadURDF("mussle.urdf",basePosition=self.mussle_pos)
         pb.changeDynamics(self.mmm,-1,linearDamping=1,angularDamping=1)
