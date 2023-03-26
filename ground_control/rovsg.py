@@ -96,6 +96,7 @@ def main():
             enable_events=True,
             ),
         sg.Image(key="-IMAGE-1-"),#,sg.Image(key="-IMAGE-2-")],
+        sg.Image(key="-IMAGE-2-"),#,sg.Image(key="-IMAGE-2-")],
         ]]
 
     cmd_column = [
@@ -234,6 +235,10 @@ def main():
                 #last_im=window["-MAIN-IMAGE-"].draw_image(data=img_to_tk3(rawImgs[0]),location=(0,0))#im_size[1]))
                 last_im=draw_image(window["-MAIN-IMAGE-"],img_to_tk(rawImgs[0],h_hsv=values['HSV_H']))#im_size[1]))
                 window["-IMAGE-1-"].update(data=img_to_tk(rawImgs[1],1))
+            main_image = rovHandler.getMainImage()
+            if main_image is not None:
+                window["-IMAGE-2-"].update(data=img_to_tk(main_image,1))
+            
                 #print(f'=== tk images took {(time.time()-tic1)*1000:.1f} msec, grab  {(time.time()-tic2)*1000:.1f} msec')
      
             if event == "Arm-Disarm":

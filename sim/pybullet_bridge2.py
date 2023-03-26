@@ -121,6 +121,7 @@ def getCameraViewMat(bindex,link):
 
 grip=False
 fps=10
+fps_main=10
 imu_fps=100
 dvl_pos_fps=5
 dvl_vel_fps=10
@@ -130,6 +131,7 @@ def main():
         return cnt%int(1/sim_step/x)==0
     cnt=0
     frame_cnt=0
+    frame_main_cnt=0
     
 
     resize_fact=0.5
@@ -139,6 +141,7 @@ def main():
     imgl = None
     current_command = np.zeros(8)
     fov=42
+    fov_main=90
 
     sim_time=0
     scene=getscene(1,1)
@@ -191,7 +194,8 @@ def main():
                 height=h,
                 viewMatrix=VML.flatten('C').tolist(),
                 lightColor=(0,0,1),
-                projectionMatrix=PM,renderer=pb.ER_BULLET_HARDWARE_OPENGL)
+                projectionMatrix=PM,renderer=pb.ER_BULLET_HARDWARE_OPENGL,
+                flags=pb.ER_NO_SEGMENTATION_MASK)
             rgbImg = hsv_range_scale(rgbImg,depthImg)
             imgl=resize(rgbImg,1/resize_fact)#inly interested in rgb
             #second camera
@@ -202,7 +206,8 @@ def main():
                     height=h,
                     viewMatrix=VML.flatten('C').tolist(),
                     lightColor=(0,0,1),
-                    projectionMatrix=PM,renderer=pb.ER_BULLET_HARDWARE_OPENGL)
+                    projectionMatrix=PM,renderer=pb.ER_BULLET_HARDWARE_OPENGL,
+                    flags=pb.ER_NO_SEGMENTATION_MASK)
                 rgbImg = hsv_range_scale(rgbImg,depthImg)
                 imgr=resize(rgbImg,1/resize_fact) #todo...
 
@@ -235,10 +240,25 @@ def main():
                 cv2.waitKey(1)
             frame_cnt+=1
 
-        #if grip:# or render==pb.GUI:
-        #    tr,qu = translateQuatfromM(Mdsym) 
-        #    pb.resetBasePositionAndOrientation(boxId,tr,qu)
-        #### test
+        if ratio(fps_main):
+            PM = pb.computeProjectionMatrixFOV(fov=fov,aspect=1.0,nearVal=0.01,farVal=100)
+            w = int(config.cam_main_sx)
+            h = int(config.cam_main_sy)
+
+            VML = getCameraViewMat(boxId,link_name_to_index['main_cam'])
+            width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
+                width=w, 
+                height=h,
+                viewMatrix=VML.flatten('C').tolist(),
+                lightColor=(0,0,1),
+                projectionMatrix=PM,renderer=pb.ER_BULLET_HARDWARE_OPENGL,
+                flags=pb.ER_NO_SEGMENTATION_MASK)
+            rgbImg = hsv_range_scale(rgbImg,depthImg)
+            imgm=resize(rgbImg,1)#inly interested in rgb
+            #second camera
+            zmq_pub.send_multipart([zmq_topics.topic_main_cam,pickle.dumps([frame_main_cnt,imgm.shape]),imgm.tostring()],copy=False)
+            frame_main_cnt+=1
+
         tic=time.time()
         imu={'ts':tic}
         #imu rotated by 180 arround x axis

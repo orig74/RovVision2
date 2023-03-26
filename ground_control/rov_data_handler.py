@@ -158,7 +158,8 @@ class rovDataHandler(object):
                                           zmq_topics.topic_att_hold_pitch_pid,
                                           zmq_topics.topic_att_hold_roll_pid], zmq_topics.topic_att_hold_port))
             
-        self.sub_vid=utils.subscribe([zmq_topics.topic_stereo_camera], zmq_topics.topic_camera_port) #for sync perposes
+        self.sub_vid=utils.subscribe([zmq_topics.topic_stereo_camera,
+            zmq_topics.topic_main_cam], zmq_topics.topic_camera_port) #for sync perposes
         self.printer_sink = utils.pull_sink(zmq_topics.printer_sink_port)
         self.subs_socks.append(self.printer_sink)
         #self.subs_socks=[]
@@ -187,6 +188,7 @@ class rovDataHandler(object):
         for i in [0,1,2]:
             self.plot_buffers[zmq_topics.topic_pos_hold_pid_fmt%i]=CycArr()
         self.printer=printer
+        self.main_image=None
         
     def getNewImages(self):
         ret = [self.curFrameId, None]
@@ -198,6 +200,11 @@ class rovDataHandler(object):
             pass
             #print(time.time(), "no image")
             #print('--->', ret[0])
+        return ret
+
+    def getMainImage(self):
+        ret=self.main_image
+        self.main_image=None
         return ret
     
     def getTelemtry(self):
@@ -214,13 +221,21 @@ class rovDataHandler(object):
         else:
             while len(select([self.sub_vid],[],[],0.003)[0]) > 0:
                 ret=self.sub_vid.recv_multipart()
-                frame_cnt,shape = pickle.loads(ret[1])
-                images = []
-                for im in ret[2:]:
-                    images.append(np.frombuffer(im,'uint8').reshape(shape).copy())
-                #print('======',len(images),ret[0])
-                if len(images)>0:
+                if ret[0]==zmq_topics.topic_stereo_camera:
+                    frame_cnt,shape = pickle.loads(ret[1])
+                    images = []
+                    for im in ret[2:]:
+                        images.append(np.frombuffer(im,'uint8').reshape(shape).copy())
+                    #print('======',len(images),ret[0])
+                    if len(images)>0:
+                        break
+
+                if ret[0]==zmq_topics.topic_main_cam:
+                    frame_main_cnt,shape = pickle.loads(ret[1])
+                    self.main_image=np.frombuffer(ret[2],'uint8').reshape(shape).copy()
+                    print('got main image',self.main_image.shape)
                     break
+
         if not vid_zmq:
             if self.record_state:
                 if get_files_fds()[0] is None:

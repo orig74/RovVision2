@@ -23,6 +23,7 @@ if rov_type==4:
     #original cam res in beyer format 2464x2056
     cam_resx,cam_resy=2464//2,2056//2
     cam_res_rgbx,cam_res_rgby=cam_resx//2,cam_resy//2
+    cam_main_sx,cam_main_sy=640,480
 
 cam_fps=8
 send_modulo=1
