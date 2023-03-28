@@ -1,0 +1,91 @@
+"""Fuse 1000 RGB-D images from the 7-scenes dataset into a TSDF voxel volume with 2cm resolution.
+"""
+
+import time
+import cv2
+import numpy as np
+import pyrealsense2 as rs
+
+WRITE_DIR = '/local/D405/' #'/home/uav/data/D405/'
+
+FRAME_MOD = 1
+
+FPS = 90
+RES_X = 640
+RES_Y = 480
+
+KEEP_STROBE_FRAMES = True
+SAVE = False
+IMSHOW = True
+DEPTH_THRESH = 1.0
+
+if __name__ == "__main__":
+    pipeline = rs.pipeline()
+    config = rs.config()
+    config.enable_stream(rs.stream.color, RES_X, RES_Y, rs.format.bgr8, FPS)
+    config.enable_stream(rs.stream.depth, RES_X, RES_Y, rs.format.z16, FPS)
+    config.enable_stream(rs.stream.infrared, 1, RES_X, RES_Y, rs.format.y8, FPS)
+    config.enable_stream(rs.stream.infrared, 2, RES_X, RES_Y, rs.format.y8, FPS)
+    #config.enable_all_streams()
+    profile = pipeline.start(config)
+
+    depth_sensor = profile.get_device().first_depth_sensor()
+    depth_sensor.set_option(rs.option.enable_auto_exposure, False)
+    depth_sensor.set_option(rs.option.exposure, 11111)  # Set exposure to inter-frame time
+    depth_sensor.set_option(rs.option.gain, 16)
+    depth_scale = depth_sensor.get_depth_scale()
+
+    frame_cnt = -1
+    keep_frame_cnt = -1
+    avg_val = 0
+    last_kept_ts = time.time()
+    while True:
+        frames = pipeline.wait_for_frames()
+        color_frame = frames.get_color_frame()
+
+        #print(1000*time.time() - color_frame.get_timestamp())
+        #print()
+
+        depth_frame = frames.get_depth_frame()
+        grey_l_frame = frames.get_infrared_frame(1)
+        grey_r_frame = frames.get_infrared_frame(2)
+
+        frame_cnt += 1
+        if frame_cnt % FRAME_MOD != 0:
+            continue
+
+        depth_float_raw = np.array(depth_frame.get_data()).astype(np.float32)
+        depth_img_m = depth_float_raw * depth_scale
+        col_img = np.array(color_frame.get_data())
+        grey_l = np.array(grey_l_frame.get_data())
+        grey_r = np.array(grey_r_frame.get_data())
+
+        val = float(grey_l.mean())
+        avg_val = avg_val * 0.8 + val * 0.2
+        elapsed_time = time.time() - last_kept_ts
+        if elapsed_time < 0.09:
+            continue
+        if KEEP_STROBE_FRAMES and val < 1.0 * avg_val and elapsed_time < 0.12:
+            continue
+        last_kept_ts = time.time()
+        keep_frame_cnt += 1
+
+        if SAVE:
+            cv2.imwrite(WRITE_DIR + 'col_' + str(keep_frame_cnt) + '.jpeg', col_img)
+            cv2.imwrite(WRITE_DIR + 'greyl_' + str(keep_frame_cnt) + '.jpeg', grey_l)
+            cv2.imwrite(WRITE_DIR + 'greyr_' + str(keep_frame_cnt) + '.jpeg', grey_r)
+            depth_img_U8 = (np.clip(depth_img_m, 0, 1.0) * 255).astype(np.uint8)
+            cv2.imwrite(WRITE_DIR + 'depthU8_' + str(keep_frame_cnt) + '.jpeg', depth_img_U8)
+            np.save(WRITE_DIR + 'depthF32_' + str(keep_frame_cnt) + '.npy', depth_img_m)
+
+        if IMSHOW:
+            depth_img_m[depth_img_m > DEPTH_THRESH] = 0
+            cv2.imshow("Depth cam image", depth_img_m)
+            cv2.imshow("Colour", col_img)
+            cv2.imshow("Grey l", grey_l)
+            cv2.imshow("Grey r", grey_r)
+            if cv2.waitKey(1) == ord('q'):
+                break
+
+    cv2.destroyAllWindows()
+    pipeline.stop()
