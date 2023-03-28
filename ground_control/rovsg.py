@@ -37,7 +37,7 @@ parser.add_argument("--depth", help="Display Depth", action='store_true')
 args = parser.parse_args()
 
 
-from rov_data_handler import rovDataHandler,rovCommandHandler
+from rov_data_handler import rovDataHandler,rovCommandHandler,im16to8_22
 from plttk import Plotter
 from plttk_tracer import Plotter as TracePlotter
 
@@ -90,13 +90,17 @@ def main():
     last_heartbit=time.time()
     #im_size = (960,600) 
     im_size = (616,514)
+    im_size2 = (config.cam_main_sx,config.cam_main_sy)
     row1_layout = [[
-        sg.Graph(im_size, graph_bottom_left=(0, im_size[1]), graph_top_right=(im_size[0],0) ,key="-MAIN-IMAGE-",
+        sg.Graph(im_size, graph_bottom_left=(0, im_size[1]), graph_top_right=(im_size[0],0) ,key="-IMAGE-0-",
             change_submits=True,
             enable_events=True,
             ),
         sg.Image(key="-IMAGE-1-"),#,sg.Image(key="-IMAGE-2-")],
-        sg.Image(key="-IMAGE-2-"),#,sg.Image(key="-IMAGE-2-")],
+        sg.Graph(im_size2, graph_bottom_left=(0, im_size2[1]), graph_top_right=(im_size2[0],0) ,key="-IMAGE-2-",
+            change_submits=True,
+            enable_events=True,
+            ),
         ]]
 
     cmd_column = [
@@ -125,21 +129,25 @@ def main():
             ]
     cmd_column+=TrackThreadSG.get_layout(track_thread)
     cmd_column+=[[sg.Button('Save',key='MISSION_SAVE',tooltip='save mission params')]]
+    cmd_column+=[
+            [sg.Checkbox('H',key='HSV_H',tooltip='h from hsv on cam 1')],
+            [sg.Combo(list('RGBrgb'),key='CHANNEL',enable_events=True ,default_value='B',
+                    tooltip='detect rope from grey image channel'),
+             sg.Combo(list('01'),key='ROPE_TO_HSV',default_value='0',enable_events=True,
+                    tooltip='detect rope from hsv image channel (h) or in h')],
+ 
+            ]
 
     #yaw_source_options=['VNAV','DVL']
     config_column = [
+            [sg.Image(key="-IMAGE-2D-")],
             [sg.Button('REC')],
             #[sg.Text('Yaw Source:'),sg.Combo(yaw_source_options,key='YAW_SOURCE',default_value=yaw_source_options[0])],
             [sg.Button('Reset-DVL'),sg.Button('Calib-DVL')],
             [sg.Button('CF+'),sg.Button('CF-')],
             [sg.Button('Lights+'),sg.Button('Lights-')],
             [sg.Multiline(key='MESSEGES',s=(23,5) if scale_screen else (32,8), autoscroll=True, reroute_stdout=False, write_only=True)],
-            [sg.Checkbox('H',key='HSV_H',tooltip='h from hsv on cam 1')],
-            [sg.Combo(list('RGBrgb'),key='CHANNEL',enable_events=True ,default_value='B',
-                    tooltip='detect rope from grey image channel'),
-             sg.Combo(list('01'),key='ROPE_TO_HSV',default_value='0',enable_events=True,
-                    tooltip='detect rope from hsv image channel (h) or in h')],
-            ]
+           ]
             #sg.Button('RTHSV',key='ROPE_TO_HSV',tooltip='detect rope from hsv image channel (h)')],
 
     plot_options=['DEPTH','X_HOLD','Y_HOLD','YAW','PITCH','ROLL']
@@ -186,7 +194,7 @@ def main():
     if scale_screen:
         window.Maximize()
             #size=(1600,900))
-    #window['-MAIN-IMAGE-'].bind('<Button-1>','')
+    #window['-IMAGE-0-'].bind('<Button-1>','')
     plotter = Plotter(window["-CANVAS-"].TKCanvas)
     trace_plotter = TracePlotter(window["-TRACE-CANVAS-"].TKCanvas)
     
@@ -207,12 +215,21 @@ def main():
             if event == "Exit" or event == sg.WIN_CLOSED:
                 break
 
-            if image_shape is not None and event.startswith('-MAIN'):
-                x,y=values['-MAIN-IMAGE-']
+            if image_shape is not None and event.startswith('-IMAGE-0'):
+                x,y=values['-IMAGE-0-']
                 x=x/image_shape[1]
                 y=y/image_shape[0]
                 print('---click--',x,y)
                 rovCommander.lock(x,y)
+            
+            if event.startswith('-IMAGE-2'):
+                x,y=values['-IMAGE-2-']
+                x=x/config.cam_main_sx
+                y=y/config.cam_main_sy
+                printer(f'click2,{x},{y}')
+                #print('---click-2-',x,y)
+                #rovCommander.lock(x,y)
+            
             tic1=time.time()
             frameId, rawImgs = rovHandler.getNewImages()
             if 0 and  scale_screen and rawImgs is not None:
@@ -228,16 +245,21 @@ def main():
                 #print('===',time.time(),rawImgs[0].shape)
                 #print(rawImgs[0].shape)
                 if last_im is not None:
-                    #window["-MAIN-IMAGE-"].delete_figure(last_im)
-                    window["-MAIN-IMAGE-"].erase()
-                    #window["-MAIN-IMAGE-"].Images[last_im]=img_to_tk(rawImgs[0])
+                    #window["-IMAGE-0-"].delete_figure(last_im)
+                    window["-IMAGE-0-"].erase()
+                    #window["-IMAGE-0-"].Images[last_im]=img_to_tk(rawImgs[0])
                 
-                #last_im=window["-MAIN-IMAGE-"].draw_image(data=img_to_tk3(rawImgs[0]),location=(0,0))#im_size[1]))
-                last_im=draw_image(window["-MAIN-IMAGE-"],img_to_tk(rawImgs[0],h_hsv=values['HSV_H']))#im_size[1]))
+                #last_im=window["-IMAGE-0-"].draw_image(data=img_to_tk3(rawImgs[0]),location=(0,0))#im_size[1]))
+                last_im=draw_image(window["-IMAGE-0-"],img_to_tk(rawImgs[0],h_hsv=values['HSV_H']))#im_size[1]))
                 window["-IMAGE-1-"].update(data=img_to_tk(rawImgs[1],1))
             main_image = rovHandler.getMainImage()
             if main_image is not None:
-                window["-IMAGE-2-"].update(data=img_to_tk(main_image,1))
+                window["-IMAGE-2-"].erase()
+                draw_image(window["-IMAGE-2-"],img_to_tk(main_image,1))#im_size[1]))
+            main_image_depth = rovHandler.getMainImageDepth()
+            if main_image_depth is not None:
+                window["-IMAGE-2D-"].update(data=img_to_tk(im16to8_22(main_image_depth),1))
+                #window["-IMAGE-2-"].update(data=img_to_tk(main_image,1))
             
                 #print(f'=== tk images took {(time.time()-tic1)*1000:.1f} msec, grab  {(time.time()-tic2)*1000:.1f} msec')
      

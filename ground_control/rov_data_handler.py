@@ -11,6 +11,7 @@ from cyc_array import CycArr
 from dvl import parse_line as dvl_parse_line
 from datetime import datetime
 import time
+import cv2
 
 from zmq import select
 print('===is sim ',config.is_sim)
@@ -18,6 +19,10 @@ vid_zmq = config.is_sim and config.sim_type=='PB'
 if not vid_zmq:
     from gst import init_gst_reader,get_imgs,set_files_fds,get_files_fds,save_main_camera_stream
     init_gst_reader(2)
+
+def im16to8_22(im):
+    return cv2.applyColorMap(cv2.convertScaleAbs(im[::2,::2].copy(), alpha=0.03), cv2.COLORMAP_JET)
+
 
 class rovCommandHandler(object):
     def __init__(self):
@@ -159,7 +164,7 @@ class rovDataHandler(object):
                                           zmq_topics.topic_att_hold_roll_pid], zmq_topics.topic_att_hold_port))
             
         self.sub_vid=utils.subscribe([zmq_topics.topic_stereo_camera,
-            zmq_topics.topic_main_cam], zmq_topics.topic_camera_port) #for sync perposes
+            zmq_topics.topic_main_cam, zmq_topics.topic_main_cam_depth], zmq_topics.topic_camera_port) #for sync perposes
         self.printer_sink = utils.pull_sink(zmq_topics.printer_sink_port)
         self.subs_socks.append(self.printer_sink)
         #self.subs_socks=[]
@@ -189,6 +194,7 @@ class rovDataHandler(object):
             self.plot_buffers[zmq_topics.topic_pos_hold_pid_fmt%i]=CycArr()
         self.printer=printer
         self.main_image=None
+        self.main_image_depth=None
         
     def getNewImages(self):
         ret = [self.curFrameId, None]
@@ -206,7 +212,12 @@ class rovDataHandler(object):
         ret=self.main_image
         self.main_image=None
         return ret
-    
+
+    def getMainImageDepth(self):
+        ret=self.main_image_depth
+        self.main_image_depth=None
+        return ret
+     
     def getTelemtry(self):
         if self.telemtry is not None:
             return self.telemtry.copy()
@@ -233,8 +244,13 @@ class rovDataHandler(object):
                 if ret[0]==zmq_topics.topic_main_cam:
                     frame_main_cnt,shape = pickle.loads(ret[1])
                     self.main_image=np.frombuffer(ret[2],'uint8').reshape(shape).copy()
-                    print('got main image',self.main_image.shape)
+                    #print('got main image',self.main_image.shape)
                     break
+                if ret[0]==zmq_topics.topic_main_cam_depth:
+                    _,shape = pickle.loads(ret[1])
+                    self.main_image_depth=np.frombuffer(ret[2],'uint16').reshape(shape)#.copy()
+                    print('got main image depth',shape)
+
 
         if not vid_zmq:
             if self.record_state:
