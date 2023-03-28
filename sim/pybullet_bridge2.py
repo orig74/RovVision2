@@ -122,7 +122,7 @@ def getCameraViewMat(bindex,link):
     return Rmat
 
 grip=False
-fps=10
+fps=5
 fps_main=10
 imu_fps=100
 dvl_pos_fps=5
@@ -188,6 +188,7 @@ def main():
         #print('==2',pb.getLinkState(boxId,1,0,1)[0])
         #print('==3',pb.getLinkState(boxId,2,0,1)[0])
         if ratio(fps):
+            cam_tic=time.time()
             PM = pb.computeProjectionMatrixFOV(fov=fov,aspect=1.0,nearVal=0.01,farVal=100)
             w = int(config.cam_res_rgbx*resize_fact)
             h = int(config.cam_res_rgby*resize_fact)
@@ -226,7 +227,7 @@ def main():
                 zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),imgl.tostring()],copy=False)
             else:
                 zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),imgl.tostring(),imgr.tostring()],copy=False)
-            zmq_pub.send_multipart([zmq_topics.topic_stereo_camera_ts,pickle.dumps((frame_cnt,time.time()))]) #for sync
+            zmq_pub.send_multipart([zmq_topics.topic_stereo_camera_ts,pickle.dumps((frame_cnt,time.time()))],copy=False) #for sync
             
             #get depth image
             depthImg=depthImg[::4,::4]
@@ -243,9 +244,13 @@ def main():
                 cv2.imshow('depth',img_show)
                 cv2.waitKey(1)
             frame_cnt+=1
+            #print(cnt,'cam_time',time.time()-cam_tic)
 
         if ratio(fps_main):
-            PM = pb.computeProjectionMatrixFOV(fov=fov,aspect=1.0,nearVal=0.01,farVal=100)
+            main_cam_tic=time.time()
+            nearPlane=.05
+            farPlane=3
+            PM = pb.computeProjectionMatrixFOV(fov=fov,aspect=1.0,nearVal=nearPlane,farVal=farPlane)
             w = int(config.cam_main_sx)
             h = int(config.cam_main_sy)
 
@@ -259,9 +264,21 @@ def main():
                 flags=pb.ER_NO_SEGMENTATION_MASK)
             rgbImg = hsv_range_scale(rgbImg,depthImg)
             imgm=resize(rgbImg,1)#inly interested in rgb
+            depthImg_scaled = nearPlane + ( farPlane - nearPlane ) * depthImg
+            depth_to_send = (depthImg_scaled*1000).astype('uint16') #scale res 0.1 mm
+            if 0:
+                depth_colormap=cv2.applyColorMap(cv2.convertScaleAbs(depth_to_send, alpha=0.03), cv2.COLORMAP_JET)
+                cv2.imshow('aaa',depth_colormap)
+                cv2.waitKey(1)
+
+            zmq_pub.send_multipart([zmq_topics.topic_main_cam_depth,pickle.dumps([frame_main_cnt,depth_to_send.shape]),depth_to_send.tostring()],copy=False)
+            frame_main_cnt+=1
+            #print('===',depthImg_scaled.max(),depthImg_scaled.min())
+            #print('===',depthImg.max(),depthImg.min())
             #second camera
             zmq_pub.send_multipart([zmq_topics.topic_main_cam,pickle.dumps([frame_main_cnt,imgm.shape]),imgm.tostring()],copy=False)
             frame_main_cnt+=1
+            #print(cnt,'main_cam_time',time.time()-main_cam_tic)
 
         tic=time.time()
         imu={'ts':tic}
@@ -349,6 +366,9 @@ def main():
         cycle_time=time.time()-tic_cycle
         if cycle_time>0.1:
             print(cnt,'very slow cycle_time',cycle_time)
+
+        if ratio(1/4):
+            print('sim rt diff',rt_delta)
 
        
 if __name__ == '__main__':

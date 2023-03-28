@@ -2,7 +2,7 @@
 <robot name="myfirst">
 
   <material name="blue">
-    <color rgba="0 0 0.8 0.7"/>
+    <color rgba="0 0 0.8 1.0"/>
   </material>
 
   <material name="solidblue">
@@ -120,39 +120,39 @@
   <joint name="base_to_cam1" type="fixed">
     <parent link="base_link"/>
     <child link="cam1"/>
-    <origin rpy="0 0 0" xyz="0.2 0.05 0.0"/>
+    <origin rpy="0 0 0" xyz="0.2 0.05 -0.15"/>
   </joint>
 
   <joint name="base_to_cam2" type="fixed">
     <parent link="base_link"/>
     <child link="cam2"/>
-    <origin rpy="0 0 0" xyz="0.2 -0.05 0.0"/>
+    <origin rpy="0 0 0" xyz="0.2 -0.05 -0.15"/>
   </joint>
 
   <joint name="base_to_main_cam" type="fixed">
     <parent link="base_link"/>
     <child link="main_cam"/>
-    <origin rpy="0 0 0" xyz="0.2 -0.0 0.3"/>
+    <origin rpy="0 0 0" xyz="0.2 -0.0 0.12"/>
   </joint>
 
     
   <joint name="base_to_right_tube" type="fixed">
     <parent link="cm"/>
     <child link="right_tube"/>
-    <origin rpy="0 0 0" xyz="0.2 0.05 0.0"/>
+    <origin rpy="0 0 0" xyz="0.2 0.05 -0.15"/>
   </joint>
 
   <joint name="base_to_left_tube" type="fixed">
     <parent link="cm"/>
     <child link="left_tube"/>
-    <origin rpy="0 0 0" xyz="0.2 -0.05 0.0"/>
+    <origin rpy="0 0 0" xyz="0.2 -0.05 -0.15"/>
   </joint>
 
     
 <joint name="gripper_extension" type="fixed">
     <parent link="base_link"/>
     <child link="gripper_pole"/>
-    <origin rpy="0 0 0" xyz="0.25 0 -0.07"/>
+    <origin rpy="0 -0.5 0" xyz="0.25 0 -0.07"/>
   </joint>
 
   <link name="gripper_pole">
@@ -219,7 +219,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <box size="0.03 .01 0.01"/>
+        <box size="0.03 0.01 0.01"/>
       </geometry>
         <material name="blue"/>
     </visual>

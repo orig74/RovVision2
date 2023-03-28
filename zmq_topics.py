@@ -20,6 +20,7 @@ topic_stereo_camera=b'topic_stereo_camera'
 topic_stereo_camera_ts=b'topic_stereo_camera_ts'
 
 topic_main_cam=b'topic_main_cam'
+topic_main_cam_depth=b'topic_main_cam_depth'
 
 topic_camera_telem=b'topic_camera_telem'
 topic_camera_port=7789
