@@ -51,6 +51,8 @@ render = pb.GUI if len(sys.argv)>1 and sys.argv[1]=='g' else pb.DIRECT # pb.GUI
 #render = pb.GUI
 physicsClient = pb.connect(render)#or p.DIRECT for non-graphical versio
 pb.configureDebugVisualizer(0,0,[0,0,100],rgbBackground=[43/255+0.26,84/255+0.26,132/255+0.26])
+pb.configureDebugVisualizer(pb.COV_ENABLE_GUI, 0)
+pb.configureDebugVisualizer(pb.COV_ENABLE_TINY_RENDERER, 0)
 #pb.setPhysicsEngineParameter(enableFileCaching=0)
 pb.setRealTimeSimulation(False)
 sim_step=1/200
@@ -127,6 +129,7 @@ dvl_pos_fps=5
 dvl_vel_fps=10
 print_fps=0.5
 def main():
+    pb.configureDebugVisualizer(pb.COV_ENABLE_RENDERING, 0)
     def ratio(x):
         return cnt%int(1/sim_step/x)==0
     cnt=0
@@ -151,6 +154,7 @@ def main():
     last_fps_print=time.time()
     gripper_cmd=0
 
+    pb.configureDebugVisualizer(pb.COV_ENABLE_RENDERING, 1)
     sim_start=time.time()
     while keep_running:
         tic_cycle = time.time()
