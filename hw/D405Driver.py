@@ -12,12 +12,9 @@ import zmq
 import zmq_topics
 import zmq_wrapper as utils
 subs_socks=[]
-subs_socks.append(utils.subscribe([ zmq_topics.topic_record_state ],zmq_topics.topic_record_state_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_record_state],zmq_topics.topic_record_state_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
-socket_pub = utils.publisher(zmq_topics.topic_camera_port)
-socket_pub_ts = utils.publisher(zmq_topics.topic_camera_ts_port)
-socket_pub_telem = utils.publisher(zmq_topics.topic_camera_telem_port)
-
+socket_pub = utils.publisher(zmq_topics.topic_main_camera_port)
 
 #WRITE_DIR = '/local/D405/' #'/home/uav/data/D405/'
 
@@ -110,7 +107,7 @@ if __name__ == "__main__":
             socket_pub.send_multipart([zmq_topics.topic_main_cam,
                 pickle.dumps((keep_frame_cnt,col_img.shape)),col_img.tobytes()])
             scale_to_mm=depth_scale
-            socket_pub_ts.send_multipart([zmq_topics.topic_main_cam_depth,
+            socket_pub.send_multipart([zmq_topics.topic_main_cam_depth,
                 pickle.dumps((keep_frame_cnt,scale_to_mm,depth_frame.shape)),depth_frame_raw])
 
             #cv2.imwrite(record_state + 'greyl_' + str(keep_frame_cnt) + '.jpeg', grey_l)
