@@ -1,10 +1,22 @@
 """Fuse 1000 RGB-D images from the 7-scenes dataset into a TSDF voxel volume with 2cm resolution.
 """
-
+import sys
+sys.path.append('../')
+sys.path.append('../utils')
 import time
 import cv2
 import numpy as np
 import pyrealsense2 as rs
+import zmq
+import zmq_topics
+import zmq_wrapper as utils
+subs_socks=[]
+subs_socks.append(utils.subscribe([ zmq_topics.topic_record_state ],zmq_topics.topic_record_state_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
+socket_pub = utils.publisher(zmq_topics.topic_camera_port)
+socket_pub_ts = utils.publisher(zmq_topics.topic_camera_ts_port)
+socket_pub_telem = utils.publisher(zmq_topics.topic_camera_telem_port)
+
 
 WRITE_DIR = '/local/D405/' #'/home/uav/data/D405/'
 
@@ -16,7 +28,7 @@ RES_Y = 480
 
 KEEP_STROBE_FRAMES = True
 SAVE = False
-IMSHOW = True
+IMSHOW = False
 DEPTH_THRESH = 1.0
 
 if __name__ == "__main__":
@@ -25,7 +37,7 @@ if __name__ == "__main__":
     config.enable_stream(rs.stream.color, RES_X, RES_Y, rs.format.bgr8, FPS)
     config.enable_stream(rs.stream.depth, RES_X, RES_Y, rs.format.z16, FPS)
     config.enable_stream(rs.stream.infrared, 1, RES_X, RES_Y, rs.format.y8, FPS)
-    config.enable_stream(rs.stream.infrared, 2, RES_X, RES_Y, rs.format.y8, FPS)
+    #config.enable_stream(rs.stream.infrared, 2, RES_X, RES_Y, rs.format.y8, FPS)
     #config.enable_all_streams()
     profile = pipeline.start(config)
 
@@ -48,7 +60,7 @@ if __name__ == "__main__":
 
         depth_frame = frames.get_depth_frame()
         grey_l_frame = frames.get_infrared_frame(1)
-        grey_r_frame = frames.get_infrared_frame(2)
+        #grey_r_frame = frames.get_infrared_frame(2)
 
         frame_cnt += 1
         if frame_cnt % FRAME_MOD != 0:
@@ -58,7 +70,7 @@ if __name__ == "__main__":
         depth_img_m = depth_float_raw * depth_scale
         col_img = np.array(color_frame.get_data())
         grey_l = np.array(grey_l_frame.get_data())
-        grey_r = np.array(grey_r_frame.get_data())
+        #grey_r = np.array(grey_r_frame.get_data())
 
         val = float(grey_l.mean())
         avg_val = avg_val * 0.8 + val * 0.2
@@ -72,8 +84,8 @@ if __name__ == "__main__":
 
         if SAVE:
             cv2.imwrite(WRITE_DIR + 'col_' + str(keep_frame_cnt) + '.jpeg', col_img)
-            cv2.imwrite(WRITE_DIR + 'greyl_' + str(keep_frame_cnt) + '.jpeg', grey_l)
-            cv2.imwrite(WRITE_DIR + 'greyr_' + str(keep_frame_cnt) + '.jpeg', grey_r)
+            #cv2.imwrite(WRITE_DIR + 'greyl_' + str(keep_frame_cnt) + '.jpeg', grey_l)
+            #cv2.imwrite(WRITE_DIR + 'greyr_' + str(keep_frame_cnt) + '.jpeg', grey_r)
             depth_img_U8 = (np.clip(depth_img_m, 0, 1.0) * 255).astype(np.uint8)
             cv2.imwrite(WRITE_DIR + 'depthU8_' + str(keep_frame_cnt) + '.jpeg', depth_img_U8)
             np.save(WRITE_DIR + 'depthF32_' + str(keep_frame_cnt) + '.npy', depth_img_m)
@@ -83,7 +95,7 @@ if __name__ == "__main__":
             cv2.imshow("Depth cam image", depth_img_m)
             cv2.imshow("Colour", col_img)
             cv2.imshow("Grey l", grey_l)
-            cv2.imshow("Grey r", grey_r)
+            #cv2.imshow("Grey r", grey_r)
             if cv2.waitKey(1) == ord('q'):
                 break
 
