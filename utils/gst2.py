@@ -72,8 +72,8 @@ class Reader(object):
     def get_img(self):
         sx,sy=self.sxsy
         image=None
-        #print('gst2...name',self.name)
         while len(select.select([self.pipe],[],[],0.001)[0])>0:
+            #print('gst2...name',self.name)
             data=b''
             toread=sx*(sy+self.pad_lines)*3
             while len(data)<toread:

@@ -226,31 +226,16 @@ def main():
                 x=x/config.cam_main_sx
                 y=y/config.cam_main_sy
                 printer(f'click2,{x},{y}')
-                #print('---click-2-',x,y)
-                #rovCommander.lock(x,y)
             
-            tic1=time.time()
-            frameId, rawImgs = rovHandler.getNewImages()
-            if 0 and  scale_screen and rawImgs is not None:
-                sy,sx=rawImgs[0].shape[:2]
-                sx=int(sx*scale_screen)
-                sy=int(sy*scale_screen)
-                #rawImgs = [cv2.resize(im,(sx,sy)) for im in rawImgs[:2]]
-                print('>>>>',sx,sy)
-
-            tic2=time.time()
-            if rawImgs is not None:
-                image_shape=rawImgs[0].shape
-                print('===',time.time(),rawImgs[0].shape)
-                #print(rawImgs[0].shape)
+            _, rawImg = rovHandler.getSincedImages(0)
+            if rawImg is not None:
+                image_shape=rawImg.shape
                 if last_im is not None:
-                    #window["-IMAGE-0-"].delete_figure(last_im)
                     window["-IMAGE-0-"].erase()
-                    #window["-IMAGE-0-"].Images[last_im]=img_to_tk(rawImgs[0])
-                
-                #last_im=window["-IMAGE-0-"].draw_image(data=img_to_tk3(rawImgs[0]),location=(0,0))#im_size[1]))
-                last_im=draw_image(window["-IMAGE-0-"],img_to_tk(rawImgs[0],h_hsv=values['HSV_H']))#im_size[1]))
-                window["-IMAGE-1-"].update(data=img_to_tk(rawImgs[1],1))
+                last_im=draw_image(window["-IMAGE-0-"],img_to_tk(rawImg,h_hsv=values['HSV_H']))#im_size[1]))
+            frameId, rawImg = rovHandler.getSincedImages(1)
+            if rawImg is not None:
+                window["-IMAGE-1-"].update(data=img_to_tk(rawImg,1))
             main_image = rovHandler.getMainImage()
             if main_image is not None:
                 window["-IMAGE-2-"].erase()

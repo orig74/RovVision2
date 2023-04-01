@@ -176,7 +176,7 @@ class rovDataHandler(object):
         self.printer_sink = utils.pull_sink(zmq_topics.printer_sink_port)
         self.subs_socks.append(self.printer_sink)
         #self.subs_socks=[]
-        self.images = None 
+        self.syncedImages = [None,None] 
         self.curFrameId = -1
         self.curExposure = -1
         
@@ -204,17 +204,16 @@ class rovDataHandler(object):
         self.main_image=None
         self.main_image_depth=None
         
-    def getNewImages(self):
-        ret = [self.curFrameId, None]
-        if self.images is not None:
-            ret = ([self.curFrameId],self.images)
-            self.images = None
-            #print("---image---", time.time())
+    def getSincedImages(self,ind):
+        ret = [self.curFrameId, self.syncedImages[ind]]
+        if self.syncedImages[ind] is not None:
+            self.syncedImages[ind] = None
         else:
             pass
-            #print(time.time(), "no image")
-            #print('--->', ret[0])
         return ret
+
+    def getNumSyncedImages(self):
+        return len(self.syncedImages)
 
     def getMainImage(self):
         ret=self.main_image
@@ -296,12 +295,14 @@ class rovDataHandler(object):
 
         if len(images)>0 and images[0] is not None:
             fmt_cnt_l=image_enc_dec.decode(images[0])
-
-            self.images=images
-            draw_mono(images[0],self.telemtry,fmt_cnt_l)
-            if len(images)>1:
-                draw_seperate(images[0],images[1],self.telemtry)
-               
+            for i in range(len(images)):
+                if images[i] is not None:
+                    self.syncedImages[i]=images[i]
+            if images[0] is not None:
+                draw_mono(images[0],self.telemtry,fmt_cnt_l)
+                if len(images)>1 and images[1] is not None:
+                    draw_seperate(images[0],images[1],self.telemtry)
+                   
     def get_pos_xy(self):
         ldata=self.telemtry['dvl_deadrecon'] 
         ret=(ldata['x'],ldata['y'])
