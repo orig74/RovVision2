@@ -241,7 +241,7 @@ def main():
             tic2=time.time()
             if rawImgs is not None:
                 image_shape=rawImgs[0].shape
-                #print('===',time.time(),rawImgs[0].shape)
+                print('===',time.time(),rawImgs[0].shape)
                 #print(rawImgs[0].shape)
                 if last_im is not None:
                     #window["-IMAGE-0-"].delete_figure(last_im)
@@ -406,6 +406,7 @@ def main():
             cnt+=1
             if 0:
                 print(f'=== tk images took {(time.time()-cycle_tic)*1000:.1f} msec')
+            time.sleep(0.001)
         except Exception as E:
             print('*'*100)
             traceback.print_exc(file=sys.stdout)

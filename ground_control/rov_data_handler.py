@@ -19,8 +19,9 @@ print('===is sim ',config.is_sim)
 print('===is sim zmq',config.is_sim_zmq)
 vid_zmq = config.is_sim_zmq
 if not vid_zmq:
-    from gst import init_gst_reader,get_imgs,set_files_fds,get_files_fds,save_main_camera_stream
+    from gst import init_gst_reader,get_imgs,set_files_fds,get_files_fds#,save_main_camera_stream
     main_cam_reader=gst2.Reader('main_cam',config.gst_cam_main_port,config.cam_main_sx,config.cam_main_sy)
+    main_cam_reader_depth=gst2.Reader('main_cam_depth',config.gst_cam_main_depth_port,config.cam_main_dgui_sx,config.cam_main_dgui_sx)
     init_gst_reader(2)
 
 
@@ -235,8 +236,11 @@ class rovDataHandler(object):
         if not vid_zmq:
             images = get_imgs()
             main_cam_img = main_cam_reader.get_img()
+            main_cam_img_depth = main_cam_reader_depth.get_img()
             if self.main_image is None:
                 self.main_image=main_cam_img
+            if self.main_image_depth is None:
+                self.main_image_depth=main_cam_img_depth
         else:
             for sock in select(self.sub_vid,[],[],0.003)[0]:
                 ret=sock.recv_multipart()
@@ -256,7 +260,6 @@ class rovDataHandler(object):
                     self.main_image_depth=im16to8_22(np.frombuffer(ret[2],'uint16').reshape(shape).astype('float32')*scale_to_mm)
 
                 #print('got main image depth',shape)
-
 
         if not vid_zmq:
             if self.record_state:

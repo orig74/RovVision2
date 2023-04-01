@@ -15,6 +15,12 @@ import zmq_wrapper
 import zmq_topics
 import image_enc_dec
 import config
+from utils import im16to8_22
+
+if config.is_sim_zmq:
+    print('using zmq to ground streamming...')
+    sys.exit(0)
+
 import gst
 import gst2
 
@@ -25,6 +31,7 @@ subs_socks.append(
 
 keep_running=True
 main_cam_gst=gst2.Writer(config.gst_cam_main_port,config.cam_main_sx,config.cam_main_sy)
+main_cam_depth_gst=gst2.Writer(config.gst_cam_main_depth_port,config.cam_main_dgui_sx,config.cam_main_dgui_sy)
 
 async def recv_and_process():
     global current_command
@@ -42,12 +49,18 @@ async def recv_and_process():
                         imgr=np.frombuffer(ret[3],'uint8').reshape(shape).copy()
                         image_enc_dec.encode(imgr,frame_cnt)
                         togst.append(imgr)
-                    #print('hhhh,,senfing to gst',frame_cnt)
+                    #print('hhhh,,sending to gst',frame_cnt)
                     gst.send_gst(togst)
             if ret[0]==zmq_topics.topic_main_cam:
                 frame_main_cnt,shape = pickle.loads(ret[1])
                 main_image=np.frombuffer(ret[2],'uint8').reshape(shape)
                 main_cam_gst.write(main_image)
+
+            if ret[0]==zmq_topics.topic_main_cam_depth:
+                _,scale_to_mm,shape = pickle.loads(ret[1])
+                main_image_depth=im16to8_22(np.frombuffer(ret[2],'uint16').reshape(shape).astype('float32')*scale_to_mm)
+                main_cam_depth_gst.write(main_image_depth)
+
 
         await asyncio.sleep(0.001)
  

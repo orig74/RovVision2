@@ -33,6 +33,7 @@ send_modulo=1
 #gstreamer
 gst_ports=[6760,6761]
 gst_cam_main_port = 17894
+gst_cam_main_depth_port = 17895
 gst_bitrate=1024*3
 #gst_bitrate=256
 gst_speed_preset=1
