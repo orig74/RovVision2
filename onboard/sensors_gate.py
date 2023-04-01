@@ -21,7 +21,7 @@ if config.is_sim_zmq:
     print('using zmq to ground streamming...')
     sys.exit(0)
 
-import gst
+#import gst
 import gst2
 
 subs_socks=[]
@@ -32,6 +32,7 @@ subs_socks.append(
 keep_running=True
 main_cam_gst=gst2.Writer(config.gst_cam_main_port,config.cam_main_sx,config.cam_main_sy)
 main_cam_depth_gst=gst2.Writer(config.gst_cam_main_depth_port,config.cam_main_dgui_sx,config.cam_main_dgui_sy)
+stereo_cam_writer=[gst2.Writer(config.gst_ports[i],config.cam_res_rgbx,config.cam_res_rgby,pad_lines=config.cam_res_gst_pad_lines) for i in [0,1]]
 
 async def recv_and_process():
     global current_command
@@ -50,7 +51,9 @@ async def recv_and_process():
                         image_enc_dec.encode(imgr,frame_cnt)
                         togst.append(imgr)
                     #print('hhhh,,sending to gst',frame_cnt)
-                    gst.send_gst(togst)
+                    #gst.send_gst(togst)
+                    for i,im in enumerate(togst):
+                        stereo_cam_writer[i].write(im)
             if ret[0]==zmq_topics.topic_main_cam:
                 frame_main_cnt,shape = pickle.loads(ret[1])
                 main_image=np.frombuffer(ret[2],'uint8').reshape(shape)
@@ -70,7 +73,7 @@ async def main():
             )
 
 if __name__=='__main__':
-    gst.init_gst(config.cam_res_rgbx,config.cam_res_rgby,2 if config.camera_setup=='stereo' else 1)
+    #gst.init_gst(config.cam_res_rgbx,config.cam_res_rgby,2 if config.camera_setup=='stereo' else 1)
     #asyncio.run(main())
     loop = asyncio.get_event_loop()
     result = loop.run_until_complete(main())

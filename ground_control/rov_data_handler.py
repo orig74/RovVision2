@@ -19,10 +19,12 @@ print('===is sim ',config.is_sim)
 print('===is sim zmq',config.is_sim_zmq)
 vid_zmq = config.is_sim_zmq
 if not vid_zmq:
-    from gst import init_gst_reader,get_imgs,set_files_fds,get_files_fds#,save_main_camera_stream
+    #from gst import init_gst_reader,get_imgs,set_files_fds,get_files_fds#,save_main_camera_stream
+    stereo_cam_reader=[gst2.Reader('stereo_'+'lr'[i],config.gst_ports[i],config.cam_res_rgbx,config.cam_res_rgby,pad_lines=config.cam_res_gst_pad_lines)
+            for i in [0,1]]
     main_cam_reader=gst2.Reader('main_cam',config.gst_cam_main_port,config.cam_main_sx,config.cam_main_sy)
     main_cam_reader_depth=gst2.Reader('main_cam_depth',config.gst_cam_main_depth_port,config.cam_main_dgui_sx,config.cam_main_dgui_sx)
-    init_gst_reader(2)
+    #init_gst_reader(2)
 
 
 from utils import im16to8_22
@@ -234,7 +236,8 @@ class rovDataHandler(object):
         #sx,sy=config.cam_res_rgbx,config.cam_res_rgby
         bmargx,bmargy=config.viewer_blacks
         if not vid_zmq:
-            images = get_imgs()
+            #images = get_imgs()
+            images = [stereo_cam_reader[i].get_img() for i in [0,1]]
             main_cam_img = main_cam_reader.get_img()
             main_cam_img_depth = main_cam_reader_depth.get_img()
             if self.main_image is None:
@@ -265,24 +268,30 @@ class rovDataHandler(object):
             if self.record_state:
                 if get_files_fds()[0] is None:
                     print('start recording...')
-                    fds=[]
+                    #fds=[]
                     #datestr=sensor_gate_data['record_date_str']
                     datestr=self.record_state
                     save_path=self.args.data_path+'/'+datestr
                     if not os.path.isdir(save_path):
                         os.mkdir(save_path)
                     for i in [0,1]:
+                        stereo_cam_reader[i].set_save_fd(open(save_path+'/vid_{}.mp4'.format('lr'[i]),'wb'))
                         #datestr=datetime.now().strftime('%y%m%d-%H%M%S')
-                        fds.append(open(save_path+'/vid_{}.mp4'.format('lr'[i]),'wb'))
-                    set_files_fds(fds)
+                        
+                        #fds.append(open(save_path+'/vid_{}.mp4'.format('lr'[i]),'wb'))
+                        
+                    #set_files_fds(fds)
                     self.data_file_fd=open(save_path+'/viewer_data.pkl','wb')
                     pickle.dump([b'start_time',time.time()],self.data_file_fd,-1)
                     #os.system("gst-launch-1.0 -v -e udpsrc port=17894  ! application/x-rtp, media=video, clock-rate=90000, encoding-name=H264, payload=96 ! rtph264depay ! h264parse ! qtmux ! filesink location=%s sync=false & "%(save_path+'/main_cam.mov'))
             else:
-                if get_files_fds()[0] is not None:
+                #if get_files_fds()[0] is not None:
+                if stereo_cam_reader[0].get_save_fd() is not None:
                     print('done recording...')
                     #os.system('pkill -2 -f "gst-launch-1.0 -v -e udpsrc port=17894"')
-                    set_files_fds([None,None])
+                    #set_files_fds([None,None])
+                    for i in [0,1]:
+                        stereo_cam_reader[i].set_save_fd(None)
                     self.data_file_fd=None
 
         if len(images)>0 and images[0] is not None:
