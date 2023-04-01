@@ -14,7 +14,7 @@ else:
 #
 class Writer(object):
     def __init__(self,port,sx,sy,pad_lines=0):
-        cmd="gst-launch-1.0 {{}}! x264enc threads=1 speed-preset={} tune=zerolatency  bitrate={} key-int-max=50 ! tcpserversink port={{}}".format(gst_speed_preset, gst_bitrate)
+        cmd="gst-launch-1.0 {{}}! x264enc threads=1 speed-preset={} tune=zerolatency  bitrate={} key-int-max=20 ! tcpserversink port={{}}".format(gst_speed_preset, gst_bitrate)
         #gstsrc = 'fdsrc ! videoparse width={} height={} format=15 ! videoconvert ! video/x-raw, format=I420'.format(sx,sy+pad_lines) #! autovideosink'
         gstsrc = 'fdsrc ! videoparse width={} height={} format=16 ! videoconvert ! video/x-raw, format=I420'.format(sx,sy+pad_lines) #! autovideosink'
 
@@ -32,7 +32,6 @@ class Writer(object):
             self.p.stdin.write(tosend)
             if self.lines_to_add is not None:
                 self.p.stdin.write(self.lines_to_add)
-
             self.cnt+=1
 
 class Reader(object):
@@ -87,21 +86,25 @@ class Reader(object):
                 image = np.fromstring(data,'uint8').reshape([sy,sx,3])[:,:,::-1].copy()
             except:
                 image = np.zeros((sy, sx, 3), dtype=np.uint8)
-        if len(select.select([self.pipe_264],[],[],0.0)[0])>0:
+        while len(select.select([self.pipe_264],[],[],0.0)[0])>0:
             data=os.read(self.pipe_264,1*1000*1000)
             if self.save_fd is not None:
                 self.save_fd.write(data)
         return image
 
-tsx,tsy=616,514
-#tsx,tsy=616,516
-#tsx,tsy=640,480
+if __name__=='__main__':
+    #tsx,tsy=616,514
+    tsx,tsy=320,240
+    tpadlines=0
+    #tsx,tsy=616,516
+    #tsx,tsy=640,480
+
 if __name__=='__main__' and sys.argv[1]=='s':
     zer=np.zeros((tsy,tsx,3),dtype='uint8')
     i=0
     cv2.namedWindow('gsttest',cv2.WINDOW_NORMAL)
-    writer = Writer(7777,tsx,tsy,pad_lines=2)
-    writer2 = Writer(7778,tsx,tsy,pad_lines=2)
+    writer = Writer(7777,tsx,tsy,pad_lines=tpadlines)
+    writer2 = Writer(7778,tsx,tsy,pad_lines=tpadlines)
     while True:
         im=zer.copy()
         cv2.circle(im,(i+100,i+100),i+10,(255,200,50),3)
@@ -117,8 +120,8 @@ if __name__=='__main__' and sys.argv[1]=='s':
 if __name__=='__main__' and sys.argv[1]=='c':
     cv2.namedWindow('gstread',cv2.WINDOW_NORMAL)
     cv2.namedWindow('gstread2',cv2.WINDOW_NORMAL)
-    reader=Reader('main',7777,tsx,tsy,pad_lines=2)
-    reader2=Reader('main_depth',7778,tsx,tsy,pad_lines=2)
+    reader=Reader('main',7777,tsx,tsy,pad_lines=tpadlines)
+    reader2=Reader('main_depth',7778,tsx,tsy,pad_lines=tpadlines)
     while True:
         im=reader.get_img()
         im2=reader2.get_img()
