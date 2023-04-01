@@ -46,7 +46,7 @@ class Reader(object):
     def set_save_fd(self,fd):
         self.save_fd=fd
 
-    def get_imgs(self):
+    def get_img(self):
         sx,sy=self.sxsy
         image=None
         while len(select.select([self.pipe],[],[],0.005)[0])>0:
@@ -65,3 +65,4 @@ class Reader(object):
             if self.save_fd is not None:
                 self.save_fd.write(data)
         return image
+

@@ -5,7 +5,6 @@ import PySimpleGUI as sg
 from PIL import Image,ImageTk
 import time
 
-import os
 import sys
 import socket
 import pickle
@@ -31,13 +30,13 @@ import argparse
 import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--data_path", help="path for data" , default='../../data')
+parser.add_argument("--data_path", help="path for data", default='../../data')
 parser.add_argument("--pub_data", help="publish data", action='store_true')
 parser.add_argument("--depth", help="Display Depth", action='store_true')
 args = parser.parse_args()
 
 
-from rov_data_handler import rovDataHandler,rovCommandHandler,im16to8_22
+from rov_data_handler import rovDataHandler,rovCommandHandler
 from plttk import Plotter
 from plttk_tracer import Plotter as TracePlotter
 
@@ -258,7 +257,7 @@ def main():
                 draw_image(window["-IMAGE-2-"],img_to_tk(main_image,1))#im_size[1]))
             main_image_depth = rovHandler.getMainImageDepth()
             if main_image_depth is not None:
-                window["-IMAGE-2D-"].update(data=img_to_tk(im16to8_22(main_image_depth),1))
+                window["-IMAGE-2D-"].update(data=img_to_tk(main_image_depth,1))
                 #window["-IMAGE-2-"].update(data=img_to_tk(main_image,1))
             
                 #print(f'=== tk images took {(time.time()-tic1)*1000:.1f} msec, grab  {(time.time()-tic2)*1000:.1f} msec')

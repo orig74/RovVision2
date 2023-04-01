@@ -37,6 +37,7 @@ from mussels_scene import MusseleRopesScene as getscene
 zmq_controller=utils.subscribe([zmq_topics.topic_dvl_cmd],zmq_topics.topic_controller_port)
 zmq_sub=utils.subscribe([zmq_topics.topic_thrusters_comand,zmq_topics.topic_gripper_cmd],zmq_topics.topic_thrusters_comand_port)
 zmq_pub=utils.publisher(zmq_topics.topic_camera_port)
+zmq_pub_main_camera=utils.publisher(zmq_topics.topic_main_cam_port)
 pub_imu = utils.publisher(zmq_topics.topic_imu_port)
 pub_depth = utils.publisher(zmq_topics.topic_depth_port)
 pub_dvl = utils.publisher(zmq_topics.topic_dvl_port)
@@ -265,18 +266,19 @@ def main():
             rgbImg = hsv_range_scale(rgbImg,depthImg)
             imgm=resize(rgbImg,1)#inly interested in rgb
             depthImg_scaled = nearPlane + ( farPlane - nearPlane ) * depthImg
-            depth_to_send = (depthImg_scaled*1000).astype('uint16') #scale res 0.1 mm
+            scale_to_mm=0.1
+            depth_to_send = (depthImg_scaled*1000/scale_to_mm).astype('uint16') #scale res 0.1 mm
             if 0:
                 depth_colormap=cv2.applyColorMap(cv2.convertScaleAbs(depth_to_send, alpha=0.03), cv2.COLORMAP_JET)
                 cv2.imshow('aaa',depth_colormap)
                 cv2.waitKey(1)
 
-            zmq_pub.send_multipart([zmq_topics.topic_main_cam_depth,pickle.dumps([frame_main_cnt,depth_to_send.shape]),depth_to_send.tostring()],copy=False)
+            zmq_pub_main_camera.send_multipart([zmq_topics.topic_main_cam_depth,pickle.dumps([frame_main_cnt,scale_to_mm,depth_to_send.shape]),depth_to_send.tostring()],copy=False)
             frame_main_cnt+=1
             #print('===',depthImg_scaled.max(),depthImg_scaled.min())
             #print('===',depthImg.max(),depthImg.min())
             #second camera
-            zmq_pub.send_multipart([zmq_topics.topic_main_cam,pickle.dumps([frame_main_cnt,imgm.shape]),imgm.tostring()],copy=False)
+            zmq_pub_main_camera.send_multipart([zmq_topics.topic_main_cam,pickle.dumps([frame_main_cnt,imgm.shape]),imgm.tostring()],copy=False)
             frame_main_cnt+=1
             #print(cnt,'main_cam_time',time.time()-main_cam_tic)
 

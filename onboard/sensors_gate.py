@@ -16,10 +16,15 @@ import zmq_topics
 import image_enc_dec
 import config
 import gst
+import gst2
 
 subs_socks=[]
 subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_stereo_camera],zmq_topics.topic_camera_port))
+subs_socks.append(
+    zmq_wrapper.subscribe([zmq_topics.topic_main_cam, zmq_topics.topic_main_cam_depth], zmq_topics.topic_main_cam_port)) #for sync perposes
+
 keep_running=True
+main_cam_gst=gst2.Writer(config.gst_cam_main_port,config.cam_main_sx,config.cam_main_sy)
 
 async def recv_and_process():
     global current_command
@@ -39,6 +44,10 @@ async def recv_and_process():
                         togst.append(imgr)
                     #print('hhhh,,senfing to gst',frame_cnt)
                     gst.send_gst(togst)
+            if ret[0]==zmq_topics.topic_main_cam:
+                frame_main_cnt,shape = pickle.loads(ret[1])
+                main_image=np.frombuffer(ret[2],'uint8').reshape(shape)
+                main_cam_gst.write(main_image)
 
         await asyncio.sleep(0.001)
  

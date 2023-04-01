@@ -16,16 +16,15 @@ import gst2
 
 from zmq import select
 print('===is sim ',config.is_sim)
-vid_zmq = config.is_sim and config.sim_type=='PB'
+print('===is sim zmq',config.is_sim_zmq)
+vid_zmq = config.is_sim_zmq
 if not vid_zmq:
     from gst import init_gst_reader,get_imgs,set_files_fds,get_files_fds,save_main_camera_stream
     main_cam_reader=gst2.Reader('main_cam',config.gst_cam_main_port,config.cam_main_sx,config.cam_main_sy)
     init_gst_reader(2)
 
-def im16to8_22(im):
-    return cv2.applyColorMap(cv2.convertScaleAbs(im[::2,::2].copy(), alpha=0.03), cv2.COLORMAP_JET)
 
-
+from utils import im16to8_22
 class rovCommandHandler(object):
     def __init__(self):
         self.pub_sock=utils.publisher(zmq_topics.topic_remote_cmd_port)
@@ -254,7 +253,7 @@ class rovDataHandler(object):
                     #print('got main image',self.main_image.shape)
                 if ret[0]==zmq_topics.topic_main_cam_depth:
                     _,scale_to_mm,shape = pickle.loads(ret[1])
-                    self.main_image_depth=np.frombuffer(ret[2],'uint16').reshape(shape).astype('float32')*scale_to_mm
+                    self.main_image_depth=im16to8_22(np.frombuffer(ret[2],'uint16').reshape(shape).astype('float32')*scale_to_mm)
 
                 #print('got main image depth',shape)
 

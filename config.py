@@ -2,6 +2,7 @@
 import os
 rov_type = int(os.environ.get('ROV_TYPE',4))
 is_sim = 'SIM' in os.environ
+is_sim_zmq = os.environ.get('SIM_STREAM_TYPE','')=='ZMQ'
 sim_type = os.environ.get('SIM','')
 camera_setup='stereo' #'mono'
 
