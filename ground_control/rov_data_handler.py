@@ -23,7 +23,7 @@ if not vid_zmq:
     stereo_cam_reader=[gst2.Reader('stereo_'+'lr'[i],config.gst_ports[i],config.cam_res_rgbx,config.cam_res_rgby,pad_lines=config.cam_res_gst_pad_lines)
             for i in [0,1]]
     main_cam_reader=gst2.Reader('main_cam',config.gst_cam_main_port,config.cam_main_sx,config.cam_main_sy)
-    main_cam_reader_depth=gst2.Reader('main_cam_depth',config.gst_cam_main_depth_port,config.cam_main_dgui_sx,config.cam_main_dgui_sx)
+    main_cam_reader_depth=gst2.Reader('main_cam_depth',config.gst_cam_main_depth_port,config.cam_main_dgui_sx,config.cam_main_dgui_sy)
     #init_gst_reader(2)
 
 
