@@ -59,9 +59,9 @@ if __name__ == "__main__":
             topic,data=ret[0],pickle.loads(ret[1])
             if topic==zmq_topics.topic_record_state:
                 new_record_state_str=data
-                if not record_state and new_record_state_str:
+                #if not record_state and new_record_state_str:
                     #switch to recording
-                    os.mkdir('/media/data/'+new_record_state_str)
+                    #os.mkdir('/media/data/'+new_record_state_str)
                     #calibrator.ParamsUpdateFlag = True
                 record_state=('/media/data/'+new_record_state_str+'/') if new_record_state_str else None
                 if record_state:
@@ -98,9 +98,10 @@ if __name__ == "__main__":
         keep_frame_cnt += 1
 
         if record_state and keep_frame_cnt%SAVE_RATIO==0:
-            fd_frame_data.write(f'{keep_frame_cnt},{time.time()},{depth_scale}')
+            fd_frame_data.write(f'{keep_frame_cnt},{time.time()},{depth_scale}\n')
             cv2.imwrite(record_state + f'{keep_frame_cnt:06d}.jpg',col_img)
-            open(record_state+'d{keep_frame_cnt:06d}.bin','wb').write(depth_frame_raw)
+            open(record_state+f'd{keep_frame_cnt:06d}.bin','wb').write(depth_frame_raw.tobytes())
+            fd_frame_data.flush()
 
         if keep_frame_cnt%SEND_RATIO==0:
             socket_pub.send_multipart([zmq_topics.topic_main_cam,
