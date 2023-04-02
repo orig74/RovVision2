@@ -216,7 +216,7 @@ class AlviumMultiCam(threading.Thread):
                                         if record_state is not None:
                                             cur_rec_state = record_state
                                             for cam_key, cam_frame in current_frames.items():
-                                                cv2.imwrite(cur_rec_state + str(total_syncd_frames)
+                                                cv2.imwrite(cur_rec_state + f'{total_syncd_frames:06d}' #str(total_syncd_frames)
                                                             + '_' + cam_key + '.pgm', cam_frame)
                                     else:
                                         print("Duplicate frame detected!")

@@ -9,8 +9,8 @@ else
 fi
 
 export SIM=PB
-#export SIM_STREAM_TYPE=ZMQ
-export SIM_STREAM_TYPE=GST
+export SIM_STREAM_TYPE=ZMQ
+#export SIM_STREAM_TYPE=GST
 PYTHON=python 
 export RESIZE_VIEWER=1800
 PROJECT_PATH=`git rev-parse --show-toplevel`
