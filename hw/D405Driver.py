@@ -14,7 +14,7 @@ import zmq_wrapper as utils
 subs_socks=[]
 subs_socks.append(utils.subscribe([zmq_topics.topic_record_state],zmq_topics.topic_record_state_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
-socket_pub = utils.publisher(zmq_topics.topic_main_camera_port)
+socket_pub = utils.publisher(zmq_topics.topic_main_cam_port)
 
 #WRITE_DIR = '/local/D405/' #'/home/uav/data/D405/'
 
@@ -37,9 +37,9 @@ if __name__ == "__main__":
     config = rs.config()
     config.enable_stream(rs.stream.color, RES_X, RES_Y, rs.format.bgr8, FPS)
     config.enable_stream(rs.stream.depth, RES_X, RES_Y, rs.format.z16, FPS)
-    #config.enable_stream(rs.stream.infrared, 1, RES_X, RES_Y, rs.format.y8, FPS)
+    config.enable_stream(rs.stream.infrared, 1, RES_X, RES_Y, rs.format.y8, FPS)
     #config.enable_stream(rs.stream.infrared, 2, RES_X, RES_Y, rs.format.y8, FPS)
-    #config.enable_all_streams()
+    config.enable_all_streams()
     profile = pipeline.start(config)
 
     depth_sensor = profile.get_device().first_depth_sensor()
@@ -71,7 +71,6 @@ if __name__ == "__main__":
         color_frame = frames.get_color_frame()
 
         #print(1000*time.time() - color_frame.get_timestamp())
-        #print()
 
         depth_frame = frames.get_depth_frame()
         grey_l_frame = frames.get_infrared_frame(1)
@@ -81,8 +80,8 @@ if __name__ == "__main__":
         if frame_cnt % FRAME_MOD != 0:
             continue
 
-        depth_frame_raw=depth_frame.get_data()
-        depth_float_raw = np.array(depth_frame_raw).astype(np.float32)
+        depth_frame_raw=np.array(depth_frame.get_data())
+        depth_float_raw = depth_frame_raw.astype(np.float32)
         depth_img_m = depth_float_raw * depth_scale
         col_img = np.array(color_frame.get_data())
         grey_l = np.array(grey_l_frame.get_data())
@@ -108,13 +107,15 @@ if __name__ == "__main__":
                 pickle.dumps((keep_frame_cnt,col_img.shape)),col_img.tobytes()])
             scale_to_mm=depth_scale
             socket_pub.send_multipart([zmq_topics.topic_main_cam_depth,
-                pickle.dumps((keep_frame_cnt,scale_to_mm,depth_frame.shape)),depth_frame_raw])
+                pickle.dumps((keep_frame_cnt,scale_to_mm,depth_frame_raw.shape)),depth_frame_raw.tostring()])
 
             #cv2.imwrite(record_state + 'greyl_' + str(keep_frame_cnt) + '.jpeg', grey_l)
             #cv2.imwrite(record_state + 'greyr_' + str(keep_frame_cnt) + '.jpeg', grey_r)
             #depth_img_U8 = (np.clip(depth_img_m, 0, 1.0) * 255).astype(np.uint8)
             #cv2.imwrite(record_state + 'depthU8_' + str(keep_frame_cnt) + '.jpeg', depth_img_U8)
             #np.save(record_state + 'depthF32_' + str(keep_frame_cnt) + '.npy', depth_img_m)
+
+        #print('===',col_img.shape,depth_img_m.shape)
 
         if IMSHOW:
             depth_img_m[depth_img_m > DEPTH_THRESH] = 0

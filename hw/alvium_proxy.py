@@ -18,6 +18,7 @@ import gc
 import zmq
 import zmq_topics
 import zmq_wrapper as utils
+import traceback
 subs_socks=[]
 subs_socks.append(utils.subscribe([ zmq_topics.topic_record_state ],zmq_topics.topic_record_state_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
@@ -29,7 +30,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--debug", help="Show frames with opencv", action='store_true')
 args = parser.parse_args()
 
-CAM_IDS = ['DEV_000F315DB084', 'DEV_000F315DAB68']#, 'DEV_000F315DAB37'] # 
+CAM_IDS = ['DEV_000F315DB084', 'DEV_000F315DAB68', 'DEV_000F315DAB37'] # 
 MASTER_CAM_ID = CAM_IDS[0]
 NUM_CAMS = len(CAM_IDS)
 
@@ -403,7 +404,8 @@ class FrameProducer(threading.Thread):
                     # if self.cam_id == MASTER_CAM_ID:
                     #     print(self.cam.__dict__.keys())
                     #     self.print_features()
-                except:
+                except Exception:
+                    print(traceback.format_exc())
                     print('Camera setup failed, restarting...')
                     #self.cam.DeviceReset.run()
                 try:
