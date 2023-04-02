@@ -48,6 +48,7 @@ current_command=[0 for _ in range(8)] # 8 thrusters
 dt=1/60.0
 #pybullet init
 render = pb.GUI if len(sys.argv)>1 and sys.argv[1]=='g' else pb.DIRECT # pb.GUI
+#render = pb.GUI
 
 physicsClient = pb.connect(render)#or p.DIRECT for non-graphical versio
 pb.setRealTimeSimulation(False)
@@ -89,7 +90,7 @@ def getrov():
     meshScale = np.array([0.01, 0.01, 0.01])*0.2
     vfo=pb.getQuaternionFromEuler(np.deg2rad([-90, 0, 90]))
     visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
-                                        fileName="br1.obj",
+                                        fileName="br1g.obj",
                                         rgbaColor=[1, 0, 0, 1],
                                         specularColor=[0.4, .4, 0],
                                         visualFramePosition=[0,0,0],
@@ -151,6 +152,7 @@ def hsv_range_scale(rgbImg,depthImg):
     #rgbImg = cv2.blur(rgbImg,(3,3))
     return rgbImg
 
+grip=True
 def main():
     cnt=0
     frame_cnt=0
@@ -163,7 +165,8 @@ def main():
     current_command = np.zeros(8)
     fov=42
 
-    if render==pb.GUI:
+    sim_time=0
+    if grip or render==pb.GUI:
         boxId = getrov()
     
     scene = getscene()
@@ -189,7 +192,9 @@ def main():
         next_q,next_u=get_next_state(curr_q,curr_u,current_command,dt,lamb)
         next_q,next_u=next_q.flatten(),next_u.flatten()
         curr_q,curr_u=next_q,next_u
-        dvlSim.update(curr_q,curr_u)
+        dvlSim.update(curr_q,curr_u,sim_time)
+        sim_time+=dt
+
 
         ps={}
         Mdsym, MdsymI=MatDsym2pybullet(*curr_q[:6])
@@ -202,7 +207,7 @@ def main():
 
             #VM = pb.computeViewMatrixFromYawPitchRoll(pos,0.1,*pb.getEulerFromQuaternion(quat),2)
             #print('===',len(VML))
-            PM = pb.computeProjectionMatrixFOV(fov=fov,aspect=1.0,nearVal=0.1,farVal=100)
+            PM = pb.computeProjectionMatrixFOV(fov=fov,aspect=1.0,nearVal=0.01,farVal=100)
             w = int(config.cam_res_rgbx*resize_fact)
             h = int(config.cam_res_rgby*resize_fact)
             width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
@@ -225,7 +230,7 @@ def main():
             if not mono:
                 #CM = np.array(pb.computeViewMatrix((0,bl,0),(1,bl,0),(0,0,-1))).reshape((4,4),order='F')
                 VMR=CM @ translateM(0,-bl/2,0) @ MdsymI #left camera 0.2 for left 
-                PM = pb.computeProjectionMatrixFOV(fov=fov,aspect=1.0,nearVal=0.1,farVal=1000)
+                PM = pb.computeProjectionMatrixFOV(fov=fov,aspect=1.0,nearVal=0.01,farVal=100)
                 width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
                     width=w, 
                     height=h,
@@ -265,7 +270,7 @@ def main():
                 cv2.waitKey(1)
             frame_cnt+=1
 
-            if render==pb.GUI:
+            if grip or render==pb.GUI:
                 tr,qu = translateQuatfromM(Mdsym) 
                 pb.resetBasePositionAndOrientation(boxId,tr,qu)
             ### test
@@ -284,7 +289,8 @@ def main():
         if cnt%5==0:
             tic=time.time()
             pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':dvlSim.dvl_pos_msg()})])
-            pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':dvlSim.dvl_vel_msg()})])
+
+        pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps({'ts':tic,'dvl_raw':dvlSim.dvl_vel_msg()})])
 
         #time.sleep(0.100)
         time.sleep(0.01)

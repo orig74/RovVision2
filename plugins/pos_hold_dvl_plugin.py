@@ -28,10 +28,38 @@ AUTOSCAN_PATH = 10 * [np.array([10.0, 0.0, 0.0]),
 AUTO_VELOCITY = 0.2
 AUTO_TARGET_THRESH = 0.1
 
+def rotate_yaw(v,yaw):
+    c,s = np.cos(yaw),np.sin(yaw)
+    x,y = v[:2]
+    x,y = x*c-y*s,x*s+y*c
+    return np.array([x,y])
+#deadreacon class
+class DRxy(object):
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.last_v=None
+        self.last_t=None
+        self.x=None
+
+
+    def __call__(self,t,v,yaw_rad):
+        if self.x is None:
+            self.x=np.zeros(2)
+        else:
+            va=(np.array(v)+np.array(self.last_v))/2
+            dt=t-self.last_t
+            self.x+=rotate_yaw(va*dt,-yaw_rad)
+        self.last_v=v
+        self.last_t=t
+        return self.x
+
 async def recv_and_process():
     keep_running=True
     target_pos=np.zeros(3)
-    pids=[None]*3
+    pids=[None]*2
+    drs=DRxy() #dr on x, dr on y
     system_state={'mode':[]}
 
     jm=Joy_map()
@@ -45,6 +73,7 @@ async def recv_and_process():
     prev_target=None
     prev_ts=time.time()
     path_vec_idx=0
+    dvl_internal_last_pos=None
 
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.005)[0]
@@ -72,11 +101,19 @@ async def recv_and_process():
 
             if topic==zmq_topics.topic_dvl_raw:
                 dd=parse_line(data['dvl_raw'])
+
                 if dd and dd['type']=='deadreacon':
-                    dvl_last_pos=dd
+                    dvl_internal_last_pos=dd
+
                 if dd and dd['type']=='vel' and dd['valid']==b'y':
                     dvl_last_vel=dd
                     last_vel_report=time.time()
+                    t=dd['tov']/1e6
+                    xy=drs(t,(dd['vx'],dd['vy']),yaw)
+                    #external dvl position calculation based on vel only
+                    dvl_last_pos  = {'x':xy[0],'y':xy[1],'yaw':np.degrees(yaw)}
+                    #print('++++',dvl_last_pos,t,(dd['vx'],dd['vy']),yaw)
+                    print('===',dvl_internal_last_pos,dvl_last_pos)
                 if dvl_last_pos and dvl_last_vel:
                     cmds=[0]*3
                     for ind in range(len(pids)):

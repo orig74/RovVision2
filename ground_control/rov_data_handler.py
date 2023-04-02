@@ -11,14 +11,23 @@ from cyc_array import CycArr
 from dvl import parse_line as dvl_parse_line
 from datetime import datetime
 import time
+import cv2
+import gst2
 
 from zmq import select
 print('===is sim ',config.is_sim)
-vid_zmq = config.is_sim and config.sim_type=='PB'
+print('===is sim zmq',config.is_sim_zmq)
+vid_zmq = config.is_sim_zmq
 if not vid_zmq:
-    from gst import init_gst_reader,get_imgs,set_files_fds,get_files_fds,save_main_camera_stream
-    init_gst_reader(2)
+    #from gst import init_gst_reader,get_imgs,set_files_fds,get_files_fds#,save_main_camera_stream
+    stereo_cam_reader=[gst2.Reader('stereo_'+'lr'[i],config.gst_ports[i],config.cam_res_rgbx,config.cam_res_rgby,pad_lines=config.cam_res_gst_pad_lines)
+            for i in [0,1]]
+    main_cam_reader=gst2.Reader('main_cam',config.gst_cam_main_port,config.cam_main_sx,config.cam_main_sy)
+    main_cam_reader_depth=gst2.Reader('main_cam_depth',config.gst_cam_main_depth_port,config.cam_main_dgui_sx,config.cam_main_dgui_sy)
+    #init_gst_reader(2)
 
+
+from utils import im16to8_22
 class rovCommandHandler(object):
     def __init__(self):
         self.pub_sock=utils.publisher(zmq_topics.topic_remote_cmd_port)
@@ -158,11 +167,16 @@ class rovDataHandler(object):
                                           zmq_topics.topic_att_hold_pitch_pid,
                                           zmq_topics.topic_att_hold_roll_pid], zmq_topics.topic_att_hold_port))
             
-        self.sub_vid=utils.subscribe([zmq_topics.topic_stereo_camera], zmq_topics.topic_camera_port) #for sync perposes
+        self.sub_vid=[]
+        self.sub_vid.append(
+                utils.subscribe([zmq_topics.topic_stereo_camera], zmq_topics.topic_camera_port)) #for sync perposes
+        self.sub_vid.append(
+                utils.subscribe([zmq_topics.topic_main_cam, zmq_topics.topic_main_cam_depth], zmq_topics.topic_main_cam_port)) #for sync perposes
+
         self.printer_sink = utils.pull_sink(zmq_topics.printer_sink_port)
         self.subs_socks.append(self.printer_sink)
         #self.subs_socks=[]
-        self.images = None 
+        self.syncedImages = [None,None] 
         self.curFrameId = -1
         self.curExposure = -1
         
@@ -187,19 +201,30 @@ class rovDataHandler(object):
         for i in [0,1,2]:
             self.plot_buffers[zmq_topics.topic_pos_hold_pid_fmt%i]=CycArr()
         self.printer=printer
+        self.main_image=None
+        self.main_image_depth=None
         
-    def getNewImages(self):
-        ret = [self.curFrameId, None]
-        if self.images is not None:
-            ret = ([self.curFrameId],self.images)
-            self.images = None
-            #print("---image---", time.time())
+    def getSincedImages(self,ind):
+        ret = [self.curFrameId, self.syncedImages[ind]]
+        if self.syncedImages[ind] is not None:
+            self.syncedImages[ind] = None
         else:
             pass
-            #print(time.time(), "no image")
-            #print('--->', ret[0])
         return ret
-    
+
+    def getNumSyncedImages(self):
+        return len(self.syncedImages)
+
+    def getMainImage(self):
+        ret=self.main_image
+        self.main_image=None
+        return ret
+
+    def getMainImageDepth(self):
+        ret=self.main_image_depth
+        self.main_image_depth=None
+        return ret
+     
     def getTelemtry(self):
         if self.telemtry is not None:
             return self.telemtry.copy()
@@ -210,49 +235,74 @@ class rovDataHandler(object):
         #sx,sy=config.cam_res_rgbx,config.cam_res_rgby
         bmargx,bmargy=config.viewer_blacks
         if not vid_zmq:
-            images = get_imgs()
+            #images = get_imgs()
+            images = [stereo_cam_reader[i].get_img() for i in [0,1]]
+            main_cam_img = main_cam_reader.get_img()
+            main_cam_img_depth = main_cam_reader_depth.get_img()
+            if self.main_image is None:
+                self.main_image=main_cam_img
+            if self.main_image_depth is None:
+                self.main_image_depth=main_cam_img_depth
         else:
-            while len(select([self.sub_vid],[],[],0.003)[0]) > 0:
-                ret=self.sub_vid.recv_multipart()
-                frame_cnt,shape = pickle.loads(ret[1])
-                images = []
-                for im in ret[2:]:
-                    images.append(np.frombuffer(im,'uint8').reshape(shape).copy())
-                #print('======',len(images),ret[0])
-                if len(images)>0:
-                    break
+            for sock in select(self.sub_vid,[],[],0.003)[0]:
+                ret=sock.recv_multipart()
+                if ret[0]==zmq_topics.topic_stereo_camera:
+                    frame_cnt,shape = pickle.loads(ret[1])
+                    images = []
+                    for im in ret[2:]:
+                        images.append(np.frombuffer(im,'uint8').reshape(shape).copy())
+                    #print('======',len(images),ret[0])
+
+                if ret[0]==zmq_topics.topic_main_cam:
+                    frame_main_cnt,shape = pickle.loads(ret[1])
+                    self.main_image=np.frombuffer(ret[2],'uint8').reshape(shape).copy()
+                    #print('got main image',self.main_image.shape)
+                if ret[0]==zmq_topics.topic_main_cam_depth:
+                    _,scale_to_mm,shape = pickle.loads(ret[1])
+                    self.main_image_depth=im16to8_22(np.frombuffer(ret[2],'uint16').reshape(shape).astype('float32')*scale_to_mm)
+
+                #print('got main image depth',shape)
+
         if not vid_zmq:
             if self.record_state:
                 if get_files_fds()[0] is None:
                     print('start recording...')
-                    fds=[]
+                    #fds=[]
                     #datestr=sensor_gate_data['record_date_str']
                     datestr=self.record_state
                     save_path=self.args.data_path+'/'+datestr
                     if not os.path.isdir(save_path):
                         os.mkdir(save_path)
                     for i in [0,1]:
+                        stereo_cam_reader[i].set_save_fd(open(save_path+'/vid_{}.mp4'.format('lr'[i]),'wb'))
                         #datestr=datetime.now().strftime('%y%m%d-%H%M%S')
-                        fds.append(open(save_path+'/vid_{}.mp4'.format('lr'[i]),'wb'))
-                    set_files_fds(fds)
+                        
+                        #fds.append(open(save_path+'/vid_{}.mp4'.format('lr'[i]),'wb'))
+                        
+                    #set_files_fds(fds)
                     self.data_file_fd=open(save_path+'/viewer_data.pkl','wb')
                     pickle.dump([b'start_time',time.time()],self.data_file_fd,-1)
-                    os.system("gst-launch-1.0 -v -e udpsrc port=17894  ! application/x-rtp, media=video, clock-rate=90000, encoding-name=H264, payload=96 ! rtph264depay ! h264parse ! qtmux ! filesink location=%s sync=false & "%(save_path+'/main_cam.mov'))
+                    #os.system("gst-launch-1.0 -v -e udpsrc port=17894  ! application/x-rtp, media=video, clock-rate=90000, encoding-name=H264, payload=96 ! rtph264depay ! h264parse ! qtmux ! filesink location=%s sync=false & "%(save_path+'/main_cam.mov'))
             else:
-                if get_files_fds()[0] is not None:
+                #if get_files_fds()[0] is not None:
+                if stereo_cam_reader[0].get_save_fd() is not None:
                     print('done recording...')
-                    os.system('pkill -2 -f "gst-launch-1.0 -v -e udpsrc port=17894"')
-                    set_files_fds([None,None])
+                    #os.system('pkill -2 -f "gst-launch-1.0 -v -e udpsrc port=17894"')
+                    #set_files_fds([None,None])
+                    for i in [0,1]:
+                        stereo_cam_reader[i].set_save_fd(None)
                     self.data_file_fd=None
 
         if len(images)>0 and images[0] is not None:
             fmt_cnt_l=image_enc_dec.decode(images[0])
-
-            self.images=images
-            draw_mono(images[0],self.telemtry,fmt_cnt_l)
-            if len(images)>1:
-                draw_seperate(images[0],images[1],self.telemtry)
-               
+            for i in range(len(images)):
+                if images[i] is not None:
+                    self.syncedImages[i]=images[i]
+            if images[0] is not None:
+                draw_mono(images[0],self.telemtry,fmt_cnt_l)
+                if len(images)>1 and images[1] is not None:
+                    draw_seperate(images[0],images[1],self.telemtry)
+                   
     def get_pos_xy(self):
         ldata=self.telemtry['dvl_deadrecon'] 
         ret=(ldata['x'],ldata['y'])

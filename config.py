@@ -2,6 +2,7 @@
 import os
 rov_type = int(os.environ.get('ROV_TYPE',4))
 is_sim = 'SIM' in os.environ
+is_sim_zmq = os.environ.get('SIM_STREAM_TYPE','')=='ZMQ'
 sim_type = os.environ.get('SIM','')
 camera_setup='stereo' #'mono'
 
@@ -23,12 +24,17 @@ if rov_type==4:
     #original cam res in beyer format 2464x2056
     cam_resx,cam_resy=2464//2,2056//2
     cam_res_rgbx,cam_res_rgby=cam_resx//2,cam_resy//2
+    cam_res_gst_pad_lines=2 ## added incase of hight not diveded by 4
+    cam_main_sx,cam_main_sy=640,480
+    cam_main_dgui_sx,cam_main_dgui_sy=320,240
 
 cam_fps=5
 send_modulo=1
 
 #gstreamer
 gst_ports=[6760,6761]
+gst_cam_main_port = 17894
+gst_cam_main_depth_port = 17895
 gst_bitrate=1024*3
 #gst_bitrate=256
 gst_speed_preset=1

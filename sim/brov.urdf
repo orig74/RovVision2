@@ -1,0 +1,252 @@
+<?xml version="1.0"?>
+<robot name="myfirst">
+
+  <material name="blue">
+    <color rgba="0 0 0.8 1.0"/>
+  </material>
+
+  <material name="solidblue">
+    <color rgba="0 0 1.0 1.0"/>
+  </material>
+
+  <material name="solidred">
+    <color rgba="1.0 0 0.0 1.0"/>
+  </material>
+
+
+  <material name="white">
+    <color rgba="1 1 1 1"/>
+  </material>
+
+  <material name="semi_white">
+    <color rgba="1 1 1 0.4"/>
+  </material>
+
+  <link name="base_link">
+    <inertial><mass value="0.0025"/><inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/></inertial>
+  </link>
+  <link name="cam1">
+    <inertial><mass value="0.0025"/><inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/></inertial>
+  </link>
+  <link name="cam2">
+    <inertial><mass value="0.0025"/><inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/></inertial>
+  </link>
+    
+  <link name="main_cam">
+    <inertial><mass value="0.0025"/><inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/></inertial>
+  </link>
+
+    
+  <link name="COB">
+    <inertial><mass value="0.0025"/><inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/></inertial>
+    <visual><geometry><sphere radius="0.01"/></geometry><material name="solidblue"/></visual>
+  </link>
+  <link name="COM">
+    <inertial><mass value="0.0025"/><inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/></inertial>
+    <visual><geometry><sphere radius="0.01"/></geometry><material name="solidred"/></visual>
+  </link>
+
+
+
+  <link name="cm">
+    <visual>
+    <origin rpy="0 1.57 0" xyz="0 0. 0."/>
+      <geometry>
+        <cylinder length="0.4" radius="0.06"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+
+    <inertial>
+    <origin rpy="0 1.57 0" xyz="0 0. 0."/>
+      <mass value="10"/>
+      <inertia ixx="0.4" ixy="0.0" ixz="0.0" iyy="0.4" iyz="0.0" izz="0.4"/>
+    </inertial>
+  </link>
+
+    
+  <link name="right_tube">
+    <visual>
+    <origin rpy="0 1.57 0" xyz="0 0. 0."/>
+      <geometry>
+        <cylinder length="0.2" radius="0.03"/>
+      </geometry>
+    <material name="semi_white"/>
+    </visual>
+    <inertial>
+    <origin rpy="0 1.57 0" xyz="0 0. 0."/>
+      <mass value="0.2"/>
+      <inertia ixx="0.4" ixy="0.0" ixz="0.0" iyy="0.4" iyz="0.0" izz="0.4"/>
+    </inertial>
+  </link>
+
+  <link name="left_tube">
+    <visual>
+    <origin rpy="0 1.57 0" xyz="0 0. 0."/>
+      <geometry>
+        <cylinder length="0.2" radius="0.03"/>
+      </geometry>
+    <material name="semi_white"/>
+    </visual>
+    <inertial>
+    <origin rpy="0 1.57 0" xyz="0 0. 0."/>
+      <inertia ixx="0.4" ixy="0.0" ixz="0.0" iyy="0.4" iyz="0.0" izz="0.4"/>
+      <mass value="0.2"/>
+    </inertial>
+
+  </link>
+
+
+  <joint name="base_to_cm" type="fixed">
+    <parent link="base_link"/>
+    <child link="cm"/>
+    <origin rpy="0 0 0" xyz="0 0. 0."/>
+  </joint>
+
+  <joint name="base_to_cob" type="fixed">
+    <parent link="base_link"/>
+    <child link="COB"/>
+    <origin rpy="0 0 0" xyz="0 0. 0.03"/>
+  </joint>
+
+  <joint name="base_to_com" type="fixed">
+    <parent link="base_link"/>
+    <child link="COM"/>
+    <origin rpy="0 0 0" xyz="0 0. -0.03"/>
+  </joint>
+
+
+
+  <joint name="base_to_cam1" type="fixed">
+    <parent link="base_link"/>
+    <child link="cam1"/>
+    <origin rpy="0 0 0" xyz="0.2 0.05 -0.15"/>
+  </joint>
+
+  <joint name="base_to_cam2" type="fixed">
+    <parent link="base_link"/>
+    <child link="cam2"/>
+    <origin rpy="0 0 0" xyz="0.2 -0.05 -0.15"/>
+  </joint>
+
+  <joint name="base_to_main_cam" type="fixed">
+    <parent link="base_link"/>
+    <child link="main_cam"/>
+    <origin rpy="0 0 0" xyz="0.2 -0.0 0.12"/>
+  </joint>
+
+    
+  <joint name="base_to_right_tube" type="fixed">
+    <parent link="cm"/>
+    <child link="right_tube"/>
+    <origin rpy="0 0 0" xyz="0.2 0.05 -0.15"/>
+  </joint>
+
+  <joint name="base_to_left_tube" type="fixed">
+    <parent link="cm"/>
+    <child link="left_tube"/>
+    <origin rpy="0 0 0" xyz="0.2 -0.05 -0.15"/>
+  </joint>
+
+    
+<joint name="gripper_extension" type="fixed">
+    <parent link="base_link"/>
+    <child link="gripper_pole"/>
+    <origin rpy="0 -0.5 0" xyz="0.25 0 -0.07"/>
+  </joint>
+
+  <link name="gripper_pole">
+    <visual>
+      <geometry>
+        <cylinder length="0.2" radius="0.01"/>
+      </geometry>
+      <origin rpy="0 1.57075 0 " xyz="0.1 0 0"/>
+    </visual>
+          <inertial><mass value="0.0025"/><inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/></inertial>
+  </link>
+
+<joint name="gripper_right" type="revolute">
+    <parent link="gripper_pole"/>
+    <child link="right_finger"/>
+    <limit effort="1000.0" lower="0.0" upper="0.748" velocity="0.5"/>
+    <axis xyz="0 0 1"/>
+    <origin rpy="0 0 -1" xyz="0.21 -0.01 -0.0"/>
+</joint>
+
+    
+  <link name="right_finger">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.03 0.01 0.01"/>
+      </geometry>
+        <material name="blue"/>
+    </visual>
+          <inertial><mass value="0.0025"/><inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/></inertial>
+   <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.03 0.01 0.01"/></geometry></collision>
+            <contact><rolling_friction value="0.001"/><spinning_friction value="0.001"/></contact>
+
+    </link>
+<joint name="gripper_right2" type="fixed">
+    <parent link="right_finger"/>
+    <child link="right_finger2"/>
+    <origin rpy="0 0 1" xyz="0.02 0.01 -0.0"/>
+</joint>
+
+  <link name="right_finger2">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.03 0.01 0.01"/>
+      </geometry>
+        <material name="blue"/>
+    </visual>
+      <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.03 0.01 0.01"/></geometry></collision>
+          <inertial><mass value="0.0025"/><inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/></inertial>
+            <contact><rolling_friction value="0.001"/><spinning_friction value="0.001"/></contact>
+
+  </link>
+
+    <joint name="gripper_left" type="revolute" >
+    <parent link="gripper_pole"/>
+    <child link="left_finger"/>
+    <limit effort="1000.0" lower="0.0" upper="0.748" velocity="0.5"/>
+    <axis xyz="0 0 1"/>
+    <origin rpy="3.1415 0 1" xyz="0.21 0.01 -0.0"/>
+</joint>
+
+  <link name="left_finger">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.03 0.01 0.01"/>
+      </geometry>
+        <material name="blue"/>
+    </visual>
+          <inertial><mass value="0.0025"/><inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/></inertial>
+      <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.03 0.01 0.01"/></geometry></collision>
+      <contact><rolling_friction value="0.001"/><spinning_friction value="0.001"/></contact>
+ 
+  </link>
+<joint name="gripper_left2" type="fixed">
+    <parent link="left_finger"/>
+    <child link="left_finger2"/>
+    <origin rpy="0 0 1" xyz="0.02 0.01 -0.0"/>
+</joint>
+
+  <link name="left_finger2">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.03 0.01 0.01"/>
+      </geometry>
+        <material name="blue"/>
+    </visual>
+          <inertial><mass value="0.0025"/><inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/></inertial>
+      <collision><origin xyz="0 0 0" rpy="0 0 0"/><geometry><box size="0.03 0.01 0.01"/></geometry></collision>
+            <contact><rolling_friction value="0.001"/><spinning_friction value="0.001"/></contact>
+
+  </link>
+    
+    
+</robot>

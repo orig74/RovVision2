@@ -11,7 +11,7 @@ import image_enc_dec
 import cv2
 ############# gst wirite #########
 gst_pipes=None
-use_ffmpeg_for_read=False
+use_ffmpeg_for_read=True
 send_cnt=[0,0]
 def init_gst(sx,sy,npipes):
     global gst_pipes
@@ -34,7 +34,7 @@ def send_gst(imgs):
             send_cnt[i]+=1
 
 def init_gst_files(sx,sy):
-   pass
+    pass
 
 
 ############# gst read #########
@@ -45,24 +45,25 @@ shape = (sx, sy, 3)
 def init_gst_reader(npipes):
     global gst_pipes,gst_pipes_264
     if 1: #h264
-        cmd='gst-launch-1.0 tcpclientsrc port={} ! identity sync=true  ! tee name=t ! queue ! filesink location=fifo_264_{}  sync=false  t. ! queue !'+\
-        ' h264parse ! decodebin ! videoconvert ! video/x-raw,height={},width={},format=RGB ! filesink location=fifo_raw_{}  sync=false'
+        cmd='gst-launch-1.0 tcpclientsrc port={} ! identity sync=true  ! tee name=t ! queue ! filesink location={}  sync=false  t. ! queue !'+\
+        ' h264parse ! decodebin ! videoconvert ! video/x-raw,height={},width={},format=RGB ! filesink location={}  sync=false'
     if 0:
         cmd='gst-launch-1.0 -q udpsrc port={} ! application/x-rtp,encoding-name=JPEG,payload=26 ! rtpjpegdepay ! jpegdec ! videoconvert ! video/x-raw,height={},width={},format=RGB ! fdsink'
 
     gst_pipes=[]
     gst_pipes_264=[]
-    os.system('rm fifo_*')
     cmds=[]
     for i in range(npipes):
         fname_264='fifo_264_'+'lr'[i]
+        os.system('rm '+fname_264)
         os.mkfifo(fname_264)
         r = os.open(fname_264,os.O_RDONLY | os.O_NONBLOCK)
         fname_raw='fifo_raw_'+'lr'[i]
+        os.system('rm '+fname_raw)
         os.mkfifo(fname_raw)
         r1 = os.open(fname_raw,os.O_RDONLY | os.O_NONBLOCK)
-        gcmd = cmd.format(config.gst_ports[i],'lr'[i],sy,sx,'lr'[i])
-        print(gcmd)
+        gcmd = cmd.format(config.gst_ports[i],fname_264,sy,sx,fname_raw)
+        print('---===---',gcmd)
         cmds.append(gcmd)
         gst_pipes_264.append(r)
         gst_pipes.append(r1)
@@ -86,7 +87,8 @@ def set_files_fds(fds):
 def get_imgs():
     global images
     for i in range(len(images)):
-        while len(select.select([ gst_pipes[i] ],[],[],0.005)[0])>0 :
+        while len(select.select([ gst_pipes[i] ],[],[],0.005)[0])>0:
+            print('got.....')
             data=b''
             while len(data)<sx*sy*3:
                 try:
@@ -97,7 +99,7 @@ def get_imgs():
                 images[i] = np.fromstring(data,'uint8').reshape([sy,sx,3])[:,:,::-1].copy()
             except:
                 images[i] = np.zeros((sy, sx, 3), dtype=np.uint8)
-        if len(select.select([ gst_pipes_264[i] ],[],[],0.005)[0])>0:
+        while len(select.select([ gst_pipes_264[i]],[],[],0.001)[0])>0:
             data=os.read(gst_pipes_264[i],1*1000*1000)
             if save_files_fds[0] is not None:
                 save_files_fds[i].write(data)
@@ -187,7 +189,8 @@ def read_image_from_pipe_ff(p, prevcnt=-1):
         #img=np.fromstring(data,'uint8').reshape((sy*3//2,sx))
         img=np.fromstring(data,'uint8')
         img=img.reshape([sy*3//2,sx])
-        img=cv2.cvtColor(img, cv2.COLOR_YUV420p2RGB)
+        #img=cv2.cvtColor(img, cv2.COLOR_YUV420p2RGB)
+        img=cv2.cvtColor(img, cv2.COLOR_YUV420p2BGR)
         #img=cv2.cvtColor(img,cv2.COLOR_YUV2BGR)
         
         #img=img.reshape([sy,sx,3])
