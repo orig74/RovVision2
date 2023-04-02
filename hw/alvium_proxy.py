@@ -30,7 +30,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--debug", help="Show frames with opencv", action='store_true')
 args = parser.parse_args()
 
-CAM_IDS = ['DEV_000F315DB084', 'DEV_000F315DAB68', 'DEV_000F315DAB37'] # 
+#CAM_IDS = ['DEV_000F315DB084', 'DEV_000F315DAB68', 'DEV_000F315DAB37'] # 
+CAM_IDS = ['DEV_000F315DB084', 'DEV_000F315DAB68']#, 'DEV_000F315DAB37'] # 
 MASTER_CAM_ID = CAM_IDS[0]
 NUM_CAMS = len(CAM_IDS)
 

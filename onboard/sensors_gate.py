@@ -50,7 +50,7 @@ async def recv_and_process():
                         imgr=np.frombuffer(ret[3],'uint8').reshape(shape).copy()
                         image_enc_dec.encode(imgr,frame_cnt)
                         togst.append(imgr)
-                    #print('hhhh,,sending to gst',frame_cnt)
+                    print('hhhh,,sending to gst',frame_cnt)
                     #gst.send_gst(togst)
                     for i,im in enumerate(togst):
                         stereo_cam_writer[i].write(im)

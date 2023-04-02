@@ -239,7 +239,7 @@ def main():
             main_image = rovHandler.getMainImage()
             if main_image is not None:
                 if config.cam_main_gui_sx!=config.cam_main_sx:
-                    main_image=cv2.resize(main_image,(config.cam_main_gui_sy,config.cam_main_gui_sx),cv2.INTER_NEAREST) 
+                    main_image=cv2.resize(main_image,(config.cam_main_gui_sx,config.cam_main_gui_sy),cv2.INTER_NEAREST) 
                 window["-IMAGE-2-"].erase()
                 draw_image(window["-IMAGE-2-"],img_to_tk(main_image,1))#im_size[1]))
             main_image_depth = rovHandler.getMainImageDepth()

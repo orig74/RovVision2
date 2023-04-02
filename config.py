@@ -27,7 +27,7 @@ if rov_type==4:
     cam_res_gst_pad_lines=2 ## added incase of hight not diveded by 4
     cam_main_sx,cam_main_sy=848,480
     cam_main_dgui_sx,cam_main_dgui_sy=848//2,240
-    cam_main_gui_sx,cam_main_gui_sy=640,int(848/640.*480)
+    cam_main_gui_sx,cam_main_gui_sy=640,int(640/848.*480)
 
 cam_fps=5
 send_modulo=1
