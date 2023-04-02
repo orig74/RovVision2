@@ -265,7 +265,7 @@ class rovDataHandler(object):
 
         if not vid_zmq:
             if self.record_state:
-                if get_files_fds()[0] is None:
+                if stereo_cam_reader[0].get_save_fd() is None:
                     print('start recording...')
                     #fds=[]
                     #datestr=sensor_gate_data['record_date_str']
@@ -276,7 +276,8 @@ class rovDataHandler(object):
                     for i in [0,1]:
                         stereo_cam_reader[i].set_save_fd(open(save_path+'/vid_{}.mp4'.format('lr'[i]),'wb'))
                         #datestr=datetime.now().strftime('%y%m%d-%H%M%S')
-                        
+                    main_cam_reader.set_save_fd(open(save_path+'/vid_main.mp4','wb'))   
+                    main_cam_reader_depth.set_save_fd(open(save_path+'/vid_main_depth.mp4','wb'))   
                         #fds.append(open(save_path+'/vid_{}.mp4'.format('lr'[i]),'wb'))
                         
                     #set_files_fds(fds)
@@ -291,6 +292,8 @@ class rovDataHandler(object):
                     #set_files_fds([None,None])
                     for i in [0,1]:
                         stereo_cam_reader[i].set_save_fd(None)
+                    main_cam_reader.set_save_fd(None)
+                    main_cam_reader_depth.set_save_fd(None)
                     self.data_file_fd=None
 
         if len(images)>0 and images[0] is not None:
@@ -355,6 +358,8 @@ class rovDataHandler(object):
             self.record_state=False
         self.pub_record_state.send_multipart([zmq_topics.topic_record_state,pickle.dumps(self.record_state)])
         self.telemtry[zmq_topics.topic_record_state]=self.record_state
+
+        self.printer('record'+str(self.record_state))
 
     def process_telem(self):
         message_dict={}
