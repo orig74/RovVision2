@@ -113,18 +113,18 @@ def hsv_range_scale(rgbImg,depthImg):
 #https://www.3dgep.com/understanding-the-view-matrix/#The_View_Matrix
 def getCameraViewMat(bindex,link):
     pos,ori=pb.getLinkState(bindex,link,0,1)[0:2]
-    #print(';;;',link,pos,Rot.from_quat(ori).as_euler('ZYX',degrees=True))
+    #print(';;;',Rot.from_quat(ori).as_euler('ZYX',degrees=True))
     R=Rot.from_quat(ori).as_matrix()
     up=(R @ np.array([[0,0,1]]).T).flatten() 
     eye=pos
-    target = (R @ np.array([[10,0,0]]).T).flatten()
+    target = (R @ np.array([[10,0,0]]).T).flatten() + pos
     Rmat = pb.computeViewMatrix(eye,target,up)
     Rmat=np.array(Rmat).reshape((4,-1))
     return Rmat
 
 grip=False
 fps=5
-fps_main=10
+fps_main=5
 imu_fps=100
 dvl_pos_fps=5
 dvl_vel_fps=10
@@ -260,7 +260,6 @@ def main():
                 width=w, 
                 height=h,
                 viewMatrix=VML.flatten('C').tolist(),
-                lightColor=(0,0,1),
                 projectionMatrix=PM,renderer=pb.ER_BULLET_HARDWARE_OPENGL,
                 flags=pb.ER_NO_SEGMENTATION_MASK)
             rgbImg = hsv_range_scale(rgbImg,depthImg)
