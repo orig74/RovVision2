@@ -145,7 +145,7 @@ def main():
             [sg.Button('Reset-DVL'),sg.Button('Calib-DVL')],
             [sg.Button('CF+'),sg.Button('CF-')],
             [sg.Button('Lights+'),sg.Button('Lights-')],
-            [sg.Multiline(key='MESSEGES',s=(23,5) if scale_screen else (32,8), autoscroll=True, reroute_stdout=False, write_only=True)],
+            [sg.Multiline(key='MESSEGES',s=(23,5) if scale_screen else (55,8), autoscroll=True, reroute_stdout=False, write_only=True)],
            ]
             #sg.Button('RTHSV',key='ROPE_TO_HSV',tooltip='detect rope from hsv image channel (h)')],
 
