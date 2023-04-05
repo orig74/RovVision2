@@ -28,6 +28,9 @@ AUTOSCAN_PATH = 10 * [np.array([10.0, 0.0, 0.0]),
 AUTO_VELOCITY = 0.2
 AUTO_TARGET_THRESH = 0.1
 
+def normalize_angle(angle):
+    return (angle + np.pi) % (2 * np.pi) - np.pi
+
 def rotate_yaw(v,yaw):
     c,s = np.cos(yaw),np.sin(yaw)
     x,y = v[:2]
@@ -35,14 +38,17 @@ def rotate_yaw(v,yaw):
     return np.array([x,y])
 #deadreacon class
 class DRxy(object):
-    def __init__(self):
-        self.reset()
+    def __init__(self,yaw_rad=0):
+        self.reset(yaw_rad)
 
-    def reset(self):
+    def reset(self,yaw_rad):
         self.last_v=None
         self.last_t=None
         self.x=None
+        self._rel_yaw=yaw_rad
 
+    def rel_yaw(self,yaw_rad):
+        return normalize_angle(yaw_rad-self._rel_yaw)
 
     def __call__(self,t,v,yaw_rad):
         if self.x is None:
@@ -50,11 +56,11 @@ class DRxy(object):
         else:
             va=(np.array(v)+np.array(self.last_v))/2
             dt=t-self.last_t
-            self.x+=rotate_yaw(va*dt,-yaw_rad)
+            self.x+=rotate_yaw(va*dt,-self.rel_yaw(yaw_rad))
         self.last_v=v
         self.last_t=t
         return self.x
-
+D2R=np.radians
 async def recv_and_process():
     keep_running=True
     target_pos=np.zeros(3)
@@ -69,7 +75,7 @@ async def recv_and_process():
     last_vel_report=time.time()
     tracker_lock_range=None
     Pxy=0.1
-
+    yaw=0
     prev_target=None
     prev_ts=time.time()
     path_vec_idx=0
@@ -87,7 +93,9 @@ async def recv_and_process():
                     if dvl_last_pos is not None:
                         for ind in range(len(pids)):
                             pids[ind] = PID(**pos_pids[ind])
-                            target_pos=np.zeros(3)
+                    target_pos=np.zeros(3)
+                    drs.reset(D2R(yaw))
+                    printer(f'reset dvl {yaw}')
                 continue
 
             try:
@@ -109,9 +117,9 @@ async def recv_and_process():
                     dvl_last_vel=dd
                     last_vel_report=time.time()
                     t=dd['tov']/1e6
-                    xy=drs(t,(dd['vx'],dd['vy']),yaw)
+                    xy=drs(t,(dd['vx'],dd['vy']),D2R(yaw))
                     #external dvl position calculation based on vel only
-                    dvl_last_pos  = {'x':xy[0],'y':xy[1],'yaw':yaw}
+                    dvl_last_pos  = {'x':xy[0],'y':xy[1],'yaw':D2R(yaw)}
                     #print('++++',dvl_last_pos,t,(dd['vx'],dd['vy']),yaw)
                     print('===',dvl_internal_last_pos,dvl_last_pos)
                 if dvl_last_pos and dvl_last_vel:
@@ -144,9 +152,8 @@ async def recv_and_process():
                             if ind==0: #xrot #should do it more cleanly
                                 x=dvl_last_pos['x']*c-dvl_last_pos['y']*s
                                 v=dvl_last_vel['vx']#*c-dvl_last_vel['vy']*s
-                            if ind==1: #vrot
+                            if ind==1: #yrot
                                 x=dvl_last_pos['x']*s+dvl_last_pos['y']*c
-                                #v=dvl_last_vel['vx']*s+dvl_last_vel['vy']*c
                                 v=dvl_last_vel['vy']
 
                             cmds[ind] = -pids[ind](x,target_pos[ind],v)
@@ -169,7 +176,9 @@ async def recv_and_process():
             if topic==zmq_topics.topic_remote_cmd:
                 if data['cmd']=='go':
                     pt=data['point']
+                    #pt=rotate_yaw(pt,D2R(yaw))
                     pt=np.array([pt[0],pt[1],0])
+                    printer(f'-go {data} {yaw}')
                     target_pos = target_pos + pt if data['rel'] else pt
 
                 if data['cmd']=='tracker_vert_object_lock':
