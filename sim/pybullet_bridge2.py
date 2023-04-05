@@ -57,6 +57,7 @@ pb.configureDebugVisualizer(pb.COV_ENABLE_TINY_RENDERER, 0)
 #pb.setPhysicsEngineParameter(enableFileCaching=0)
 pb.setRealTimeSimulation(False)
 sim_step=1/200
+sim_current=np.array([-1,0.,0])*0.2
 pb.setTimeStep(sim_step)
 pb.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 pb.setGravity(0,0,0)
@@ -295,7 +296,7 @@ def main():
             imu['rates']=[wx,-wy,-wz]            
             pub_imu.send_multipart([zmq_topics.topic_imu,pickle.dumps(imu)])
 
-            pub_depth.send_multipart([zmq_topics.topic_depth,pickle.dumps({'ts':tic,'depth':start_depth+pos_com[2]})])
+            pub_depth.send_multipart([zmq_topics.topic_depth,pickle.dumps({'ts':tic,'depth':2+pos_com[2]})])
             #print('send imu',imu)
 
         if ratio(dvl_vel_fps):
@@ -345,6 +346,9 @@ def main():
         gravity_force = (Rot.from_quat(orient_com).as_matrix().T @ np.array([0,0,-100]).reshape(-1,1)).flatten()
         pb.applyExternalForce(boxId,link_name_to_index['COM'],gravity_force,[0,0,0],pb.LINK_FRAME)
         #boyency force
+        
+        #sim currents
+        pb.applyExternalForce(boxId,link_name_to_index['COM'],sim_current,[0,0,0],pb.WORLD_FRAME)
 
         maxForce = 500
         pb.setJointMotorControl2(bodyUniqueId=boxId,
