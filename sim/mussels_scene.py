@@ -103,12 +103,13 @@ class MusseleRopesScene(object):
                                             visualFramePosition=[1.5,0,0],
                                             visualFrameOrientation=vfo,
                                             meshScale=meshScale)#set the center of mass frame (loadURDF sets base link frame) startPos/Ornp.resetBasePositionAndOrientation(boxId, startPos, startOrientation)
-        ret.append(pb.createMultiBody(baseMass=0,
-                              baseInertialFramePosition=[0, 0, 0],
-                              baseVisualShapeIndex=visualShapeId,
-                              basePosition=[0,0,0],
-                              useMaximalCoordinates=True))
-        #for j in range(rows):
+        for i in range(4):
+            ret.append(pb.createMultiBody(baseMass=0,
+                                  baseInertialFramePosition=[0, 0, 0],
+                                  baseVisualShapeIndex=visualShapeId,
+                                  basePosition=[0,1.4*i,0],
+                                  useMaximalCoordinates=True))
+            #for j in range(rows):
         #    for i in range(cols):
         #        ret+=gen_rope(2+j*3,i*1)
 

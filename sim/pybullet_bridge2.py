@@ -57,7 +57,8 @@ pb.configureDebugVisualizer(pb.COV_ENABLE_TINY_RENDERER, 0)
 #pb.setPhysicsEngineParameter(enableFileCaching=0)
 pb.setRealTimeSimulation(False)
 sim_step=1/200
-sim_current=np.array([-1,0.,0])*0.2
+sim_current=np.array([0 ,1.,0])*0.2*1
+sim_current_torque=np.array([0,0.,1.0])*0.1*0
 pb.setTimeStep(sim_step)
 pb.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 pb.setGravity(0,0,0)
@@ -348,7 +349,8 @@ def main():
         #boyency force
         
         #sim currents
-        pb.applyExternalForce(boxId,link_name_to_index['COM'],sim_current,[0,0,0],pb.WORLD_FRAME)
+        pb.applyExternalForce(boxId,-1,sim_current,[0,0,0],pb.WORLD_FRAME)
+        pb.applyExternalTorque(boxId,link_name_to_index['COM'],sim_current_torque,pb.WORLD_FRAME)
 
         maxForce = 500
         pb.setJointMotorControl2(bodyUniqueId=boxId,
