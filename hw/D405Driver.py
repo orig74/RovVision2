@@ -65,7 +65,7 @@ if __name__ == "__main__":
                     #calibrator.ParamsUpdateFlag = True
                 record_state=('/media/data/'+new_record_state_str+'/') if new_record_state_str else None
                 if record_state:
-                    fd_frame_data=open(record_state+'/frame_data.txt','w')
+                    fd_frame_data=open(record_state+'/d405_frame_data.txt','w')
  
         frames = pipeline.wait_for_frames()
         color_frame = frames.get_color_frame()
@@ -85,6 +85,7 @@ if __name__ == "__main__":
         depth_img_m = depth_float_raw * depth_scale
         col_img = np.array(color_frame.get_data())
         grey_l = np.array(grey_l_frame.get_data())
+        time_stamp=time.time()
         #grey_r = np.array(grey_r_frame.get_data())
 
         val = float(grey_l.mean())
@@ -96,9 +97,8 @@ if __name__ == "__main__":
             continue
         last_kept_ts = time.time()
         keep_frame_cnt += 1
-
         if record_state and keep_frame_cnt%SAVE_RATIO==0:
-            fd_frame_data.write(f'{keep_frame_cnt},{time.time()},{depth_scale}\n')
+            fd_frame_data.write(f'{keep_frame_cnt},{time_stamp},{depth_scale}\n')
             cv2.imwrite(record_state + f'{keep_frame_cnt:06d}.jpg',col_img)
             open(record_state+f'd{keep_frame_cnt:06d}.bin','wb').write(depth_frame_raw.tobytes())
             fd_frame_data.flush()
@@ -109,7 +109,8 @@ if __name__ == "__main__":
             scale_to_mm=depth_scale
             socket_pub.send_multipart([zmq_topics.topic_main_cam_depth,
                 pickle.dumps((keep_frame_cnt,scale_to_mm,depth_frame_raw.shape)),depth_frame_raw.tostring()])
-
+            socket_pub.send_multipart([zmq_topics.topic_main_cam_ts,
+                pickle.dumps((keep_frame_cnt,time_stamp,time.time()))])
             #cv2.imwrite(record_state + 'greyl_' + str(keep_frame_cnt) + '.jpeg', grey_l)
             #cv2.imwrite(record_state + 'greyr_' + str(keep_frame_cnt) + '.jpeg', grey_r)
             #depth_img_U8 = (np.clip(depth_img_m, 0, 1.0) * 255).astype(np.uint8)
