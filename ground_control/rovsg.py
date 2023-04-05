@@ -393,7 +393,7 @@ def main():
             cnt+=1
             if 0:
                 print(f'=== tk images took {(time.time()-cycle_tic)*1000:.1f} msec')
-            time.sleep(0.001)
+            #time.sleep(0.001)
         except Exception as E:
             print('*'*100)
             traceback.print_exc(file=sys.stdout)

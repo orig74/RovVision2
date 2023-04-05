@@ -244,22 +244,26 @@ class rovDataHandler(object):
             if self.main_image_depth is None:
                 self.main_image_depth=main_cam_img_depth
         else:
-            for sock in select(self.sub_vid,[],[],0.003)[0]:
-                ret=sock.recv_multipart()
-                if ret[0]==zmq_topics.topic_stereo_camera:
-                    frame_cnt,shape = pickle.loads(ret[1])
-                    images = []
-                    for im in ret[2:]:
-                        images.append(np.frombuffer(im,'uint8').reshape(shape).copy())
-                    #print('======',len(images),ret[0])
+            while True:
+                socks=select(self.sub_vid,[],[],0.003)[0]
+                if len(socks)==0:
+                    break
+                for sock in socks:
+                    ret=sock.recv_multipart()
+                    if ret[0]==zmq_topics.topic_stereo_camera:
+                        frame_cnt,shape = pickle.loads(ret[1])
+                        images = []
+                        for im in ret[2:]:
+                            images.append(np.frombuffer(im,'uint8').reshape(shape).copy())
+                        #print('======',len(images),ret[0])
 
-                if ret[0]==zmq_topics.topic_main_cam:
-                    frame_main_cnt,shape = pickle.loads(ret[1])
-                    self.main_image=np.frombuffer(ret[2],'uint8').reshape(shape).copy()
-                    #print('got main image',self.main_image.shape)
-                if ret[0]==zmq_topics.topic_main_cam_depth:
-                    _,scale_to_mm,shape = pickle.loads(ret[1])
-                    self.main_image_depth=im16to8_22(np.frombuffer(ret[2],'uint16').reshape(shape).astype('float32')*scale_to_mm)
+                    if ret[0]==zmq_topics.topic_main_cam:
+                        frame_main_cnt,shape = pickle.loads(ret[1])
+                        self.main_image=np.frombuffer(ret[2],'uint8').reshape(shape).copy()
+                        #print('got main image',self.main_image.shape)
+                    if ret[0]==zmq_topics.topic_main_cam_depth:
+                        _,scale_to_mm,shape = pickle.loads(ret[1])
+                        self.main_image_depth=im16to8_22(np.frombuffer(ret[2],'uint16').reshape(shape).astype('float32')*scale_to_mm)
 
                 #print('got main image depth',shape)
 
