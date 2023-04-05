@@ -119,6 +119,16 @@ class MusseleRopesScene(object):
         self.ccc=pb.createConstraint(self.mmm, -1, -1, -1, pb.JOINT_FIXED, [0, 0, 0], [0,0,0] , self.mussle_pos)
         pb.changeConstraint(self.ccc,maxForce=0.3)
 
+        if 1: #mussle position clue
+            visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_SPHERE,
+                                        rgbaColor=[0,0,1,0.2],
+                                        radius=0.1)
+            ret.append(pb.createMultiBody(baseMass=0,
+                              baseVisualShapeIndex=visualShapeId,
+                              basePosition=self.mussle_pos,
+                              useMaximalCoordinates=True))
+
+
     def update(self):
         #small force to emulate gravity
         pb.applyExternalForce(self.mmm,-1,[0,0,-0.001],[0,0,0],pb.WORLD_FRAME)
