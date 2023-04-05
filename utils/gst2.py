@@ -71,6 +71,7 @@ class Reader(object):
     def get_img(self):
         sx,sy=self.sxsy
         image=None
+        tic=time.time()
         while len(select.select([self.pipe],[],[],0.001)[0])>0:
             #print('gst2...name',self.name)
             data=b''
@@ -86,10 +87,17 @@ class Reader(object):
                 image = np.fromstring(data,'uint8').reshape([sy,sx,3])[:,:,::-1].copy()
             except:
                 image = np.zeros((sy, sx, 3), dtype=np.uint8)
-        while len(select.select([self.pipe_264],[],[],0.0)[0])>0:
+        toc=time.time()
+        if toc-tic>0.1:
+            print('to much time in this loop 1',toc-tic)
+        tic=time.time()
+        while len(select.select([self.pipe_264],[],[],0.001)[0])>0:
             data=os.read(self.pipe_264,1*1000*1000)
             if self.save_fd is not None:
                 self.save_fd.write(data)
+        toc=time.time()
+        if toc-tic>0.1:
+            print('to much time in this loop 2',toc-tic)
         return image
 
 if __name__=='__main__':

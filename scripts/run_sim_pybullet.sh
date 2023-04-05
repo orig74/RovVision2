@@ -9,8 +9,14 @@ else
 fi
 
 export SIM=PB
-export SIM_STREAM_TYPE=ZMQ
+if  [ ! -v SIM_STREAM_TYPE ]; then
+    export SIM_STREAM_TYPE=ZMQ
+fi
+
+echo running sim with $SIM_STREAM_TYPE
+#SIM_STREAM_TYPE=${SIM_STREAM_TYPE:-$ZMQ}
 #export SIM_STREAM_TYPE=GST
+sleep 1 
 PYTHON=python 
 export RESIZE_VIEWER=1800
 PROJECT_PATH=`git rev-parse --show-toplevel`
