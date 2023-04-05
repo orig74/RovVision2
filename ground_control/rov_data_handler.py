@@ -171,7 +171,9 @@ class rovDataHandler(object):
         self.sub_vid.append(
                 utils.subscribe([zmq_topics.topic_stereo_camera], zmq_topics.topic_camera_port)) #for sync perposes
         self.sub_vid.append(
-                utils.subscribe([zmq_topics.topic_main_cam, zmq_topics.topic_main_cam_depth], zmq_topics.topic_main_cam_port)) #for sync perposes
+                utils.subscribe([zmq_topics.topic_main_cam,
+                    zmq_topics.topic_main_cam_depth,
+                    zmq_topics.topic_main_cam_ts], zmq_topics.topic_main_cam_port)) #for sync perposes
 
         self.printer_sink = utils.pull_sink(zmq_topics.printer_sink_port)
         self.subs_socks.append(self.printer_sink)
