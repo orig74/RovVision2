@@ -182,6 +182,11 @@ def main():
         pos_com,orient_com,_,_,_,_,vel_linear,vel_rot=pb.getLinkState(boxId,0,1,1)
         vel_rot_in_body = (Rot.from_quat(orient_com).as_matrix().T @ np.array(vel_rot).reshape(-1,1)).flatten()
         vel_linear_in_body = (Rot.from_quat(orient_com).as_matrix().T @ np.array(vel_linear).reshape(-1,1)).flatten()
+        pos_com=list(pos_com)
+        for i in [1,2]:
+            vel_linear_in_body[i]=-vel_linear_in_body[i]
+            pos_com[i]=-pos_com[i]
+
         yaw,pitch,roll = Rot.from_quat(orient_com).as_euler('ZYX')
 
 
@@ -290,7 +295,7 @@ def main():
             imu['rates']=[wx,-wy,-wz]            
             pub_imu.send_multipart([zmq_topics.topic_imu,pickle.dumps(imu)])
 
-            pub_depth.send_multipart([zmq_topics.topic_depth,pickle.dumps({'ts':tic,'depth':start_depth-pos_com[2]})])
+            pub_depth.send_multipart([zmq_topics.topic_depth,pickle.dumps({'ts':tic,'depth':start_depth+pos_com[2]})])
             #print('send imu',imu)
 
         if ratio(dvl_vel_fps):
@@ -298,7 +303,7 @@ def main():
                     {'ts':tic,'dvl_raw':vel_msg(*vel_linear_in_body,sim_time)})])
         if ratio(dvl_pos_fps):
             pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps(
-                    {'ts':tic,'dvl_raw':pos_msg(pos_com[0],-pos_com[1],-pos_com[2],-yaw)})])
+                    {'ts':tic,'dvl_raw':pos_msg(pos_com[0],pos_com[1],pos_com[2],-yaw)})])
 
         #time.sleep(0.100)
 

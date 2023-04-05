@@ -111,17 +111,26 @@ async def recv_and_process():
                     t=dd['tov']/1e6
                     xy=drs(t,(dd['vx'],dd['vy']),yaw)
                     #external dvl position calculation based on vel only
-                    dvl_last_pos  = {'x':xy[0],'y':xy[1],'yaw':np.degrees(yaw)}
+                    dvl_last_pos  = {'x':xy[0],'y':xy[1],'yaw':yaw}
                     #print('++++',dvl_last_pos,t,(dd['vx'],dd['vy']),yaw)
                     print('===',dvl_internal_last_pos,dvl_last_pos)
                 if dvl_last_pos and dvl_last_vel:
                     cmds=[0]*3
                     for ind in range(len(pids)):
                         pid_states=['RX_HOLD','RY_HOLD','RZ_HOLD']
-                        if pid_states[ind] not in system_state['mode'] and 'AUTONAV' not in system_state['mode'] \
-                                or pids[ind] is None or \
-                                (pid_states[ind]=='RX_HOLD' and abs(jm.joy_mix()['fb'])>0.1 and 'AUTONAV' not in system_state['mode']) or \
-                                (pid_states[ind]=='RY_HOLD' and abs(jm.joy_mix()['lr'])>0.1 and 'AUTONAV' not in system_state['mode']):
+                        is_override = False
+                        if ind<2: #only apply for x and y hold
+                            is_override = abs(jm.joy_mix()[('fb','lr')[ind]])>0.1 
+
+                        mod_active = pid_states[ind] in system_state['mode']
+                        is_autonav = 'AUTONAV' in system_state['mode'] 
+                        #if pid_states[ind] not in system_state['mode'] and 'AUTONAV' not in system_state['mode'] \
+                        #        or pids[ind] is None or \
+                        #        (pid_states[ind]=='RX_HOLD' and abs(jm.joy_mix()['fb'])>0.1 and 'AUTONAV' not in system_state['mode']) or \
+                        #        (pid_states[ind]=='RY_HOLD' and abs(jm.joy_mix()['lr'])>0.1 and 'AUTONAV' not in system_state['mode']):
+                        
+                        #reset pid
+                        if not mod_active or is_override:
                             pids[ind] = PID(**pos_pids[ind])
                             fname='xyz'[ind]+'_hold_pid.json'
                             if os.path.isfile(fname):
@@ -134,10 +143,11 @@ async def recv_and_process():
                             s=np.sin(tetha)
                             if ind==0: #xrot #should do it more cleanly
                                 x=dvl_last_pos['x']*c-dvl_last_pos['y']*s
-                                v=dvl_last_vel['vx']*c-dvl_last_vel['vy']*s
+                                v=dvl_last_vel['vx']#*c-dvl_last_vel['vy']*s
                             if ind==1: #vrot
                                 x=dvl_last_pos['x']*s+dvl_last_pos['y']*c
-                                v=dvl_last_vel['vx']*s+dvl_last_vel['vy']*c
+                                #v=dvl_last_vel['vx']*s+dvl_last_vel['vy']*c
+                                v=dvl_last_vel['vy']
 
                             cmds[ind] = -pids[ind](x,target_pos[ind],v)
                             ts=time.time()
