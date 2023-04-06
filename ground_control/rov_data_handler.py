@@ -356,7 +356,7 @@ class rovDataHandler(object):
         if zmq_topics.topic_main_tracker in self.telemtry:
             trdata = self.telemtry[zmq_topics.topic_main_tracker]
             #print('==trdata==',trdata)
-            return trdata['xy']
+            return trdata
 
     def get_depth(self):
         return self.telemtry[zmq_topics.topic_depth]['depth']

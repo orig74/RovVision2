@@ -34,6 +34,8 @@ async def recv_and_process():
     sock_pub=zmq_wrapper.publisher(zmq_topics.topic_main_tracker_port)
     im_gray=None
     of=OF()
+    last_depth16=None
+    scale_to_mm=0
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.005)[0]
         for sock in socks:
@@ -53,19 +55,26 @@ async def recv_and_process():
                 frame_main_cnt,shape = pickle.loads(ret[1])
                 main_image=np.frombuffer(ret[2],'uint8').reshape(shape).copy()
                 im_gray=cv2.cvtColor(main_image, cv2.COLOR_BGR2GRAY)
-                ret=of.track(im_gray)
+                _ret=of.track(im_gray)
                 rows,cols=im_gray.shape
-                if ret is not None:
-                    ret=[\
-                        ret[0]/cols,
-                        ret[1]/rows]
-                res={'xy':ret}
+
+                d=0
+                if _ret is not None:
+                    if last_depth16 is not None:
+                        print('ret===',_ret)
+                        d=last_depth16[int(_ret[1]),int(_ret[0])]*scale_to_mm
+                        _ret=[\
+                            _ret[0]/cols,
+                            _ret[1]/rows]
+
+
+                res={'xy':_ret,'depth':d}
                 #print('returning: ',ret)
                 sock_pub.send_multipart([zmq_topics.topic_main_tracker,pickle.dumps(res)])
 
-            if  0 and ret[0]==zmq_topics.topic_main_cam_depth:
+            if ret[0]==zmq_topics.topic_main_cam_depth:
                 _,scale_to_mm,shape = pickle.loads(ret[1])
-                self.main_image_depth=im16to8_22(np.frombuffer(ret[2],'uint16').reshape(shape).astype('float32')*scale_to_mm)
+                last_depth16=np.frombuffer(ret[2],'uint16').reshape(shape)
 
 
         await asyncio.sleep(0.001)

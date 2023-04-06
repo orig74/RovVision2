@@ -1,4 +1,4 @@
-#gcc -o bayer_conv.so -shared -O3 bayer_conv.c
+#gcc -o bayer_conv.so -hared -O3 bayer_conv.c
 import ctypes,os
 from ctypes import *
 import numpy as np
@@ -33,6 +33,14 @@ def shrink_bayer_to_rgb(im):
     outptr=out.ctypes.data_as(c_void_p)
     libc.shrinkToRGB(w,h,inptr,outptr)
     return out
+
+if __name__=='__main__':
+    import argparse,cv2
+    parser = argparse.ArgumentParser()
+    parser.add_argument("pgmfile",help="pgm file")
+    args = parser.parse_args()
+    im=cv2.imread(args.pgmfile)
+    convert_to_bayer(im)
 
 if __name__=='__main__':
     im=np.ones((100,100),dtype='uint8')
