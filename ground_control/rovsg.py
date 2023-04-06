@@ -223,9 +223,10 @@ def main():
             
             if event.startswith('-IMAGE-2'):
                 x,y=values['-IMAGE-2-']
-                x=x/config.cam_main_sx
-                y=y/config.cam_main_sy
+                x=x/config.cam_main_gui_sx
+                y=y/config.cam_main_gui_sy
                 printer(f'click2,{x},{y}')
+                rovCommander.main_track(x,y)
             
             _, rawImg = rovHandler.getSincedImages(0)
             if rawImg is not None:
@@ -241,6 +242,13 @@ def main():
                 if config.cam_main_gui_sx!=config.cam_main_sx:
                     main_image=cv2.resize(main_image,(config.cam_main_gui_sx,config.cam_main_gui_sy),cv2.INTER_NEAREST) 
                 window["-IMAGE-2-"].erase()
+                tr_main=rovHandler.get_main_track_pt()
+                print('tr_main is',tr_main)
+                if tr_main is not None:
+                    x,y=tr_main
+                    x*=config.cam_main_gui_sx
+                    y*=config.cam_main_gui_sy
+                    cv2.circle(main_image,(int(x),int(y)),4,(255,0,0),1)
                 draw_image(window["-IMAGE-2-"],img_to_tk(main_image,1))#im_size[1]))
             main_image_depth = rovHandler.getMainImageDepth()
             if main_image_depth is not None:

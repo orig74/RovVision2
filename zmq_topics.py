@@ -77,6 +77,10 @@ topic_pos_hold_port=10053
 topic_tracker=b'topic_tracker'
 topic_tracker_port=10101
 
+topic_main_tracker=b'topic_main_tracker'
+topic_main_tracker_port=10111
+
+
 topic_telem=b'topic_hw_telem'
 topic_telem_port=10102
 
