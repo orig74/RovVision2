@@ -69,8 +69,8 @@ class rovCommandHandler(object):
     def lock(self,x,y):
         self.pub({'cmd':'lock','click_pt':(x,y)})
 
-    def main_track(self,x,y):
-        self.pub({'cmd':'main_track','click_pt':(x,y)})
+    def main_track(self,pt):
+        self.pub({'cmd':'main_track','click_pt':pt})
 
     def lock_max(self):
         self.pub({'cmd':'lock_max'})

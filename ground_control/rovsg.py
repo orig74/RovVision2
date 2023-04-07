@@ -223,7 +223,7 @@ def main():
                 x=x/config.cam_main_gui_sx
                 y=y/config.cam_main_gui_sy
                 printer(f'click2,{x},{y}')
-                rovCommander.main_track(x,y)
+                rovCommander.main_track((x,y))
             
             _, rawImg = rovHandler.getSincedImages(0)
             if rawImg is not None:
@@ -366,6 +366,8 @@ def main():
             if event=='Gc':
                 rovCommander.set_gripper(0.0)
 
+            if event=='Tx':
+                rovCommander.main_track(None)
 
             if values['-PLOT-TYPE-']=='DEPTH':
                 plotter.update_pid(rovHandler.plot_buffers[zmq_topics.topic_depth_hold_pid])

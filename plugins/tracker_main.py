@@ -44,8 +44,13 @@ async def recv_and_process():
             if ret[0]==zmq_topics.topic_remote_cmd:
                 if data['cmd']=='main_track':
                     print('got click',data['click_pt'])
-                    x,y=data['click_pt']
+                    pt=data['click_pt']
+                    if pt is None:
+                        im_gray=None
+                        of.reset()
+                        
                     if im_gray is not None:
+                        x,y=pt
                         x=int(x*im_gray.shape[1])
                         y=int(y*im_gray.shape[0])
                         of.set(im_gray,(x,y))

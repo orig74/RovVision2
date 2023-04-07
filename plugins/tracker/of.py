@@ -13,6 +13,10 @@ class OF(object):
         self.old_gray=gray_img
         self.p0=np.array(pt[:2],dtype='float32').reshape((-1,1,2))
 
+    def reset(self):
+        self.old_gray=None    
+
+
     def track(self,frame_gray):
         if self.old_gray is None:
             return None
