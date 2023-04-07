@@ -256,11 +256,13 @@ def main():
 
         if ratio(fps_main):
             main_cam_tic=time.time()
-            nearPlane=.05
+            nearPlane=.001
             farPlane=3
-            PM = pb.computeProjectionMatrixFOV(fov=fov,aspect=1.0,nearVal=nearPlane,farVal=farPlane)
             w = int(config.cam_main_sx)
             h = int(config.cam_main_sy)
+            int_mat=np.array(config.cam_main_int)
+            fov_x = np.rad2deg(2 * np.arctan2(w, 2 * int_mat[0,0]))
+            PM = pb.computeProjectionMatrixFOV(fov=fov_x,aspect=w/h,nearVal=nearPlane,farVal=farPlane)
 
             VML = getCameraViewMat(boxId,link_name_to_index['main_cam'])
             width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
@@ -271,15 +273,19 @@ def main():
                 flags=pb.ER_NO_SEGMENTATION_MASK)
             rgbImg = hsv_range_scale(rgbImg,depthImg)
             imgm=resize(rgbImg,1)#inly interested in rgb
-            depthImg_scaled = nearPlane + ( farPlane - nearPlane ) * depthImg
+            #depthImg_scaled = farPlane * nearPlane / (farPlane - (farPlane - nearPlane) * depthImg)
+            f,n=farPlane,nearPlane
+            depthImg_scaled = f*n/(f-depthImg*(f-n))
             scale_to_mm=0.1
             depth_to_send = (depthImg_scaled*1000/scale_to_mm).astype('uint16') #scale res 0.1 mm
+            #z_line=PM[2,:]
             if 0:
                 depth_colormap=cv2.applyColorMap(cv2.convertScaleAbs(depth_to_send, alpha=0.03), cv2.COLORMAP_JET)
                 cv2.imshow('aaa',depth_colormap)
                 cv2.waitKey(1)
 
-            zmq_pub_main_camera.send_multipart([zmq_topics.topic_main_cam_depth,pickle.dumps([frame_main_cnt,scale_to_mm,depth_to_send.shape]),depth_to_send.tostring()],copy=False)
+            zmq_pub_main_camera.send_multipart([zmq_topics.topic_main_cam_depth,pickle.dumps(
+                [frame_main_cnt,scale_to_mm,depth_to_send.shape]),depth_to_send.tostring()],copy=False)
             frame_main_cnt+=1
             #print('===',depthImg_scaled.max(),depthImg_scaled.min())
             #print('===',depthImg.max(),depthImg.min())

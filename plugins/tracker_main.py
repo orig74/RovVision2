@@ -58,17 +58,19 @@ async def recv_and_process():
                 _ret=of.track(im_gray)
                 rows,cols=im_gray.shape
 
-                d=0
+                xw,yw,d=0,0,0
                 if _ret is not None:
                     if last_depth16 is not None:
                         print('ret===',_ret)
                         d=last_depth16[int(_ret[1]),int(_ret[0])]*scale_to_mm
+                        xw,yw,s=(np.linalg.inv(np.array(config.cam_main_int)) @ np.array([[_ret[0]*d,_ret[1]*d,d]]).T).flatten()
+                        print('===+===',xw,yw,s,_ret)
                         _ret=[\
                             _ret[0]/cols,
                             _ret[1]/rows]
 
 
-                res={'xy':_ret,'depth':d}
+                res={'xy':_ret,'depth':d,'xw':xw,'yw':yw}
                 #print('returning: ',ret)
                 sock_pub.send_multipart([zmq_topics.topic_main_tracker,pickle.dumps(res)])
 
