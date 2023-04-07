@@ -121,7 +121,8 @@ async def recv_and_process():
                     #external dvl position calculation based on vel only
                     dvl_last_pos  = {'x':xy[0],'y':xy[1],'yaw':D2R(yaw)}
                     #print('++++',dvl_last_pos,t,(dd['vx'],dd['vy']),yaw)
-                    print('===',dvl_internal_last_pos,dvl_last_pos)
+                    #print('===',dvl_internal_last_pos,dvl_last_pos)
+
                 if dvl_last_pos and dvl_last_vel:
                     cmds=[0]*3
                     for ind in range(len(pids)):
@@ -172,6 +173,16 @@ async def recv_and_process():
                     #target_pos[1]=dvl_last_pos['y']+Pxy*dy
                     target_pos[0]-=Pxy*dx
                     target_pos[1]+=Pxy*dy
+
+            if topic==zmq_topics.topic_main_tracker:
+                if data['xy'] is not None:
+                    rng,left,up=config.grip_pos_rel_mm
+                    dx=np.clip((rng-data['range']),-10,10)/1000 #mm to m
+                    dy=-(left-data['left'])/1000
+                    #dz=up-data['up']
+                    target_pos[0]-=Pxy*dx
+                    target_pos[1]+=Pxy*dy
+
 
             if topic==zmq_topics.topic_remote_cmd:
                 if data['cmd']=='go':
@@ -248,6 +259,7 @@ if __name__=='__main__':
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_dvl_raw],zmq_topics.topic_dvl_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_remote_cmd],zmq_topics.topic_remote_cmd_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_tracker],zmq_topics.topic_tracker_port))
+    subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_main_tracker],zmq_topics.topic_main_tracker_port))
 
     ### plugin outputs
     thrusters_source = zmq_wrapper.push_source(zmq_topics.thrusters_sink_port) 

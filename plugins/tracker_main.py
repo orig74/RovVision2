@@ -70,7 +70,7 @@ async def recv_and_process():
                             _ret[1]/rows]
 
 
-                res={'xy':_ret,'depth':d,'xw':xw,'yw':yw}
+                res={'xy':_ret,'range':d,'left':xw,'up':yw}
                 #print('returning: ',ret)
                 sock_pub.send_multipart([zmq_topics.topic_main_tracker,pickle.dumps(res)])
 
