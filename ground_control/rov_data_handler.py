@@ -101,6 +101,8 @@ class rovCommandHandler(object):
     def set_rope_tracker_to_grey(self,chan):
         self.pub({'cmd':'track_conf','rope_grey_func':'grey','chan':chan})
 
+    def set_gripper(self,val):
+        self.pub({'cmd':'gripper','val': val})
 #    def start_recording(self):
 #        self.pub({'cmd':'start_recording'})
 #

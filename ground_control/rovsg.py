@@ -136,15 +136,12 @@ def main():
                     tooltip='detect rope from hsv image channel (h) or in h')],
  
             ]
-
     #yaw_source_options=['VNAV','DVL']
     config_column = [
             [sg.Image(key="-IMAGE-2D-")],
-            [sg.Button('REC')],
-            #[sg.Text('Yaw Source:'),sg.Combo(yaw_source_options,key='YAW_SOURCE',default_value=yaw_source_options[0])],
-            [sg.Button('Reset-DVL'),sg.Button('Calib-DVL')],
-            [sg.Button('CF+'),sg.Button('CF-')],
-            [sg.Button('Lights+'),sg.Button('Lights-')],
+            [sg.Button('Gc',tooltip="gripper close"),sg.Button('Go',tooltip="gripper open"),sg.Button('Tx',tooltip='stop main tracker')],
+            [sg.Button('REC'),sg.Button('Reset-DVL'),sg.Button('Calib-DVL')],
+            [sg.Button('CF+'),sg.Button('CF-'),sg.Button('Lights+'),sg.Button('Lights-')],
             [sg.Multiline(key='MESSEGES',s=(23,5) if scale_screen else (55,8), autoscroll=True, reroute_stdout=False, write_only=True)],
            ]
             #sg.Button('RTHSV',key='ROPE_TO_HSV',tooltip='detect rope from hsv image channel (h)')],
@@ -243,7 +240,7 @@ def main():
                     main_image=cv2.resize(main_image,(config.cam_main_gui_sx,config.cam_main_gui_sy),cv2.INTER_NEAREST) 
                 window["-IMAGE-2-"].erase()
                 tr_main=rovHandler.get_main_track_pt()
-                print('tr_main is',tr_main)
+                #print('tr_main is',tr_main)
                 if tr_main and tr_main['xy'] is not None:
                     x,y=tr_main['xy']
                     x*=config.cam_main_gui_sx
@@ -362,6 +359,13 @@ def main():
 
             if event=='REC':
                 rovHandler.toggle_recording()
+
+            if event=='Go':
+                rovCommander.set_gripper(1.0)
+
+            if event=='Gc':
+                rovCommander.set_gripper(0.0)
+
 
             if values['-PLOT-TYPE-']=='DEPTH':
                 plotter.update_pid(rovHandler.plot_buffers[zmq_topics.topic_depth_hold_pid])
