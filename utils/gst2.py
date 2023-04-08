@@ -108,7 +108,7 @@ def ffprobe_data(fname):
 
 
 class FileReader(object):
-    def __init__(self,fname):
+    def __init__(self,fname,pad_lines=0):
         fdata=ffprobe_data(fname)
         width,height=fdata['size']
         base_name=os.path.basename(fname)
@@ -123,6 +123,7 @@ class FileReader(object):
         self.prevcnt=-1
         self.last_gap=1
         self.width,self.height=width,height
+        self.pad_lines=pad_lines
 
     def get_img(self):
         sx,sy=self.width,self.height
@@ -135,9 +136,12 @@ class FileReader(object):
                     print('bloking....',sx*sy*3-len(data))
             if data:
                 img=np.frombuffer(data,'uint8').reshape([sy,sx,3])
+                if self.pad_lines>0:
+                    img=img[:-self.pad_lines,:,:]
                 fmt_cnt=image_enc_dec.decode(img)
                 if fmt_cnt is None: #gess frame number
                     fmt_cnt = self.prevcnt+self.last_gap
+                    print('error decoding...')
                 else:
                     self.last_gap=fmt_cnt-self.prevcnt
                 self.prevcnt = fmt_cnt
