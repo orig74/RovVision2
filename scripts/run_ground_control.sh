@@ -21,18 +21,24 @@ run 0 ground_control joy_rov.py
 #run 1 ground_control "viewer.py --pub_data"
 #run 1 ground_control "rovViewer.py"
 #run 1 ground_control "rovtk.py"
+if [ ! -v SIM ]
+then
 run 1 ground_control "rovsg.py"
-run 2 web "--version && FLASK_APP=server.py flask run"
+else
+run 1 ground_control "rovsg.py --data_path=../../data_sim"
+fi
+#run 2 web "--version && FLASK_APP=server.py flask run"
 run 3 ground_control gps_logger.py
 #run 3 web "--version && sleep 3 && firefox http://127.0.0.1:5000/static/html/ropedive.html --new-window  --new-tab -url http://127.0.0.1:5000/static/html/checklists.html"
 if [ ! -v SIM ]
 then
-tmux select-pane -t 4
+#tmux select-pane -t 4
 #tmux send-keys "gst-launch-1.0 -v udpsrc port=17893 ! application/x-rtp, media=video, clock-rate=90000, encoding-name=H264, payload=96 ! rtph264depay ! decodebin ! videoconvert ! autovideosink" ENTER
 
 #tmux send-keys "gst-launch-1.0 -v -e udpsrc port=17893 ! application/x-rtp, media=video, clock-rate=90000, encoding-name=H264, payload=96 ! rtph264depay ! tee name=t ! queue ! decodebin ! videoconvert ! autovideosink t. ! queue ! h264parse ! qtmux ! filesink location=/home/uav/records_main_cam/$(date '+%y%m%d-%H%M%S').mov sync=false" ENTER
 
-tmux send-keys "gst-launch-1.0 -v -e udpsrc address=169.254.0.2 port=17893 ! tee name=t ! queue !  application/x-rtp, media=video, clock-rate=90000, encoding-name=H264, payload=96 ! rtph264depay ! decodebin ! videoconvert ! autovideosink sync=false t. ! queue ! udpsink host=127.0.0.1 port=17894 sync=false" ENTER
+###no need
+###tmux send-keys "gst-launch-1.0 -v -e udpsrc address=169.254.0.2 port=17893 ! tee name=t ! queue !  application/x-rtp, media=video, clock-rate=90000, encoding-name=H264, payload=96 ! rtph264depay ! decodebin ! videoconvert ! autovideosink sync=false t. ! queue ! udpsink host=127.0.0.1 port=17894 sync=false" ENTER
 
 #tmux send-keys "gst-launch-1.0 -v -e udpsrc port=17893 !  application/x-rtp, media=video, clock-rate=90000, encoding-name=H264, payload=96 ! rtph264depay ! decodebin ! videoconvert ! autovideosink " ENTER 
 tmux att

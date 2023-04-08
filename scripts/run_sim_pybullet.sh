@@ -29,7 +29,7 @@ tmux set -g pane-border-status top
 
 ################## sim part
 new_4_win
-run 1 sim "pybullet_bridge2.py g"
+run 1 sim "pybullet_bridge2.py --show_gui"
 #run 1 sim "pybullet_bridge.py"
 tmux select-pane -t 2
 

@@ -13,9 +13,7 @@
 #         X-----------X            7          8
 #        4             3
 
-
-
-import sys,time
+import os,sys,time
 import pybullet as pb
 import pybullet_data
 sys.path.append('..')
@@ -34,8 +32,17 @@ from scipy.spatial.transform import Rotation as Rot
 
 from mussels_scene import MusseleRopesScene as getscene
 
-zmq_controller=utils.subscribe([zmq_topics.topic_dvl_cmd],zmq_topics.topic_controller_port)
-zmq_sub=utils.subscribe([zmq_topics.topic_thrusters_comand,zmq_topics.topic_gripper_cmd],zmq_topics.topic_thrusters_comand_port)
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--data_path", help="path for data", default='../../data_sim')
+parser.add_argument("--show_gui", help="show gui", action='store_true')
+args = parser.parse_args()
+
+subs_socks=[]
+subs_socks.append(utils.subscribe([zmq_topics.topic_dvl_cmd],zmq_topics.topic_controller_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_thrusters_comand,zmq_topics.topic_gripper_cmd],zmq_topics.topic_thrusters_comand_port))
+subs_socks.append(utils.subscribe([ zmq_topics.topic_record_state ],zmq_topics.topic_record_state_port))
+
 zmq_pub=utils.publisher(zmq_topics.topic_camera_port)
 zmq_pub_main_camera=utils.publisher(zmq_topics.topic_main_cam_port)
 pub_imu = utils.publisher(zmq_topics.topic_imu_port)
@@ -48,7 +55,7 @@ pub_sonar = utils.publisher(zmq_topics.topic_sonar_port)
 #cvshow=False
 current_command=[0 for _ in range(8)] # 8 thrusters
 #pybullet init
-render = pb.GUI if len(sys.argv)>1 and sys.argv[1]=='g' else pb.DIRECT # pb.GUI
+render = pb.GUI if args.show_gui else pb.DIRECT # pb.GUI
 #render = pb.GUI
 physicsClient = pb.connect(render)#or p.DIRECT for non-graphical versio
 pb.configureDebugVisualizer(0,0,[0,0,100],rgbBackground=[43/255+0.26,84/255+0.26,132/255+0.26])
@@ -132,6 +139,7 @@ dvl_pos_fps=5
 dvl_vel_fps=10
 print_fps=0.5
 def main():
+    record_state=None
     pb.configureDebugVisualizer(pb.COV_ENABLE_RENDERING, 0)
     def ratio(x):
         return cnt%int(1/sim_step/x)==0
@@ -162,19 +170,28 @@ def main():
     while keep_running:
         tic_cycle = time.time()
         if 1:
-            socks=zmq.select([zmq_sub,zmq_controller],[],[],0.001)[0]
+            socks=zmq.select(subs_socks,[],[],0.001)[0]
             #if len(socks)==0:
             #    break
             for sock in socks:
-                data = sock.recv_multipart()
-                topic=data[0]
+                _ret = sock.recv_multipart()
+                topic = _ret[0]
+                data = pickle.loads(_ret[1])
                 if topic==zmq_topics.topic_thrusters_comand:
-                    _,current_command=pickle.loads(data[1])
+                    #_,current_command=pickle.loads(data[1])
+                    _,current_command=data
                 if topic==zmq_topics.topic_dvl_cmd:
                     print('got dvl reset....')
                 if topic==zmq_topics.topic_gripper_cmd:
-                    gripper_cmd=pickle.loads(data[1])
+                    gripper_cmd=data
                     print('gripper command',gripper_cmd)
+                if topic==zmq_topics.topic_record_state:
+                    new_record_state_str=data
+                    if not record_state and new_record_state_str:
+                        #switch to recording
+                        os.mkdir(args.data_path+'/'+new_record_state_str)
+                        #calibrator.ParamsUpdateFlag = True
+                    record_state=(args.data_path+'/'+new_record_state_str+'/') if new_record_state_str else None
  
 
 
@@ -237,16 +254,22 @@ def main():
                 zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),imgl.tostring(),imgr.tostring()],copy=False)
             zmq_pub.send_multipart([zmq_topics.topic_stereo_camera_ts,pickle.dumps((frame_cnt,time.time()))],copy=False) #for sync
             
-            #get depth image
-            depthImg=depthImg[::4,::4]
-            min_range=depthImg.min() 
-            #import pdb;pdb.set_trace()
+            if record_state is not None:
+                cam_key='000F315DAB68'
+                cv2.imwrite(record_state+f'/{frame_cnt:06d}'+ '_' + cam_key + '.jpg', imgl)
+                if not mono:
+                    cam_key='000F315DB084'
+                    cv2.imwrite(record_state+f'/{frame_cnt:06d}'+ '_' + cam_key + '.jpg', imgr)
+            if 0:
+                depthImg=depthImg[::4,::4]
+                min_range=depthImg.min() 
+                #import pdb;pdb.set_trace()
 
-            img_show=(depthImg/10.0).clip(0,255).astype('uint8')
-            depthImg[depthImg>5000]=np.nan
-            max_range=np.nanmax(depthImg)
-            #print('sonar::',min_range,max_range)
-            pub_sonar.send_multipart([zmq_topics.topic_sonar,pickle.dumps([min_range,max_range])])
+                img_show=(depthImg/10.0).clip(0,255).astype('uint8')
+                depthImg[depthImg>5000]=np.nan
+                max_range=np.nanmax(depthImg)
+                #print('sonar::',min_range,max_range)
+                pub_sonar.send_multipart([zmq_topics.topic_sonar,pickle.dumps([min_range,max_range])])
 
             if cvshow:
                 cv2.imshow('depth',img_show)
@@ -284,13 +307,17 @@ def main():
                 cv2.imshow('aaa',depth_colormap)
                 cv2.waitKey(1)
 
+            if record_state:
+                cv2.imwrite(record_state + f'/{frame_main_cnt:06d}.jpg',imgm)
+                open(record_state+f'/d{frame_main_cnt:06d}.bin','wb').write(depth_to_send.tobytes())
+
             zmq_pub_main_camera.send_multipart([zmq_topics.topic_main_cam_depth,pickle.dumps(
                 [frame_main_cnt,scale_to_mm,depth_to_send.shape]),depth_to_send.tostring()],copy=False)
-            frame_main_cnt+=1
             #print('===',depthImg_scaled.max(),depthImg_scaled.min())
             #print('===',depthImg.max(),depthImg.min())
             #second camera
             zmq_pub_main_camera.send_multipart([zmq_topics.topic_main_cam,pickle.dumps([frame_main_cnt,imgm.shape]),imgm.tostring()],copy=False)
+            zmq_pub.send_multipart([zmq_topics.topic_main_cam_ts,pickle.dumps((frame_main_cnt,time.time()))],copy=False) #for sync
             frame_main_cnt+=1
             #print(cnt,'main_cam_time',time.time()-main_cam_tic)
 
