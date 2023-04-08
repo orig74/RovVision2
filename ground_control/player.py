@@ -78,6 +78,8 @@ zmq_pub_main_camera_ts=zmq_wrapper.publisher(zmq_topics.topic_main_cam_ts_port)
 
 map_port_topic = {}
 map_port_topic[zmq_topics.topic_imu_port]=[zmq_topics.topic_imu]
+map_port_topic[zmq_topics.topic_tracker_port]=[zmq_topics.topic_tracker]
+map_port_topic[zmq_topics.topic_main_tracker_port]=[zmq_topics.topic_main_tracker]
 map_port_topic[zmq_topics.topic_controller_port]=[zmq_topics.topic_system_state]
 
 map_topic_port={}
@@ -136,5 +138,4 @@ if __name__=='__main__':
 
         if v[0] in map_topic_port:
             map_port_publisher[map_topic_port[v[0]]].send_multipart([v[0],pickle.dumps(data)])
-
 
