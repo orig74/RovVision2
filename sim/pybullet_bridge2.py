@@ -187,10 +187,8 @@ def main():
                     print('gripper command',gripper_cmd)
                 if topic==zmq_topics.topic_record_state:
                     new_record_state_str=data
-                    if not record_state and new_record_state_str:
-                        #switch to recording
-                        os.mkdir(args.data_path+'/'+new_record_state_str)
-                        #calibrator.ParamsUpdateFlag = True
+                    #if not record_state and new_record_state_str:
+                    #    os.mkdir(args.data_path+'/'+new_record_state_str)
                     record_state=(args.data_path+'/'+new_record_state_str+'/') if new_record_state_str else None
  
 
