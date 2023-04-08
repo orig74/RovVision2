@@ -21,7 +21,7 @@ import pandas as pd
 import config
 import gst2
 import zmq_wrapper as utils
-import zmq_topics as topics
+import zmq_topics
 
 
 parser = argparse.ArgumentParser()
@@ -37,7 +37,7 @@ parser.add_argument("--ccr",help="the efect of the color correction 0 to 1.0 (ma
 parser.add_argument("path",help="dir path")
 args = parser.parse_args()
 
-socket_pub = utils.publisher(topics.topic_local_route_port,'0.0.0.0')
+#socket_pub = utils.publisher(zmq_topics.topic_local_route_port,'0.0.0.0')
 
 def read_pkl(pkl_file):
     fd = open(pkl_file,'rb')
@@ -48,7 +48,7 @@ def read_pkl(pkl_file):
             #print('----',ret)
         except EOFError:
             break
-        if ret[0]==topics.topic_viewer_data:
+        if ret[0]==zmq_topics.topic_viewer_data:
             msg=ret[1]
             if start==-1:
                 start=msg['frame_cnt'][0]
@@ -71,6 +71,12 @@ def get_next_image(stream,rcnt):
                 continue
         time.sleep(0.001)
 
+zmq_pub_stereo=utils.publisher(zmq_topics.topic_camera_port)
+zmq_pub_stereo_ts=utils.publisher(zmq_topics.topic_camera_ts_port)
+zmq_pub_main_camera=utils.publisher(zmq_topics.topic_main_cam_port)
+zmq_pub_main_camera_ts=utils.publisher(zmq_topics.topic_main_cam_ts_port)
+
+
 if __name__=='__main__':
     vdata = read_pkl(args.path+'/viewer_data.pkl')
     keys=set()
@@ -88,17 +94,24 @@ if __name__=='__main__':
     for v in vdata[1:]:
         ts=v[1]
         data=v[2]
-        if v[0]==topics.topic_stereo_camera_ts:
+        if v[0]==zmq_topics.topic_stereo_camera_ts:
             cnt=data[0]
             #print('==getting stereo',cnt)
             iml=get_next_image(vid_l,cnt)
             imr=get_next_image(vid_r,cnt)
-        if v[0]==topics.topic_main_cam_ts:
+            if imr is not None and iml is not None:
+                print('sending stereo...',cnt)
+                zmq_pub_stereo.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([cnt,iml.shape]),iml.tostring(),imr.tostring()],copy=False)
+        if v[0]==zmq_topics.topic_main_cam_ts:
             cnt=data[0]
             #print('==getting main',cnt)
             imm=get_next_image(vid_main,cnt)
             imd=get_next_image(vid_main_depth,cnt)
-
+            if imm is not None and imd is not None:
+                print('sending main...',cnt)
+                zmq_pub_main_camera.send_multipart([zmq_topics.topic_main_cam_depth,pickle.dumps(
+                    [cnt,None,imd.shape]),imd.tostring()],copy=False)
+                zmq_pub_main_camera.send_multipart([zmq_topics.topic_main_cam,pickle.dumps([cnt,imm.shape]),imm.tostring()],copy=False)
 
 
 

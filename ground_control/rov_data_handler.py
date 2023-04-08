@@ -272,7 +272,11 @@ class rovDataHandler(object):
                         #print('got main image',self.main_image.shape)
                     if ret[0]==zmq_topics.topic_main_cam_depth:
                         _,scale_to_mm,shape = pickle.loads(ret[1])
-                        self.main_image_depth=im16to8_22(np.frombuffer(ret[2],'uint16').reshape(shape).astype('float32')*scale_to_mm)
+                        if scale_to_mm is not None:
+                            self.main_image_depth=im16to8_22(np.frombuffer(ret[2],'uint16').reshape(shape).astype('float32')*scale_to_mm)
+                        else: #already converted
+                            self.main_image_depth=np.frombuffer(ret[2],'uint8').reshape(shape).copy()
+
 
                 #print('got main image depth',shape)
 
