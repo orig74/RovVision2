@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 import config
 import gst2
-import zmq_wrapper as utils
+import zmq_wrapper
 import zmq_topics
 
 
@@ -37,7 +37,7 @@ parser.add_argument("--ccr",help="the efect of the color correction 0 to 1.0 (ma
 parser.add_argument("path",help="dir path")
 args = parser.parse_args()
 
-#socket_pub = utils.publisher(zmq_topics.topic_local_route_port,'0.0.0.0')
+#socket_pub = zmq_wrapper.publisher(zmq_topics.topic_local_route_port,'0.0.0.0')
 
 def read_pkl(pkl_file):
     fd = open(pkl_file,'rb')
@@ -71,10 +71,23 @@ def get_next_image(stream,rcnt):
                 continue
         time.sleep(0.001)
 
-zmq_pub_stereo=utils.publisher(zmq_topics.topic_camera_port)
-zmq_pub_stereo_ts=utils.publisher(zmq_topics.topic_camera_ts_port)
-zmq_pub_main_camera=utils.publisher(zmq_topics.topic_main_cam_port)
-zmq_pub_main_camera_ts=utils.publisher(zmq_topics.topic_main_cam_ts_port)
+zmq_pub_stereo=zmq_wrapper.publisher(zmq_topics.topic_camera_port)
+zmq_pub_stereo_ts=zmq_wrapper.publisher(zmq_topics.topic_camera_ts_port)
+zmq_pub_main_camera=zmq_wrapper.publisher(zmq_topics.topic_main_cam_port)
+zmq_pub_main_camera_ts=zmq_wrapper.publisher(zmq_topics.topic_main_cam_ts_port)
+
+map_port_topic = {}
+map_port_topic[zmq_topics.topic_imu_port]=[zmq_topics.topic_imu]
+map_port_topic[zmq_topics.topic_controller_port]=[zmq_topics.topic_system_state]
+
+map_topic_port={}
+map_port_publisher={}
+for p in map_port_topic:
+    if p not in map_port_publisher:
+        map_port_publisher[p]=zmq_wrapper.publisher(p)
+    for t in map_port_topic[p]:
+        map_topic_port[t]=p
+
 
 
 if __name__=='__main__':
@@ -121,8 +134,7 @@ if __name__=='__main__':
                     [cnt,None,imd.shape]),imd.tostring()],copy=False)
                 zmq_pub_main_camera.send_multipart([zmq_topics.topic_main_cam,pickle.dumps([cnt,imm.shape]),imm.tostring()],copy=False)
 
-
-
-    
+        if v[0] in map_topic_port:
+            map_port_publisher[map_topic_port[v[0]]].send_multipart([v[0],pickle.dumps(data)])
 
 
