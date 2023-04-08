@@ -56,12 +56,14 @@ async def recv_and_process():
                         stereo_cam_writer[i].write(im)
             if ret[0]==zmq_topics.topic_main_cam:
                 frame_main_cnt,shape = pickle.loads(ret[1])
-                main_image=np.frombuffer(ret[2],'uint8').reshape(shape)
+                main_image=np.frombuffer(ret[2],'uint8').reshape(shape).copy()
+                image_enc_dec.encode(main_image,frame_main_cnt)
                 main_cam_gst.write(main_image)
 
             if ret[0]==zmq_topics.topic_main_cam_depth:
-                _,scale_to_mm,shape = pickle.loads(ret[1])
-                main_image_depth=im16to8_22(np.frombuffer(ret[2],'uint16').reshape(shape).astype('float32')*scale_to_mm)
+                frame_main_cnt,scale_to_mm,shape = pickle.loads(ret[1])
+                main_image_depth=im16to8_22(np.frombuffer(ret[2],'uint16').reshape(shape).astype('float32')*scale_to_mm).copy()
+                image_enc_dec.encode(main_image_depth,frame_main_cnt)
                 main_cam_depth_gst.write(main_image_depth)
 
 
