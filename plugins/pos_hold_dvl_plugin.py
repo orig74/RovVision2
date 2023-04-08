@@ -175,7 +175,7 @@ async def recv_and_process():
                     target_pos[1]+=Pxy*dy
 
             if topic==zmq_topics.topic_main_tracker:
-                if data['xy'] is not None:
+                if data['range']:
                     rng,left,up=config.grip_pos_rel_mm
                     dx=np.clip((rng-data['range']),-10,10)/1000 #mm to m
                     dy=-(left-data['left'])/1000

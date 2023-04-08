@@ -245,11 +245,12 @@ def main():
                     x,y=tr_main['xy']
                     x*=config.cam_main_gui_sx
                     y*=config.cam_main_gui_sy
-                    rng=tr_main['range']
-                    right=tr_main['left']
-                    up=tr_main['up']
                     cv2.circle(main_image,(int(x),int(y)),4,(255,0,0),1)
-                    cv2.putText(main_image, f'rng{rng:04.1f} up{up:04.1f} left{right:04.1f} mm', (50,23), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 1, cv2.LINE_AA)
+                    if tr_main['range'] is not None:
+                        rng=tr_main['range']
+                        right=tr_main['left']
+                        up=tr_main['up']
+                        cv2.putText(main_image, f'rng{rng:04.1f} up{up:04.1f} left{right:04.1f} mm', (50,23), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 1, cv2.LINE_AA)
                 draw_image(window["-IMAGE-2-"],img_to_tk(main_image,1))#im_size[1]))
             main_image_depth = rovHandler.getMainImageDepth()
             if main_image_depth is not None:
