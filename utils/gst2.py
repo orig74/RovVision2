@@ -2,7 +2,8 @@ from subprocess import Popen,PIPE
 import sys,time,select,os
 import numpy as np
 import cv2
-#import image_enc_dec
+import image_enc_dec
+
 if 0:
     import config
     gst_speed_preset=config.gst_speed_preset
@@ -100,10 +101,72 @@ class Reader(object):
             print('to much time in this loop 2',toc-tic)
         return image
 
+def ffprobe_data(fname):
+    lns=os.popen(f"""ffprobe {fname} 2>&1 | grep Video: |egrep -oh '[0-9]+x[0-9]+' | egrep -oh '[0-9]+'""").readlines()
+    width,height=map(int,lns)
+    return {'size':(width,height)}
+
+
+class FileReader(object):
+    def __init__(self,fname):
+        fdata=ffprobe_data(fname)
+        width,height=fdata['size']
+        base_name=os.path.basename(fname)
+        self.fifo_name=f'/tmp/{base_name}.pipe'
+        os.system('rm '+self.fifo_name)
+        os.mkfifo(self.fifo_name)
+        cmd=f'gst-launch-1.0 filesrc location={fname} ! '+\
+            f' h264parse ! decodebin ! videoconvert ! video/x-raw,height={height},width={width},format=RGB ! filesink location={self.fifo_name} sync=false'
+        print('cmd is',cmd)
+        self.rpipe = os.open(self.fifo_name,os.O_RDONLY | os.O_NONBLOCK)
+        self.p = Popen(cmd, shell=True)
+        self.prevcnt=-1
+        self.last_gap=1
+        self.width,self.height=width,height
+
+    def get_img(self):
+        sx,sy=self.width,self.height
+        if len(select.select([self.rpipe],[],[],0.001)[0])>0:
+            data=b''
+            while len(data)<sx*sy*3:
+                try:
+                    data+=os.read(self.rpipe,sx*sy*3-len(data))
+                except BlockingIOError:
+                    print('bloking....',sx*sy*3-len(data))
+            if data:
+                img=np.frombuffer(data,'uint8').reshape([sy,sx,3])
+                fmt_cnt=image_enc_dec.decode(img)
+                if fmt_cnt is None: #gess frame number
+                    fmt_cnt = self.prevcnt+self.last_gap
+                else:
+                    self.last_gap=fmt_cnt-self.prevcnt
+                self.prevcnt = fmt_cnt
+                return self.prevcnt,img
+        return None,None
+
+    def __del__(self):
+        os.system('rm '+self.fifo_name)
+
+
+if __name__=='__main__' and sys.argv[1].endswith('mp4'):
+    cv2.namedWindow('gstread',cv2.WINDOW_NORMAL)
+    reader=FileReader(sys.argv[1])
+    while True:
+        cnt,im=reader.get_img()
+        print(cnt)
+        if im is not None:
+            cv2.imshow('gstread',im)
+        k=cv2.waitKey(1)
+        if k%256==ord('q'):
+            break
+        time.sleep(0.001)
+ 
+
 if __name__=='__main__':
     #tsx,tsy=616,514
     tsx,tsy=320,240
     tpadlines=0
+
     #tsx,tsy=616,516
     #tsx,tsy=640,480
 
