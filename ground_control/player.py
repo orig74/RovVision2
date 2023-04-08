@@ -89,10 +89,18 @@ if __name__=='__main__':
     vid_stereo_cnt=-1
     vid_l=gst2.FileReader(args.path+'/vid_l.mp4',pad_lines=config.cam_res_gst_pad_lines)
     vid_r=gst2.FileReader(args.path+'/vid_r.mp4',pad_lines=config.cam_res_gst_pad_lines)
+    time.sleep(4)
     
-    start_time=v[0][1]
+    start_time_rec=vdata[0][1]
+    start_time_rt=time.time()
     for v in vdata[1:]:
-        ts=v[1]
+        rec_ts=v[1]-start_time_rec
+        rt_ts=time.time()-start_time_rt
+        rt_delta=rec_ts-rt_ts
+        #print('==rtd=',rt_ts,rec_ts,rt_delta,v[1],start_time_rec,vdata[0])
+        if rt_delta>0:
+            time.sleep(rt_delta)
+
         data=v[2]
         if v[0]==zmq_topics.topic_stereo_camera_ts:
             cnt=data[0]
