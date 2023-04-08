@@ -23,6 +23,7 @@ topic_main_cam=b'topic_main_cam'
 topic_main_cam_depth=b'topic_main_cam_depth'
 topic_main_cam_ts=b'topic_main_cam_ts'
 topic_main_cam_port=16894
+topic_main_cam_ts_port=16895
 
 topic_camera_telem=b'topic_camera_telem'
 topic_camera_port=7789

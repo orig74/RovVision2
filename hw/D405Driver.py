@@ -15,6 +15,7 @@ subs_socks=[]
 subs_socks.append(utils.subscribe([zmq_topics.topic_record_state],zmq_topics.topic_record_state_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
 socket_pub = utils.publisher(zmq_topics.topic_main_cam_port)
+socket_pub_ts=utils.publisher(zmq_topics.topic_main_cam_ts_port)
 
 #WRITE_DIR = '/local/D405/' #'/home/uav/data/D405/'
 
@@ -109,8 +110,7 @@ if __name__ == "__main__":
             scale_to_mm=depth_scale
             socket_pub.send_multipart([zmq_topics.topic_main_cam_depth,
                 pickle.dumps((keep_frame_cnt,scale_to_mm,depth_frame_raw.shape)),depth_frame_raw.tostring()])
-            socket_pub.send_multipart([zmq_topics.topic_main_cam_ts,
-                pickle.dumps((keep_frame_cnt,time_stamp,time.time()))])
+            socket_pub_ts.send_multipart([zmq_topics.topic_main_cam_ts,pickle.dumps((keep_frame_cnt,time_stamp))])
             #cv2.imwrite(record_state + 'greyl_' + str(keep_frame_cnt) + '.jpeg', grey_l)
             #cv2.imwrite(record_state + 'greyr_' + str(keep_frame_cnt) + '.jpeg', grey_r)
             #depth_img_U8 = (np.clip(depth_img_m, 0, 1.0) * 255).astype(np.uint8)

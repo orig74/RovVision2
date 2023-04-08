@@ -161,6 +161,8 @@ class rovDataHandler(object):
         self.subs_socks.append(utils.subscribe([zmq_topics.topic_sonar], zmq_topics.topic_sonar_port))
         self.subs_socks.append(utils.subscribe([zmq_topics.topic_sonar_hold_pid], zmq_topics.topic_sonar_hold_port))
         self.subs_socks.append(utils.subscribe([zmq_topics.topic_stereo_camera_ts], zmq_topics.topic_camera_ts_port)) #for sync perposes
+        self.subs_socks.append(utils.subscribe([zmq_topics.topic_main_cam_ts], zmq_topics.topic_main_cam_ts_port)) #for sync perposes
+        self.subs_socks.append(utils.subscribe([zmq_topics.topic_main_cam_ts], zmq_topics.topic_main_cam_ts_port)) #for sync perposes
         self.subs_socks.append(utils.subscribe([zmq_topics.topic_tracker], zmq_topics.topic_tracker_port))
         self.subs_socks.append(utils.subscribe([zmq_topics.topic_main_tracker], zmq_topics.topic_main_tracker_port))
         self.subs_socks.append(utils.subscribe([zmq_topics.topic_telem], zmq_topics.topic_telem_port))
@@ -394,14 +396,12 @@ class rovDataHandler(object):
                 else:
                     ret = sock.recv_multipart()
                     topic, data = ret
+                    data_receive_ts=time.time()
                     data = pickle.loads(ret[1])
                     message_dict[topic] = data
                     self.telemtry.update(message_dict.copy())
-                    
-                    
                     if self.pubData:
                         self.socket_pub.send_multipart([ret[0],ret[1]])
-                    
                     #if zmq_topics.topic_tracker_result == topic:
                     #    #print('trck data res:', data)
                     #    try:
@@ -445,7 +445,7 @@ class rovDataHandler(object):
             
 
                     if self.data_file_fd is not None:
-                        pickle.dump([topic,data],self.data_file_fd,-1)
+                        pickle.dump([topic,data_receive_ts,data],self.data_file_fd,-1)
 
 
     def next(self):

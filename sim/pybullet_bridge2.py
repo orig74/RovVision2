@@ -44,7 +44,10 @@ subs_socks.append(utils.subscribe([zmq_topics.topic_thrusters_comand,zmq_topics.
 subs_socks.append(utils.subscribe([ zmq_topics.topic_record_state ],zmq_topics.topic_record_state_port))
 
 zmq_pub=utils.publisher(zmq_topics.topic_camera_port)
+zmq_pub_ts=utils.publisher(zmq_topics.topic_camera_ts_port)
 zmq_pub_main_camera=utils.publisher(zmq_topics.topic_main_cam_port)
+zmq_pub_main_camera_ts=utils.publisher(zmq_topics.topic_main_cam_ts_port)
+
 pub_imu = utils.publisher(zmq_topics.topic_imu_port)
 pub_depth = utils.publisher(zmq_topics.topic_depth_port)
 pub_dvl = utils.publisher(zmq_topics.topic_dvl_port)
@@ -250,7 +253,7 @@ def main():
                 zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),imgl.tostring()],copy=False)
             else:
                 zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),imgl.tostring(),imgr.tostring()],copy=False)
-            zmq_pub.send_multipart([zmq_topics.topic_stereo_camera_ts,pickle.dumps((frame_cnt,time.time()))],copy=False) #for sync
+            zmq_pub_ts.send_multipart([zmq_topics.topic_stereo_camera_ts,pickle.dumps((frame_cnt,time.time()))],copy=False) #for sync
             
             if record_state is not None:
                 cam_key='000F315DAB68'
@@ -315,7 +318,7 @@ def main():
             #print('===',depthImg.max(),depthImg.min())
             #second camera
             zmq_pub_main_camera.send_multipart([zmq_topics.topic_main_cam,pickle.dumps([frame_main_cnt,imgm.shape]),imgm.tostring()],copy=False)
-            zmq_pub.send_multipart([zmq_topics.topic_main_cam_ts,pickle.dumps((frame_main_cnt,time.time()))],copy=False) #for sync
+            zmq_pub_main_camera_ts.send_multipart([zmq_topics.topic_main_cam_ts,pickle.dumps((frame_main_cnt,time.time()))],copy=False) #for sync
             frame_main_cnt+=1
             #print(cnt,'main_cam_time',time.time()-main_cam_tic)
 
