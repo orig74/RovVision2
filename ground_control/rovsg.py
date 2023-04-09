@@ -236,7 +236,7 @@ def main():
                 last_im=draw_image(window["-IMAGE-0-"],img_to_tk(rawImg,h_hsv=values['HSV_H']))#im_size[1]))
             frameId, rawImg = rovHandler.getSincedImages(1)
             if rawImg is not None:
-                window["-IMAGE-1-"].update(data=img_to_tk(rawImg,1.64 if values['LAYOUT2'] else 1))
+                window["-IMAGE-1-"].update(data=img_to_tk(rawImg,1.65 if values['LAYOUT2'] else 1))
             main_image = rovHandler.getMainImage()
             if main_image is not None:
                 #if config.cam_main_gui_sx!=config.cam_main_sx:
@@ -366,10 +366,10 @@ def main():
                 rovHandler.toggle_recording()
 
             if event=='Go':
-                rovCommander.set_gripper(1.0)
+                rovCommander.set_gripper(0.0)
 
             if event=='Gc':
-                rovCommander.set_gripper(0.0)
+                rovCommander.set_gripper(1.0)
 
             if event=='Tx':
                 rovCommander.main_track(None)
