@@ -54,7 +54,9 @@ def img_to_tk(img,shrink=1,h_hsv=False):
     if shrink==1:
         img = Image.fromarray(img)
     else:
-        img = Image.fromarray(img[::shrink,::shrink])
+        #img = Image.fromarray(img[::shrink,::shrink])
+        img=cv2.resize(img,(int(img.shape[1]/shrink),int(img.shape[0]/shrink)),cv2.INTER_NEAREST) 
+        img = Image.fromarray(img)
     img = ImageTk.PhotoImage(img)
     return img
 
@@ -140,7 +142,7 @@ def main():
     config_column = [
             [sg.Image(key="-IMAGE-2D-")],
             [sg.Button('Gc',tooltip="gripper close"),sg.Button('Go',tooltip="gripper open"),sg.Button('Tx',tooltip='stop main tracker')],
-            [sg.Button('REC'),sg.Button('Reset-DVL'),sg.Button('Calib-DVL')],
+            [sg.Button('REC'),sg.Button('Reset-DVL'),sg.Button('Calib-DVL'),sg.Checkbox('L2',key='LAYOUT2',tooltip='layout2')],
             [sg.Button('CF+'),sg.Button('CF-'),sg.Button('Lights+'),sg.Button('Lights-')],
             [sg.Multiline(key='MESSEGES',s=(23,5) if scale_screen else (55,8), autoscroll=True, reroute_stdout=False, write_only=True)],
            ]
@@ -208,6 +210,7 @@ def main():
         try:
             cycle_tic=time.time()
             event, values = window.read(timeout=2) #10 mili timeout
+            main_image_size=(config.cam_main_sx,config.cam_main_sy) if values['LAYOUT2'] else (config.cam_main_gui_sx,config.cam_main_gui_sy)
             if event == "Exit" or event == sg.WIN_CLOSED:
                 break
 
@@ -220,8 +223,8 @@ def main():
             
             if event.startswith('-IMAGE-2'):
                 x,y=values['-IMAGE-2-']
-                x=x/config.cam_main_gui_sx
-                y=y/config.cam_main_gui_sy
+                x=x/main_image_size[0]
+                y=y/main_image_size[1]
                 printer(f'click2,{x},{y}')
                 rovCommander.main_track((x,y))
             
@@ -233,18 +236,19 @@ def main():
                 last_im=draw_image(window["-IMAGE-0-"],img_to_tk(rawImg,h_hsv=values['HSV_H']))#im_size[1]))
             frameId, rawImg = rovHandler.getSincedImages(1)
             if rawImg is not None:
-                window["-IMAGE-1-"].update(data=img_to_tk(rawImg,1))
+                window["-IMAGE-1-"].update(data=img_to_tk(rawImg,1.64 if values['LAYOUT2'] else 1))
             main_image = rovHandler.getMainImage()
             if main_image is not None:
-                if config.cam_main_gui_sx!=config.cam_main_sx:
+                #if config.cam_main_gui_sx!=config.cam_main_sx:
+                if not values['LAYOUT2']:
                     main_image=cv2.resize(main_image,(config.cam_main_gui_sx,config.cam_main_gui_sy),cv2.INTER_NEAREST) 
                 window["-IMAGE-2-"].erase()
                 tr_main=rovHandler.get_main_track_pt()
                 #print('tr_main is',tr_main)
                 if tr_main and tr_main['xy'] is not None:
                     x,y=tr_main['xy']
-                    x*=config.cam_main_gui_sx
-                    y*=config.cam_main_gui_sy
+                    x*=main_image_size[0]
+                    y*=main_image_size[1]
                     cv2.circle(main_image,(int(x),int(y)),4,(255,0,0),1)
                     if tr_main['range'] is not None:
                         rng=tr_main['range']
