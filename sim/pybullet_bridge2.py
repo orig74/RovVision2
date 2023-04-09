@@ -158,7 +158,6 @@ def main():
     imgl = None
     current_command = np.zeros(8)
     fov=42
-    fov_main=90
 
     sim_time=0
     scene=getscene(1,1)
@@ -215,9 +214,9 @@ def main():
         #print('==3',pb.getLinkState(boxId,2,0,1)[0])
         if ratio(fps):
             cam_tic=time.time()
-            PM = pb.computeProjectionMatrixFOV(fov=fov,aspect=1.0,nearVal=0.01,farVal=100)
             w = int(config.cam_res_rgbx*resize_fact)
             h = int(config.cam_res_rgby*resize_fact)
+            PM = pb.computeProjectionMatrixFOV(fov=fov,aspect=w/h,nearVal=0.01,farVal=100)
 
             VML = getCameraViewMat(boxId,0)
             width, height, rgbImg, depthImg, segImg = pb.getCameraImage(
