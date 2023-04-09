@@ -139,7 +139,7 @@ def plot_pid(pid_label):
     plt.grid('on')
     return ((ax,*hdls),(ax2,*hdls2))
 
-def update_pid(ax_hdls,topic):
+def update_pid(ax_hdls,topic,ylim=None):
     if topic not in msgs:
         return
     data = msgs[topic].get_data(['TS','P','I','D','C'])
@@ -149,7 +149,12 @@ def update_pid(ax_hdls,topic):
         hdls[i][0].set_ydata(data[:,i+1]) #skip timestemp
         hdls[i][0].set_xdata(xs)
     ax.set_xlim(data.shape[0]-400,data.shape[0])
-    ax.set_ylim(-1,1)
+    if ylim is not None:
+        ax.set_ylim(-ylim,ylim)
+    else:
+        min_y = data.min()
+        max_y = data.max()
+        ax.set_ylim(min_y,max_y)
 
     ax2,hdls2 = ax_hdls[1][0],ax_hdls[1][1:]
     data = msgs[topic].get_data(['T','N','R'])

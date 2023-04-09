@@ -25,7 +25,7 @@ class Plotter(object):
         self.ax2.grid('on')
         self.canvas.draw()
 
-    def update_pid(self,cyc_buffer):
+    def update_pid(self,cyc_buffer,ylim=None):
         if not cyc_buffer.changed:
             return 
         data = cyc_buffer.get_data(['TS','P','I','D','C'])
@@ -35,7 +35,14 @@ class Plotter(object):
             hdls[i][0].set_ydata(data[:,i+1]) #skip timestemp
             hdls[i][0].set_xdata(xs)
         ax.set_xlim(data.shape[0]-400,data.shape[0])
-        ax.set_ylim(-1,1)
+        if ylim is not None:
+            ax.set_ylim(-ylim,ylim)
+        else:
+            #ignore timetag thats why 1:
+            min_y = data[:,1:].min()-0.01
+            max_y = data[:,1:].max()+0.01
+            ax.set_ylim(min_y,max_y)
+
 
         ax2,hdls2 = self.ax2,self.hdls2#ax_hdls[1][0],ax_hdls[1][1:]
         data = cyc_buffer.get_data(['T','N','R'])

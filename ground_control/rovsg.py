@@ -150,12 +150,13 @@ def main():
 
     plot_options=['DEPTH','X_HOLD','Y_HOLD','YAW','PITCH','ROLL']
     matplot_column1 = [
-        [sg.Text('Plot Type:'),sg.Combo(plot_options,key='-PLOT-TYPE-',default_value=plot_options[0]),
+        [sg.Text('PType:'),sg.Combo(plot_options,key='-PLOT-TYPE-',default_value=plot_options[0]),
             sg.Button('P+'),sg.Button('P-'),
             sg.Button('I+'),sg.Button('I-'),
             sg.Button('D+'),sg.Button('D-'),
             sg.Text('Prc:'),sg.Input(key='PID_Mul',default_text='3.0',size=(4,1)),
             sg.Button('S',key='SAVE_PID'),
+            sg.Checkbox('A',key='AUTOSCALEY',tooltip='auto scale y plot'),
             ],
         #[ sg.Canvas(key="-CANVAS-", size=(300,200)), sg.Canvas(key="-TRACE-CANVAS-", size=(300,300))]]
         [sg.Canvas(key="-CANVAS-", size=(300,300))]
@@ -214,6 +215,7 @@ def main():
             if event == "Exit" or event == sg.WIN_CLOSED:
                 break
 
+            scaley=None if values['AUTOSCALEY'] else 1.0
             if image_shape is not None and event.startswith('-IMAGE-0'):
                 x,y=values['-IMAGE-0-']
                 x=x/image_shape[1]
@@ -375,7 +377,7 @@ def main():
                 rovCommander.main_track(None)
 
             if values['-PLOT-TYPE-']=='DEPTH':
-                plotter.update_pid(rovHandler.plot_buffers[zmq_topics.topic_depth_hold_pid])
+                plotter.update_pid(rovHandler.plot_buffers[zmq_topics.topic_depth_hold_pid],ylim=scaley)
 
             if event=='CHANNEL':
                 rovCommander.set_rope_tracker_to_grey(chan='RGBrgb'.index(values['CHANNEL']))
@@ -385,7 +387,7 @@ def main():
             for i,p_type in [(0,'X_HOLD'),(1,'Y_HOLD')]:
                 pb=rovHandler.plot_buffers[zmq_topics.topic_pos_hold_pid_fmt%i]
                 if values['-PLOT-TYPE-']==p_type:
-                    plotter.update_pid(pb)
+                    plotter.update_pid(pb,ylim=scaley)
                 target_xy[i]=pb.get_last('T')
                 if target_xy[i] is None:
                     target_xy[i]=0
@@ -397,7 +399,7 @@ def main():
                         ('PITCH',zmq_topics.topic_att_hold_pitch_pid),
                         ('ROLL',zmq_topics.topic_att_hold_roll_pid)]:
                     if values['-PLOT-TYPE-']==p_type:
-                        plotter.update_pid(rovHandler.plot_buffers[pb])
+                        plotter.update_pid(rovHandler.plot_buffers[pb],ylim=scaley)
 
             rovHandler.next()
 
