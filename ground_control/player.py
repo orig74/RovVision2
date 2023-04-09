@@ -80,9 +80,13 @@ map_port_topic = {}
 map_port_topic[zmq_topics.topic_imu_port]=[zmq_topics.topic_imu]
 map_port_topic[zmq_topics.topic_tracker_port]=[zmq_topics.topic_tracker]
 map_port_topic[zmq_topics.topic_main_tracker_port]=[zmq_topics.topic_main_tracker]
-map_port_topic[zmq_topics.topic_controller_port]=[zmq_topics.topic_system_state]
+map_port_topic[zmq_topics.topic_controller_port]=[zmq_topics.topic_thrusters_comand,zmq_topics.topic_system_state,zmq_topics.topic_lights]
 map_port_topic[zmq_topics.topic_dvl_port]=[zmq_topics.topic_dvl_raw]
 map_port_topic[zmq_topics.topic_depth_port]=[zmq_topics.topic_depth]
+map_port_topic[zmq_topics.topic_gps_port]=[zmq_topics.topic_gps]
+map_port_topic[zmq_topics.topic_pos_hold_port]=[zmq_topics.topic_pos_hold_pid_fmt%i for i in range(3)]
+map_port_topic[zmq_topics.topic_att_hold_port]=[zmq_topics.topic_att_hold_yaw_pid,zmq_topics.topic_att_hold_pitch_pid,zmq_topics.topic_att_hold_roll_pid]
+map_port_topic[zmq_topics.topic_depth_hold_port]=[zmq_topics.topic_depth_hold_pid]
 
 map_topic_port={}
 map_port_publisher={}
