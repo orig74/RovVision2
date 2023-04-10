@@ -31,6 +31,7 @@ from numpy import sin,cos
 from scipy.spatial.transform import Rotation as Rot
 
 from mussels_scene import MusseleRopesScene as getscene
+gst_stream_type=os.environ['SIM_STREAM_TYPE']=='GST'
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -133,6 +134,11 @@ def getCameraViewMat(bindex,link):
     Rmat = pb.computeViewMatrix(eye,target,up)
     Rmat=np.array(Rmat).reshape((4,-1))
     return Rmat
+
+def bgr2rgb(im):
+    if gst_stream_type:
+        return im[:,:,::-1]
+    return im
 
 grip=False
 fps=5
@@ -249,9 +255,9 @@ def main():
                 cv2.waitKey(1)
             
             if mono:
-                zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),imgl.tostring()],copy=False)
+                zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),bgr2rgb(imgl).tostring()],copy=False)
             else:
-                zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),imgl.tostring(),imgr.tostring()],copy=False)
+                zmq_pub.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([frame_cnt,imgl.shape]),bgr2rgb(imgl).tostring(),bgr2rgb(imgr).tostring()],copy=False)
             zmq_pub_ts.send_multipart([zmq_topics.topic_stereo_camera_ts,pickle.dumps((frame_cnt,time.time()))],copy=False) #for sync
             
             if record_state is not None:
@@ -316,7 +322,7 @@ def main():
             #print('===',depthImg_scaled.max(),depthImg_scaled.min())
             #print('===',depthImg.max(),depthImg.min())
             #second camera
-            zmq_pub_main_camera.send_multipart([zmq_topics.topic_main_cam,pickle.dumps([frame_main_cnt,imgm.shape]),imgm.tostring()],copy=False)
+            zmq_pub_main_camera.send_multipart([zmq_topics.topic_main_cam,pickle.dumps([frame_main_cnt,imgm.shape]),bgr2rgb(imgm).tostring()],copy=False)
             zmq_pub_main_camera_ts.send_multipart([zmq_topics.topic_main_cam_ts,pickle.dumps((frame_main_cnt,time.time()))],copy=False) #for sync
             frame_main_cnt+=1
             #print(cnt,'main_cam_time',time.time()-main_cam_tic)
