@@ -22,7 +22,7 @@ socket_pub_ts=utils.publisher(zmq_topics.topic_main_cam_ts_port)
 FRAME_MOD = 1
 
 FPS = 90
-RES_X = 640
+RES_X = 848
 RES_Y = 480
 
 KEEP_STROBE_FRAMES = True
@@ -107,7 +107,7 @@ if __name__ == "__main__":
         if keep_frame_cnt%SEND_RATIO==0:
             socket_pub.send_multipart([zmq_topics.topic_main_cam,
                 pickle.dumps((keep_frame_cnt,col_img.shape)),col_img.tobytes()])
-            scale_to_mm=depth_scale
+            scale_to_mm=depth_scale*1000
             socket_pub.send_multipart([zmq_topics.topic_main_cam_depth,
                 pickle.dumps((keep_frame_cnt,scale_to_mm,depth_frame_raw.shape)),depth_frame_raw.tostring()])
             socket_pub_ts.send_multipart([zmq_topics.topic_main_cam_ts,pickle.dumps((keep_frame_cnt,time_stamp))])
