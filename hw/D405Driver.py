@@ -40,8 +40,12 @@ if __name__ == "__main__":
     config.enable_stream(rs.stream.depth, RES_X, RES_Y, rs.format.z16, FPS)
     config.enable_stream(rs.stream.infrared, 1, RES_X, RES_Y, rs.format.y8, FPS)
     #config.enable_stream(rs.stream.infrared, 2, RES_X, RES_Y, rs.format.y8, FPS)
-    config.enable_all_streams()
+    #config.enable_all_streams()
+
+
     profile = pipeline.start(config)
+    intrinsics_depth=profile.get_stream(rs.stream.depth).as_video_stream_profile().get_intrinsics()
+    intrinsics_color=profile.get_stream(rs.stream.color).as_video_stream_profile().get_intrinsics()
 
     depth_sensor = profile.get_device().first_depth_sensor()
     depth_sensor.set_option(rs.option.enable_auto_exposure, False)
@@ -67,6 +71,8 @@ if __name__ == "__main__":
                 record_state=('/media/data/'+new_record_state_str+'/') if new_record_state_str else None
                 if record_state:
                     fd_frame_data=open(record_state+'/d405_frame_data.txt','w')
+                    open(record_state+'/camera_main.txt','w').write(str(intrinsics_color))
+                    open(record_state+'/camera_depth.txt','w').write(str(intrinsics_depth))
  
         frames = pipeline.wait_for_frames()
         color_frame = frames.get_color_frame()
@@ -110,7 +116,8 @@ if __name__ == "__main__":
             scale_to_mm=depth_scale*1000
             socket_pub.send_multipart([zmq_topics.topic_main_cam_depth,
                 pickle.dumps((keep_frame_cnt,scale_to_mm,depth_frame_raw.shape)),depth_frame_raw.tostring()])
-            socket_pub_ts.send_multipart([zmq_topics.topic_main_cam_ts,pickle.dumps((keep_frame_cnt,time_stamp))])
+            socket_pub_ts.send_multipart([zmq_topics.topic_main_cam_ts,pickle.dumps((
+                keep_frame_cnt,time_stamp,depth_frame.get_timestamp(),color_frame.get_timestamp()))])
             #cv2.imwrite(record_state + 'greyl_' + str(keep_frame_cnt) + '.jpeg', grey_l)
             #cv2.imwrite(record_state + 'greyr_' + str(keep_frame_cnt) + '.jpeg', grey_r)
             #depth_img_U8 = (np.clip(depth_img_m, 0, 1.0) * 255).astype(np.uint8)
