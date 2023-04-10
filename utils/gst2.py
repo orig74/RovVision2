@@ -17,7 +17,7 @@ class Writer(object):
     def __init__(self,port,sx,sy,pad_lines=0):
         cmd="gst-launch-1.0 {{}}! x264enc threads=1 speed-preset={} tune=zerolatency  bitrate={} key-int-max=20 ! tcpserversink port={{}}".format(gst_speed_preset, gst_bitrate)
         #gstsrc = 'fdsrc ! videoparse width={} height={} format=15 ! videoconvert ! video/x-raw, format=I420'.format(sx,sy+pad_lines) #! autovideosink'
-        gstsrc = 'fdsrc ! videoparse width={} height={} format=15 ! videoconvert ! video/x-raw, format=I420'.format(sx,sy+pad_lines) #! autovideosink'
+        gstsrc = 'fdsrc ! videoparse width={} height={} format=16 ! videoconvert ! video/x-raw, format=I420'.format(sx,sy+pad_lines) #! autovideosink'
 
         gcmd = cmd.format(gstsrc,port)
         self.p = Popen(gcmd, shell=True, bufsize=0,stdin=PIPE, stdout=sys.stdout, close_fds=False)
