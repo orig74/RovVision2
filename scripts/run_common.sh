@@ -42,6 +42,10 @@ fi
 tmux send-keys "printf '\033]2;%s\033\\' '$3'" ENTER
 tmux send-keys "cd $PROJECT_PATH/$2" ENTER
 tmux send-keys "export ROV_TYPE=$ROV_TYPE" ENTER
+if [ "$SIM" == "PB" ]
+then
+tmux send-keys "export SIM_STREAM_TYPE=$SIM_STREAM_TYPE" ENTER
+fi
 tmux send-keys "$PYTHON $3" ENTER
 
 }

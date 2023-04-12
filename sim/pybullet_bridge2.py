@@ -31,7 +31,7 @@ from numpy import sin,cos
 from scipy.spatial.transform import Rotation as Rot
 
 from mussels_scene import MusseleRopesScene as getscene
-gst_stream_type=os.environ['SIM_STREAM_TYPE']=='GST'
+gst_stream_type='SIM_STREAM_TYPE' in os.environ and os.environ['SIM_STREAM_TYPE']=='GST'
 
 import argparse
 parser = argparse.ArgumentParser()

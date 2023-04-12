@@ -13,8 +13,8 @@ if  [ ! -v SIM_STREAM_TYPE ]; then
     export SIM_STREAM_TYPE=ZMQ
 fi
 
+export SIM_STREAM_TYPE=${SIM_STREAM_TYPE:-$ZMQ}
 echo running sim with $SIM_STREAM_TYPE
-#SIM_STREAM_TYPE=${SIM_STREAM_TYPE:-$ZMQ}
 #export SIM_STREAM_TYPE=GST
 sleep 1 
 PYTHON=python 
