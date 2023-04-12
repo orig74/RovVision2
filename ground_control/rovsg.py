@@ -247,6 +247,11 @@ def main():
                 window["-IMAGE-2-"].erase()
                 tr_main=rovHandler.get_main_track_pt()
                 #print('tr_main is',tr_main)
+                grng,gleft,gup=config.grip_pos_rel_mm
+                uv=np.array(config.cam_main_int) @ np.array([[gleft,gup,grng]]).T
+                uv=(uv/uv[2,0]).flatten()[:2]*((main_image_size[0]/config.cam_main_sx),(main_image_size[1]/config.cam_main_sy))
+                cv2.circle(main_image,(int(uv[0]),int(uv[1])),4,(0,255,0),1)
+
                 if tr_main and tr_main['xy'] is not None:
                     x,y=tr_main['xy']
                     x*=main_image_size[0]
@@ -254,9 +259,9 @@ def main():
                     cv2.circle(main_image,(int(x),int(y)),4,(255,0,0),1)
                     if tr_main['range'] is not None:
                         rng=tr_main['range']
-                        right=tr_main['left']
+                        left=tr_main['left']
                         up=tr_main['up']
-                        cv2.putText(main_image, f'rng{rng:04.1f} up{up:04.1f} left{right:04.1f} mm', (50,23), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 1, cv2.LINE_AA)
+                        cv2.putText(main_image, f'rng{rng-grng:04.1f} up{up-gup:04.1f} left{left-gleft:04.1f} mm', (50,23), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 1, cv2.LINE_AA)
                 draw_image(window["-IMAGE-2-"],img_to_tk(main_image,1))#im_size[1]))
             main_image_depth = rovHandler.getMainImageDepth()
             if main_image_depth is not None:
