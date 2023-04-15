@@ -37,7 +37,7 @@ if rov_type==4:
     #grip_pos_rel_mm=(1220,20,20) #range left up in mm
     valid_range_mm=(50,1500)
     
-cam_fps=5
+cam_fps=8
 send_modulo=1
 
 #gstreamer
@@ -55,7 +55,7 @@ tracker = 'rope'
 joy_deadband=0.00
 joy_dtarget_min=0.05
 
-manual_control_limit=0.85
+manual_control_limit=0.6
 thruster_limit=1.0
 
 viewer_blacks=(50,100)

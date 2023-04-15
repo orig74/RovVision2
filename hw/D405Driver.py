@@ -69,10 +69,10 @@ if __name__ == "__main__":
                     #os.mkdir('/media/data/'+new_record_state_str)
                     #calibrator.ParamsUpdateFlag = True
                 record_state=('/media/data/'+new_record_state_str+'/') if new_record_state_str else None
-                if record_state:
-                    fd_frame_data=open(record_state+'/d405_frame_data.txt','w')
-                    open(record_state+'/camera_main.txt','w').write(str(intrinsics_color))
-                    open(record_state+'/camera_depth.txt','w').write(str(intrinsics_depth))
+                if record_state and os.path.isdir(record_state):
+                    fd_frame_data=open(record_state+'d405_frame_data.txt','w')
+                    open(record_state+'camera_main.txt','w').write(str(intrinsics_color))
+                    open(record_state+'camera_depth.txt','w').write(str(intrinsics_depth))
  
         frames = pipeline.wait_for_frames()
         color_frame = frames.get_color_frame()
@@ -105,10 +105,13 @@ if __name__ == "__main__":
         last_kept_ts = time.time()
         keep_frame_cnt += 1
         if record_state and keep_frame_cnt%SAVE_RATIO==0:
-            fd_frame_data.write(f'{keep_frame_cnt},{time_stamp},{depth_scale}\n')
-            cv2.imwrite(record_state + f'{keep_frame_cnt:06d}.jpg',col_img)
-            open(record_state+f'd{keep_frame_cnt:06d}.bin','wb').write(depth_frame_raw.tobytes())
-            fd_frame_data.flush()
+            if os.path.isdir(record_state):
+                fd_frame_data.write(f'{keep_frame_cnt},{time_stamp},{depth_scale}\n')
+                cv2.imwrite(record_state + f'{keep_frame_cnt:06d}.jpg',col_img)
+                open(record_state+f'd{keep_frame_cnt:06d}.bin','wb').write(depth_frame_raw.tobytes())
+                fd_frame_data.flush()
+            else:
+                print("Write directory doesnt exist!")
 
         if keep_frame_cnt%SEND_RATIO==0:
             socket_pub.send_multipart([zmq_topics.topic_main_cam,

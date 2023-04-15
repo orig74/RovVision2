@@ -30,7 +30,7 @@ CMND_TIMEOUT = 1.0
 current_command=[0 for _ in range(8)] # 8 thrusters
 keep_running=True
 last_thrstcmnd_ts=0
-lights_pw=0.0
+gripper_val=0
 camera_servo = 0.0  # -1.0 -> 1.0, or use 0-255 without scale_val function (mapped to 45->135 degrees camera angle)
 rec_state=False
 serial_rx_bytes=b''
@@ -39,7 +39,7 @@ pub_depth = zmq_wrapper.publisher(zmq_topics.topic_depth_port)
 pub_telem = zmq_wrapper.publisher(zmq_topics.topic_telem_port)
 subs_socks=[]
 subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_thrusters_comand],zmq_topics.topic_thrusters_comand_port))
-subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_lights, zmq_topics.topic_camera_servo],zmq_topics.topic_controller_port))
+subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_gripper_cmd, zmq_topics.topic_camera_servo],zmq_topics.topic_controller_port))
 subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_record_state],zmq_topics.topic_record_state_port))
 
 ser = serial.Serial(detect_usb.devmap['ESP_USB'], 500000)
@@ -67,15 +67,12 @@ async def send_serial_command_50hz():
         else:
             m = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         m = np.clip(m, -THRSTR_LIMIT, THRSTR_LIMIT)
-
-        # TODO: lights flash on RECORD
-
         
         #print('< ', ["%.1f" % i for i in m], end='')
         #m = 8*[0.0]
 
         tx_ints = [scale_val(thr, -1.0, 1.0, 16) for thr in m]
-        tx_ints.append(scale_val(lights_pw, 0, 6, 8))
+        tx_ints.append(scale_val(gripper_val, 0, 1, 8))
         tx_ints.append(scale_val(camera_servo, -1.0, 1.0, 8))
         tx_data = struct.pack('>HHHHHHHHBB', *tx_ints)
         tx_data += struct.pack('>H', CalcChksm(tx_data))
@@ -114,7 +111,7 @@ async def send_serial_command_50hz():
                 pub_telem.send_multipart([zmq_topics.topic_telem, tosend])
 
                 print('< ', ["%.1f" % i for i in m], end='')
-                print(' Lights: {}, CamServo: {}'.format(lights_pw, camera_servo))
+                #print(' Lights: {}, CamServo: {}'.format(lights_pw, camera_servo))
                 print("> Batt V: {}, "\
                       "Batt I: {}, "\
                       "ESC1 I: {}, "\
@@ -127,7 +124,7 @@ async def send_serial_command_50hz():
 
 
 async def recv_and_process():
-    global current_command, rec_state, lights_pw, last_thrstcmnd_ts,camera_servo
+    global current_command, rec_state, gripper_val, last_thrstcmnd_ts,camera_servo
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.000)[0]
         for sock in socks:
@@ -137,8 +134,8 @@ async def recv_and_process():
                 last_thrstcmnd_ts,current_command=data
             if topic == zmq_topics.topic_record_state:
                 rec_state=data
-            if topic == zmq_topics.topic_lights:
-                lights_pw=data
+            if topic == zmq_topics.topic_gripper_cmd:
+                gripper_val=min(max(data, 0), 1)
             if topic == zmq_topics.topic_camera_servo:
                 camera_servo=data
         await asyncio.sleep(0.001)

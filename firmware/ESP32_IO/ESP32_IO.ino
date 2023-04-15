@@ -9,7 +9,7 @@
 #define NODATA_TIMEOUT_LOOPS 100
 
 #define STATUS_LED_PIN 2
-#define LIGHTS_PIN 16
+#define GRIPPER_PIN 16
 #define CAM_SERVO_PIN 17
 int thruster_pins[8] = {12, 13, 14, 27, 25, 26, 33, 32};
 int thruster_dirs[8] = {-1, -1, 1, 1, -1, 1, 1, -1};
@@ -33,7 +33,7 @@ byte serial_count;
 Servo thrusters[8];
 #define PWM_MIDPOINT 1488
 #define PWM_RANGE_H 500
-Servo lights;
+Servo gripper;
 Servo cam_servo;
 int servo_offset = 0;
 
@@ -84,8 +84,8 @@ void setup() {
   pinMode(VOLTAGE_ADC_PIN, INPUT);
   pinMode(MOISTURE_SENSE_PIN, INPUT);
 
-  lights.attach(LIGHTS_PIN, 1100, 1900);
-  lights.writeMicroseconds(1100);
+  gripper.attach(GRIPPER_PIN, 1100, 1900);
+  gripper.writeMicroseconds(1900);
   cam_servo.attach(CAM_SERVO_PIN);
   for (int t_ind = 0; t_ind < 8; t_ind++) {
     thrusters[t_ind].attach(thruster_pins[t_ind]);
@@ -146,9 +146,12 @@ void loop() {
         thrusters[thrstr_idx].writeMicroseconds(thrst_us);
       }
       
-      // Lights
-      byte lights_8b = msg_buff[16];
-      lights.writeMicroseconds(1100 + (int) 3.14 * (float) lights_8b);
+      // Gripper
+      byte gripper_8b = msg_buff[16];
+      if (gripper_8b > 127)
+          gripper.writeMicroseconds(1100);
+      else
+          gripper.writeMicroseconds(1900);
       
       // Camera Servo
       byte servo_8b = msg_buff[17];
@@ -169,7 +172,6 @@ void loop() {
     for (int thrstr_idx=0; thrstr_idx < 8; thrstr_idx++) {
         thrusters[thrstr_idx].writeMicroseconds(PWM_MIDPOINT);
     }
-    lights.writeMicroseconds(1100);
     digitalWrite(STATUS_LED_PIN, LOW);
   }
 

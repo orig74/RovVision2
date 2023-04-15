@@ -38,7 +38,7 @@ if __name__=='__main__':
                 dmap['DVL_USB']=dev
             if '1-3' in line:
                 dmap['VNAV_USB']=dev
-            if '1-5' in line:
+            if '1-1.3' in line:
                 dmap['ESP_USB']=dev
  
     with open('/tmp/devusbmap.pkl','wb') as fp:
