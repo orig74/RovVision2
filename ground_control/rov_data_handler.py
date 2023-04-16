@@ -106,6 +106,9 @@ class rovCommandHandler(object):
 
     def set_manual_control_limit(self,val):
         self.pub({'cmd':'manual_control_limit','value':val})
+
+    def set_thruster_limit(self,val):
+        self.pub({'cmd':'thruster_limit','value':val})
 #    def start_recording(self):
 #        self.pub({'cmd':'start_recording'})
 #

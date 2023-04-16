@@ -55,8 +55,9 @@ tracker = 'rope'
 joy_deadband=0.00
 joy_dtarget_min=0.05
 
-manual_control_limit=0.4
-thruster_limit=1.0
+manual_control_limit=0.4 #limit in manual plugin override by controller limit
+thruster_limit=1.0 #limit in esp32 gate
+thruster_limit_controler=1.0 #limit in controller
 
 viewer_blacks=(50,100)
 

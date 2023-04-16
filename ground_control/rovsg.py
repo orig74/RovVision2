@@ -105,10 +105,14 @@ def main():
         ]]
 
     cmd_column = [
-            [sg.Button('Arm-Disarm'),sg.Combo([f'{i/10}' for i in range(1,10)],key='MANUAL_LIMIT',
+            [sg.Button('Arm-Disarm'),
+                sg.Combo([f'{i/10}' for i in range(1,10)],key='MANUAL_LIMIT',
                 default_value=str(config.manual_control_limit),enable_events=True,
-                    tooltip='set manual control limit')],
-            [sg.Button('Depth-Hold'),
+                    tooltip='set manual control limit'),
+                sg.Combo([f'{i/10}' for i in range(1,10)],key='THRUSTER_LIMIT',
+                default_value=str(config.thruster_limit_controler),enable_events=True,
+                    tooltip='set thruster limit for all thrusters')],
+             [sg.Button('Depth-Hold'),
                 sg.Button(sym_up),sg.Button(sym_down),sg.Input(key='Target-Depth',default_text='0.1',size=(4,1))],
             [sg.Button('Att-hold'),sg.Text('Pitch:'),sg.Input(key='Target-Pitch',default_text='0.0',size=(4,1))],
             [sg.Button('X-hold'),sg.Button(sym_fwd),sg.Button(sym_back),sg.Input(key='Target-X',default_text='0.1',size=(4,1))],
@@ -306,6 +310,9 @@ def main():
                 rovCommander.att_cmd((float(values['DeltaYawD']),0,0))
             if event == 'MANUAL_LIMIT':
                 rovCommander.set_manual_control_limit(float(values['MANUAL_LIMIT']))
+            if event == 'THRUSTER_LIMIT':
+                rovCommander.set_thruster_limit(float(values['THRUSTER_LIMIT']))
+
             if event in ['P+','P-','I+','I-','D-','D+']:
                 plot_type=values['-PLOT-TYPE-']
                 mul=float(values['PID_Mul'].strip())/100+1.0

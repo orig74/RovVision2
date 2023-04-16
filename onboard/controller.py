@@ -10,6 +10,7 @@ sys.path.append('..')
 sys.path.append('../utils')
 import zmq_wrapper as utils
 import zmq_topics
+import config
 from joy_mix import Joy_map
 
 pub_sock = utils.publisher(zmq_topics.topic_controller_port)
@@ -36,6 +37,7 @@ async def recv_and_process():
     thrusters_dict={}
     last_axes_joy_message_time = 0 #keep alive time
     jm=Joy_map()
+    THRSTR_LIMIT=config.thruster_limit_controler
 
     def togle_mode(m):
         s=system_state
@@ -133,6 +135,10 @@ async def recv_and_process():
                         system_state['gripper']=data['val']
                         pub_sock.send_multipart([zmq_topics.topic_gripper_cmd,pickle.dumps(data['val'])])
                         printer(f"controller:\n gripper {system_state['gripper']}")
+
+                    if data['cmd']=='thruster_limit':
+                        THRSTR_LIMIT=data['value']
+
                            
                 if topic==zmq_topics.topic_axes:
                     last_axes_joy_message_time=time.time()
@@ -177,6 +183,7 @@ async def recv_and_process():
                 for k in thrusters_dict:
                     thruster_cmd += thrusters_dict[k]
             #thruster_cmd = 8*[0.043]
+            thruster_cmd=np.clip(thruster_cmd,-THRSTR_LIMIT,THRSTR_LIMIT)
             pub_sock.send_multipart([zmq_topics.topic_thrusters_comand,pickle.dumps((tic,list(thruster_cmd)))])
             thruster_cmd = np.zeros(8)
 
