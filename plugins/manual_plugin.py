@@ -52,6 +52,10 @@ async def recv_and_process():
             if topic==zmq_topics.topic_imu:
                 yaw,pitch,roll=data['yaw'],data['pitch'],data['roll']
 
+            if topic==zmq_topics.topic_remote_cmd:
+                if data['cmd']=='manual_control_limit':
+                    config.manual_control_limit=data['value']
+
         await asyncio.sleep(0.001)
  
 async def main():
@@ -66,6 +70,7 @@ if __name__=='__main__':
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_imu],zmq_topics.topic_imu_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
 
+    subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_remote_cmd],zmq_topics.topic_remote_cmd_port))
     ### plugin outputs
     thrusters_source = zmq_wrapper.push_source(zmq_topics.thrusters_sink_port) 
 

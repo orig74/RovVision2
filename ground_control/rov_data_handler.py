@@ -103,6 +103,9 @@ class rovCommandHandler(object):
 
     def set_gripper(self,val):
         self.pub({'cmd':'gripper','val': val})
+
+    def set_manual_control_limit(self,val):
+        self.pub({'cmd':'manual_control_limit','value':val})
 #    def start_recording(self):
 #        self.pub({'cmd':'start_recording'})
 #
