@@ -55,7 +55,7 @@ tracker = 'rope'
 joy_deadband=0.00
 joy_dtarget_min=0.05
 
-manual_control_limit=0.6
+manual_control_limit=0.4
 thruster_limit=1.0
 
 viewer_blacks=(50,100)
