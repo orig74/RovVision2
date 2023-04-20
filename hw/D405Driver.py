@@ -114,13 +114,13 @@ if __name__ == "__main__":
                 print("Write directory doesnt exist!")
 
         if keep_frame_cnt%SEND_RATIO==0:
+            socket_pub_ts.send_multipart([zmq_topics.topic_main_cam_ts,pickle.dumps((
+                keep_frame_cnt,time_stamp,depth_frame.get_timestamp(),color_frame.get_timestamp()))])
             socket_pub.send_multipart([zmq_topics.topic_main_cam,
                 pickle.dumps((keep_frame_cnt,col_img.shape)),col_img.tobytes()])
             scale_to_mm=depth_scale*1000
             socket_pub.send_multipart([zmq_topics.topic_main_cam_depth,
                 pickle.dumps((keep_frame_cnt,scale_to_mm,depth_frame_raw.shape)),depth_frame_raw.tostring()])
-            socket_pub_ts.send_multipart([zmq_topics.topic_main_cam_ts,pickle.dumps((
-                keep_frame_cnt,time_stamp,depth_frame.get_timestamp(),color_frame.get_timestamp()))])
             #cv2.imwrite(record_state + 'greyl_' + str(keep_frame_cnt) + '.jpeg', grey_l)
             #cv2.imwrite(record_state + 'greyr_' + str(keep_frame_cnt) + '.jpeg', grey_r)
             #depth_img_U8 = (np.clip(depth_img_m, 0, 1.0) * 255).astype(np.uint8)
