@@ -48,7 +48,10 @@ i=args.start_frame
 refPt=None
 def click(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
+        d=depth_img[y,x]
         print('---click',x,y,depth_img[y,x])
+        xw,yw,s=(np.linalg.inv(np.array(config.cam_main_int)) @ np.array([[x*d,y*d,d]]).T).flatten()
+        print('===+===',xw,yw,s)
 
 cv2.setMouseCallback("depth", click)
 cv2.setMouseCallback("rgb", click)
