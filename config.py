@@ -29,6 +29,7 @@ if rov_type==4:
     cam_main_dgui_sx,cam_main_dgui_sy=848//2,240
     cam_main_gui_sx,cam_main_gui_sy=640,int(640/848.*480)
     water_scale=90/64.2
+    #water_scale=1
     cam_main_int = [
         [424*water_scale,0,848/2],
         [0,422*water_scale,480/2],

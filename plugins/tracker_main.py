@@ -27,7 +27,7 @@ async def recv_and_process():
     subs_socks=[]
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_remote_cmd],zmq_topics.topic_remote_cmd_port))
 
-    vid_topics=[zmq_topics.topic_main_cam,zmq_topics.topic_main_cam_depth]
+    vid_topics=[zmq_topics.topic_main_cam,zmq_topics.topic_main_cam_depth,zmq_topics.topic_main_cam_ts]
     subs_socks.append(zmq_wrapper.subscribe(vid_topics+[zmq_topics.topic_main_cam_ts], zmq_topics.topic_main_cam_port)) #for sync perposes
 
     ### plugin outputs
@@ -56,6 +56,9 @@ async def recv_and_process():
                         of.set(im_gray,(x,y))
                         print('setting track',x,y)
  
+            if ret[0]==zmq_topics.topic_main_cam_ts:
+                ts_fcnt,ts_depth,ts_color=pickle.loads(ret[1])
+
             if ret[0]==zmq_topics.topic_main_cam:
                 frame_main_cnt,shape = pickle.loads(ret[1])
                 main_image=np.frombuffer(ret[2],'uint8').reshape(shape).copy()
@@ -67,7 +70,7 @@ async def recv_and_process():
                 if _ret is not None:
                     if last_depth16 is not None:
                         print('ret===',_ret)
-                        d=last_depth16[int(_ret[1]),int(_ret[0])]*scale_to_mm
+                        d=last_depth16[int(_ret[1]),int(_ret[0])]*scale_to_mm*config.water_scale
                         if config.valid_range_mm[0]<d<config.valid_range_mm[1]:
                             xw,yw,s=(np.linalg.inv(np.array(config.cam_main_int)) @ np.array([[_ret[0]*d,_ret[1]*d,d]]).T).flatten()
                             print('===+===',xw,yw,s,_ret)
