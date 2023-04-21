@@ -26,12 +26,25 @@ RES_X = 848
 RES_Y = 480
 
 KEEP_STROBE_FRAMES = True
+MIN_GAP_BETWEEN_KEEPS = 8 #dectates maxmial keep frequency
+MAX_GAP_BETWEEN_KEEPS = 12 #dectates minimal keep frequency
 SAVE_RATIO = 3
 SEND_RATIO = 1
 SAVE = False
 IMSHOW = False
 DEPTH_THRESH = 1.0
 fd_frame_data=None
+
+class BrightDetector(object):
+    def __init__(self,ws=30):
+        self.buf=[0 for _ in ws]
+
+    def add(self,val):
+        self.buf.pop(0)
+        self.buf.append(val)
+
+    def is_bright(self,val):
+        return abs(val-np.min(self.buf))>abs(val-np.max(self.val))
 
 if __name__ == "__main__":
     record_state=None
@@ -57,7 +70,10 @@ if __name__ == "__main__":
     frame_cnt = -1
     keep_frame_cnt = -1
     avg_val = 0
-    last_kept_ts = time.time()
+    #last_kept_ts = time.time()
+    last_kept_num = -1
+    bd=BrightDetector()
+
     while True:
         socks=zmq.select(subs_socks,[],[],0)[0]
         for sock in socks:
@@ -96,15 +112,26 @@ if __name__ == "__main__":
         time_stamp=time.time()
         #grey_r = np.array(grey_r_frame.get_data())
 
+        if frame_cnt%(2*FPS)==0 and frame_cnt>100:
+            print(f'frame_cnt={frame_cnt},keep_frame_cnt={keep_frame_cnt},realfps={FPS*keep_frame_cnt/frame_cnt}')
+
         val = float(grey_l.mean())
-        avg_val = avg_val * 0.8 + val * 0.2
-        elapsed_time = time.time() - last_kept_ts
-        if elapsed_time < 0.1:
+        bd.add(val)
+        keep_gap = frame_cnt-last_kept_num
+        if keep_gap<MIN_GAP_BETWEEN_KEEPS:
             continue
-        if KEEP_STROBE_FRAMES and val < 1.0 * avg_val and elapsed_time < 0.14:
+        if not bd.is_bright(val) and keep_gap<MAX_GAP_BETWEEN_KEEPS:
             continue
-        last_kept_ts = time.time()
+        last_kept_num = frame_cnt
         keep_frame_cnt += 1
+
+        #avg_val = avg_val * 0.8 + val * 0.2
+        #elapsed_time = time.time() - last_kept_ts
+        #if elapsed_time < 0.1:
+        #    continue
+        ##if KEEP_STROBE_FRAMES and val < 1.0 * avg_val and elapsed_time < 0.14:
+        #    continue
+        #last_kept_ts = time.time()
         if record_state and keep_frame_cnt%SAVE_RATIO==0:
             if os.path.isdir(record_state) and fd_frame_data is not None:
                 fd_frame_data.write(f'{keep_frame_cnt},{time_stamp},{depth_scale}\n')
