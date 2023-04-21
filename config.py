@@ -31,8 +31,8 @@ if rov_type==4:
     water_scale=90/64.2
     #water_scale=1
     cam_main_int = [
-        [424,0,848/2],
-        [0,422,480/2],
+        [424*water_scale,0,848/2],
+        [0,422*water_scale,480/2],
         [0,0,1]]
     grip_pos_rel_mm=(220,-17,21.5) #range left up in mm
     #grip_pos_rel_mm=(1220,20,20) #range left up in mm
