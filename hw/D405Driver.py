@@ -18,7 +18,7 @@ socket_pub = utils.publisher(zmq_topics.topic_main_cam_port)
 socket_pub_ts=utils.publisher(zmq_topics.topic_main_cam_ts_port)
 
 #WRITE_DIR = '/local/D405/' #'/home/uav/data/D405/'
-
+time.sleep(6)
 FRAME_MOD = 1
 
 FPS = 90
@@ -27,10 +27,11 @@ RES_Y = 480
 
 KEEP_STROBE_FRAMES = True
 SAVE_RATIO = 3
-SEND_RATIO = 3
+SEND_RATIO = 1
 SAVE = False
 IMSHOW = False
 DEPTH_THRESH = 1.0
+fd_frame_data=None
 
 if __name__ == "__main__":
     record_state=None
@@ -98,14 +99,14 @@ if __name__ == "__main__":
         val = float(grey_l.mean())
         avg_val = avg_val * 0.8 + val * 0.2
         elapsed_time = time.time() - last_kept_ts
-        if elapsed_time < 0.09:
+        if elapsed_time < 0.1:
             continue
-        if KEEP_STROBE_FRAMES and val < 1.0 * avg_val and elapsed_time < 0.12:
+        if KEEP_STROBE_FRAMES and val < 1.0 * avg_val and elapsed_time < 0.14:
             continue
         last_kept_ts = time.time()
         keep_frame_cnt += 1
         if record_state and keep_frame_cnt%SAVE_RATIO==0:
-            if os.path.isdir(record_state):
+            if os.path.isdir(record_state) and fd_frame_data is not None:
                 fd_frame_data.write(f'{keep_frame_cnt},{time_stamp},{depth_scale}\n')
                 cv2.imwrite(record_state + f'{keep_frame_cnt:06d}.jpg',col_img)
                 open(record_state+f'd{keep_frame_cnt:06d}.bin','wb').write(depth_frame_raw.tobytes())
@@ -114,13 +115,13 @@ if __name__ == "__main__":
                 print("Write directory doesnt exist!")
 
         if keep_frame_cnt%SEND_RATIO==0:
-            socket_pub_ts.send_multipart([zmq_topics.topic_main_cam_ts,pickle.dumps((
-                keep_frame_cnt,time_stamp,depth_frame.get_timestamp(),color_frame.get_timestamp()))])
             socket_pub.send_multipart([zmq_topics.topic_main_cam,
                 pickle.dumps((keep_frame_cnt,col_img.shape)),col_img.tobytes()])
             scale_to_mm=depth_scale*1000
             socket_pub.send_multipart([zmq_topics.topic_main_cam_depth,
                 pickle.dumps((keep_frame_cnt,scale_to_mm,depth_frame_raw.shape)),depth_frame_raw.tostring()])
+            socket_pub_ts.send_multipart([zmq_topics.topic_main_cam_ts,pickle.dumps((
+                keep_frame_cnt,time_stamp,depth_frame.get_timestamp(),color_frame.get_timestamp()))])
             #cv2.imwrite(record_state + 'greyl_' + str(keep_frame_cnt) + '.jpeg', grey_l)
             #cv2.imwrite(record_state + 'greyr_' + str(keep_frame_cnt) + '.jpeg', grey_r)
             #depth_img_U8 = (np.clip(depth_img_m, 0, 1.0) * 255).astype(np.uint8)
