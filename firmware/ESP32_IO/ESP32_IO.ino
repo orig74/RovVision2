@@ -39,7 +39,9 @@ int servo_offset = 0;
 
 unsigned long prev_sensor_event_us;
 unsigned long prev_loop_us;
+unsigned long prev_led_toggle_ms;
 unsigned long no_data_cnt;
+bool disconnected = false;
 
 MS5837 DepthSensor;
 bool depth_sensor_ok=false;
@@ -61,7 +63,7 @@ bool CheckSerialMsgCHKSM(byte* c_buff)
 {
   uint16_t msg_chksum = unpack_16bit(c_buff, N_SERIAL_RX_BYTES - 2);
   uint16_t chksm_calc = CalcChksm(c_buff, N_SERIAL_RX_BYTES - 2);
-  return chksm_calc == msg_chksum && msg_chksum;
+  return (chksm_calc == msg_chksum) && msg_chksum;
 }
 
 int ScaleUint16(uint16_t in_val, int out_min, int out_max) {
@@ -136,7 +138,7 @@ void loop() {
     if (CheckSerialMsgCHKSM(msg_buff)) {
       // Valid outputs message recieved, update outputs
       no_data_cnt = 0;
-      digitalWrite(STATUS_LED_PIN, HIGH);
+      disconnected = false;
       
       // Thrusters
       for (int thrstr_idx=0; thrstr_idx < 8; thrstr_idx++) {
@@ -169,13 +171,23 @@ void loop() {
   // If no serial messages for N loops write outputs to OFF
   if (no_data_cnt > NODATA_TIMEOUT_LOOPS) {
     no_data_cnt = 0;
+    disconnected = true;
     for (int thrstr_idx=0; thrstr_idx < 8; thrstr_idx++) {
         thrusters[thrstr_idx].writeMicroseconds(PWM_MIDPOINT);
     }
-    digitalWrite(STATUS_LED_PIN, LOW);
   }
 
-  // Sensors read task
+  // Blue status LED and thruster init
+  if (disconnected) {
+      if (millis() - prev_led_toggle_ms > 1000) {
+          prev_led_toggle_ms = millis();
+          digitalWrite(STATUS_LED_PIN, !digitalRead(STATUS_LED_PIN));
+      }   
+  } else {
+	digitalWrite(STATUS_LED_PIN, HIGH);
+  }
+
+  // Sensors read task 
   if((micros() - prev_sensor_event_us) > SENSOR_EVENT_MICROS) {
     prev_sensor_event_us = micros();
 

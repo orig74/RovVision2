@@ -21,7 +21,7 @@ import zmq_wrapper as utils
 import traceback
 subs_socks=[]
 subs_socks.append(utils.subscribe([ zmq_topics.topic_record_state ],zmq_topics.topic_record_state_port))
-subs_socks.append(utils.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_system_state, zmq_topics.topic_lights],zmq_topics.topic_controller_port))
 socket_pub = utils.publisher(zmq_topics.topic_camera_port)
 socket_pub_ts = utils.publisher(zmq_topics.topic_camera_ts_port)
 socket_pub_telem = utils.publisher(zmq_topics.topic_camera_telem_port)
@@ -31,14 +31,17 @@ parser.add_argument("--debug", help="Show frames with opencv", action='store_tru
 args = parser.parse_args()
 
 #CAM_IDS = ['DEV_000F315DB084', 'DEV_000F315DAB68', 'DEV_000F315DAB37'] # 
-CAM_IDS = ['DEV_000F315DB084', 'DEV_000F315DAB68']#, 'DEV_000F315DAB37'] # 
+CAM_IDS = ['DEV_000F315DAB68', 'DEV_000F315DB084']#, 'DEV_000F315DAB37'] # 
 MASTER_CAM_ID = CAM_IDS[0]
 NUM_CAMS = len(CAM_IDS)
 
 # Min exposure time: 32us
 CAM_EXPOSURE_US = None #10000
-CAM_EXPOSURE_MAX = 2000 #2000    # us
+CAM_EXPOSURE_MAX = 400 #2000    # us
 CAM_EXPOSURE_MIN = 200  #32
+
+CAM_STROBE_DELAY = 50
+CAM_STROBE_DURATION_MAX = 400
 
 IMG_SIZE_BYTES = 5065984
 
@@ -86,6 +89,11 @@ class AlviumMultiCam(threading.Thread):
             with self.producers_lock:
                 self.producers[cam.get_id()] = FrameProducer(cam, self.frame_queue)
                 self.producers[cam.get_id()].start()
+    
+    def setStrobeLevel(self, val):
+        strobe_duration = int(val * CAM_STROBE_DURATION_MAX / 5)
+        for prod in self.producers.values():
+            prod.cam.get_feature_by_name('StrobeDuration').set(strobe_duration)
 
     def run(self):
         system_state = 'INIT'
@@ -382,7 +390,9 @@ class FrameProducer(threading.Thread):
             self.cam.get_feature_by_name('ExposureAuto').set('Continuous')
             self.cam.get_feature_by_name('ExposureAutoMax').set(CAM_EXPOSURE_MAX)
             self.cam.get_feature_by_name('ExposureAutoMin').set(CAM_EXPOSURE_MIN)
-        self.cam.get_feature_by_name('GainAuto').set('Continuous')
+
+        self.cam.get_feature_by_name('GainAuto').set('Off') # Continuous
+        self.cam.get_feature_by_name('Gain').set(20)
         self.cam.get_feature_by_name('BalanceWhiteAuto').set('Continuous')
 
         self.cam.set_pixel_format(PixelFormat.BayerRG8)  # PixelFormat.Bgr8
@@ -394,6 +404,13 @@ class FrameProducer(threading.Thread):
         self.cam.get_feature_by_name('ActionDeviceKey').set(ACTION_DEV_KEY)
         self.cam.get_feature_by_name('ActionGroupKey').set(ACTION_GROUP_KEY)
         self.cam.get_feature_by_name('ActionGroupMask').set(ACTION_GROUP_MASK)
+
+        self.cam.get_feature_by_name('SyncOutSelector').set('SyncOut1')
+        self.cam.get_feature_by_name('SyncOutSource').set('Strobe1')
+        self.cam.get_feature_by_name('StrobeSource').set('FrameTrigger')
+        self.cam.get_feature_by_name('StrobeDurationMode').set('Controlled')
+        self.cam.get_feature_by_name('StrobeDelay').set(CAM_STROBE_DELAY)
+        self.cam.get_feature_by_name('StrobeDuration').set(0) # Set to 0 to turn strobes off
 
         print("Alvium Producer Cam ID: " + self.cam_id)
 
@@ -456,6 +473,8 @@ if __name__ == '__main__':
                 record_state=('/media/data/'+new_record_state_str+'/') if new_record_state_str else None
             if topic==zmq_topics.topic_system_state:
                 _,system_state=data
+            if topic==zmq_topics.topic_lights:
+                multicam_handler_thread.setStrobeLevel(data)
             time.sleep(0.001)
     print('done running thread exited')
  

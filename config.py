@@ -33,9 +33,9 @@ if rov_type==4:
         [424*water_scale,0,848/2],
         [0,422*water_scale,480/2],
         [0,0,1]]
-    grip_pos_rel_mm=(220,-17,21.5) #range left up in mm
+    grip_pos_rel_mm=(50,0,20) #range left up in mm
     #grip_pos_rel_mm=(1220,20,20) #range left up in mm
-    valid_range_mm=(50,1500)
+    valid_range_mm=(50,150)
     
 cam_fps=8
 send_modulo=1

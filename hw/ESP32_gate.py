@@ -26,10 +26,12 @@ ADC_VOLTAGE_MUL = 0.000805
 ADC_VOLTAGE_OFFSET = 0.122
 
 CMND_TIMEOUT = 1.0
+SERIAL_TIMEOUT = 2.0
 
 current_command=[0 for _ in range(8)] # 8 thrusters
 keep_running=True
 last_thrstcmnd_ts=0
+last_serial_rx_ts=time.time()
 gripper_val=0
 camera_servo = 0.0  # -1.0 -> 1.0, or use 0-255 without scale_val function (mapped to 45->135 degrees camera angle)
 rec_state=False
@@ -43,6 +45,12 @@ subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_gripper_cmd, zmq_topic
 subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_record_state],zmq_topics.topic_record_state_port))
 
 ser = serial.Serial(detect_usb.devmap['ESP_USB'], 500000)
+
+def resetESP32():
+    ser.setDTR(False)
+    time.sleep(0.5)
+    ser.setDTR(True)
+    time.sleep(0.5)
 
 def scale_val(value, val_min, val_max, n_bits):
     scaled_range = 2 ** n_bits
@@ -58,7 +66,7 @@ def CalcChksm(bytes):
     return chksm
 
 async def send_serial_command_50hz():
-    global serial_rx_bytes,camera_servo
+    global serial_rx_bytes,camera_servo, last_serial_rx_ts
     while keep_running:
         await asyncio.sleep(1/100.0)
         
@@ -81,6 +89,12 @@ async def send_serial_command_50hz():
 
         while ser.inWaiting():
             serial_rx_bytes += ser.read()
+            last_serial_rx_ts = time.time()
+
+        if (time.time() - last_serial_rx_ts) > SERIAL_TIMEOUT:
+            print("Serial timeout! Resetting ESP32...")
+            resetESP32()
+            last_serial_rx_ts = time.time()
 
         if len(serial_rx_bytes) > N_SERIAL_RX_BYTES-1:
             buff_msg = serial_rx_bytes[-N_SERIAL_RX_BYTES:]
