@@ -9,6 +9,7 @@ import pickle
 import numpy as np
 import pyrealsense2 as rs
 import zmq
+import signal
 import zmq_topics
 import zmq_wrapper as utils
 subs_socks=[]
@@ -17,42 +18,57 @@ subs_socks.append(utils.subscribe([zmq_topics.topic_system_state],zmq_topics.top
 socket_pub = utils.publisher(zmq_topics.topic_main_cam_port)
 socket_pub_ts=utils.publisher(zmq_topics.topic_main_cam_ts_port)
 
+
 #WRITE_DIR = '/local/D405/' #'/home/uav/data/D405/'
-time.sleep(6)
+time.sleep(2)
 FRAME_MOD = 1
 
-FPS = 90
+FPS = 15#90
 RES_X = 848
 RES_Y = 480
 
 KEEP_STROBE_FRAMES = True
-MIN_GAP_BETWEEN_KEEPS = 8 #dectates maxmial keep frequency
-MAX_GAP_BETWEEN_KEEPS = 12 #dectates minimal keep frequency
-SAVE_RATIO = 3
-SEND_RATIO = 1
+MIN_GAP_BETWEEN_KEEPS = 1 *FPS//15 #dectates maxmial keep frequency
+MAX_GAP_BETWEEN_KEEPS = 5 * FPS//15 #dectates minimal keep frequency
+SAVE_RATIO = 3 *FPS//15
+SEND_RATIO = 1 *FPS//15
 SAVE = False
 IMSHOW = False
 DEPTH_THRESH = 1.0
 fd_frame_data=None
 
 class BrightDetector(object):
-    def __init__(self,ws=30):
-        self.buf=[0 for _ in ws]
+    def __init__(self,ws=FPS):
+        self.buf=[0] * ws
 
     def add(self,val):
         self.buf.pop(0)
         self.buf.append(val)
 
     def is_bright(self,val):
-        return abs(val-np.min(self.buf))>abs(val-np.max(self.val))
+        min_g=abs(val-np.min(self.buf))
+        max_g=abs(val-np.max(self.buf))
+        #return abs(val-np.min(self.buf))>abs(val-np.max(self.buf))
+        return min_g>max_g
 
 if __name__ == "__main__":
     record_state=None
     pipeline = rs.pipeline()
+    keep_run=True
+
+    def handler(signum, frame):
+        global keep_run
+        msg = "Ctrl-c was pressed"
+        print(msg, flush=True)
+        time.sleep(1)
+        keep_run=False
+     
+    signal.signal(signal.SIGINT, handler)
+
     config = rs.config()
     config.enable_stream(rs.stream.color, RES_X, RES_Y, rs.format.bgr8, FPS)
     config.enable_stream(rs.stream.depth, RES_X, RES_Y, rs.format.z16, FPS)
-    config.enable_stream(rs.stream.infrared, 1, RES_X, RES_Y, rs.format.y8, FPS)
+    #config.enable_stream(rs.stream.infrared, 1, RES_X, RES_Y, rs.format.y8, FPS)
     #config.enable_stream(rs.stream.infrared, 2, RES_X, RES_Y, rs.format.y8, FPS)
     #config.enable_all_streams()
 
@@ -62,9 +78,12 @@ if __name__ == "__main__":
     intrinsics_color=profile.get_stream(rs.stream.color).as_video_stream_profile().get_intrinsics()
 
     depth_sensor = profile.get_device().first_depth_sensor()
-    depth_sensor.set_option(rs.option.enable_auto_exposure, False)
-    depth_sensor.set_option(rs.option.exposure, 11111)  # Set exposure to inter-frame time
-    depth_sensor.set_option(rs.option.gain, 16)
+
+    sens=pipeline.get_active_profile().get_device().query_sensors()[0]
+    sens.set_option(rs.option.enable_auto_exposure, False)
+    sens.set_option(rs.option.exposure, int(1e6//FPS))  # Set exposure to inter-frame time
+    sens.set_option(rs.option.gain, 10)
+    
     depth_scale = depth_sensor.get_depth_scale()
 
     frame_cnt = -1
@@ -74,7 +93,7 @@ if __name__ == "__main__":
     last_kept_num = -1
     bd=BrightDetector()
 
-    while True:
+    while keep_run:
         socks=zmq.select(subs_socks,[],[],0)[0]
         for sock in socks:
             ret=sock.recv_multipart()
@@ -97,7 +116,7 @@ if __name__ == "__main__":
         #print(1000*time.time() - color_frame.get_timestamp())
 
         depth_frame = frames.get_depth_frame()
-        grey_l_frame = frames.get_infrared_frame(1)
+        #grey_l_frame = frames.get_infrared_frame(1)
         #grey_r_frame = frames.get_infrared_frame(2)
 
         frame_cnt += 1
@@ -108,14 +127,17 @@ if __name__ == "__main__":
         depth_float_raw = depth_frame_raw.astype(np.float32)
         depth_img_m = depth_float_raw * depth_scale
         col_img = np.array(color_frame.get_data())
-        grey_l = np.array(grey_l_frame.get_data())
+        #grey_l = np.array(grey_l_frame.get_data())
         time_stamp=time.time()
         #grey_r = np.array(grey_r_frame.get_data())
 
         if frame_cnt%(2*FPS)==0 and frame_cnt>100:
             print(f'frame_cnt={frame_cnt},keep_frame_cnt={keep_frame_cnt},realfps={FPS*keep_frame_cnt/frame_cnt}')
+            print('::',list(map(int,bd.buf)),np.min(bd.buf),np.max(bd.buf))
+            print('::',[1 if bd.is_bright(i) else 0 for i in bd.buf])
+            #print(color_frame.get_frame_metadata(rs.frame_metadata_value.actual_exposure))
 
-        val = float(grey_l.mean())
+        val = float(col_img.mean())
         bd.add(val)
         keep_gap = frame_cnt-last_kept_num
         if keep_gap<MIN_GAP_BETWEEN_KEEPS:
@@ -124,6 +146,7 @@ if __name__ == "__main__":
             continue
         last_kept_num = frame_cnt
         keep_frame_cnt += 1
+        #print('===',bd.is_bright(val))
 
         #avg_val = avg_val * 0.8 + val * 0.2
         #elapsed_time = time.time() - last_kept_ts

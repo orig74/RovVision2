@@ -70,7 +70,12 @@ async def recv_and_process():
                 if _ret is not None:
                     if last_depth16 is not None:
                         print('ret===',_ret)
-                        d=last_depth16[int(_ret[1]),int(_ret[0])]*scale_to_mm*config.water_scale
+                        try:
+                            d=last_depth16[int(_ret[1]),int(_ret[0])]*scale_to_mm*config.water_scale
+                        except IndexError:
+                            print('===error getting depth for ',_ret)
+                            d=0
+
                         if config.valid_range_mm[0]<d<config.valid_range_mm[1]:
                             xw,yw,s=(np.linalg.inv(np.array(config.cam_main_int)) @ np.array([[_ret[0]*d,_ret[1]*d,d]]).T).flatten()
                             print('===+===',xw,yw,s,_ret)

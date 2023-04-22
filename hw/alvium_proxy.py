@@ -36,12 +36,12 @@ MASTER_CAM_ID = CAM_IDS[0]
 NUM_CAMS = len(CAM_IDS)
 
 # Min exposure time: 32us
-CAM_EXPOSURE_US = None #10000
-CAM_EXPOSURE_MAX = 400 #2000    # us
+CAM_EXPOSURE_US = 2000 #10000
+CAM_EXPOSURE_MAX = 2000 #2000    # us
 CAM_EXPOSURE_MIN = 200  #32
 
-CAM_STROBE_DELAY = 50
-CAM_STROBE_DURATION_MAX = 400
+CAM_STROBE_DELAY = 200
+CAM_STROBE_DURATION_MAX = 800*2
 
 IMG_SIZE_BYTES = 5065984
 
@@ -392,7 +392,7 @@ class FrameProducer(threading.Thread):
             self.cam.get_feature_by_name('ExposureAutoMin').set(CAM_EXPOSURE_MIN)
 
         self.cam.get_feature_by_name('GainAuto').set('Off') # Continuous
-        self.cam.get_feature_by_name('Gain').set(20)
+        self.cam.get_feature_by_name('Gain').set(15)
         self.cam.get_feature_by_name('BalanceWhiteAuto').set('Continuous')
 
         self.cam.set_pixel_format(PixelFormat.BayerRG8)  # PixelFormat.Bgr8
