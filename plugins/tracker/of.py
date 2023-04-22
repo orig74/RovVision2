@@ -8,10 +8,12 @@ class OF(object):
                           maxLevel = 2,
                           criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
         self.old_gray=None    
+        self.last_good=None
 # Take first frame and find corners in it
     def set(self,gray_img,pt):
         self.old_gray=gray_img
         self.p0=np.array(pt[:2],dtype='float32').reshape((-1,1,2))
+        self.last_good=self.p0
 
     def reset(self):
         self.old_gray=None    
@@ -24,11 +26,22 @@ class OF(object):
         good_new = p1[st==1]
         if len(good_new)>0:
             x,y=good_new[0].ravel()
+            if self.last_good is not None:
+                xp,yp=self.last_good[0].ravel()
+                tr=20
+                if abs(x-xp)>tr or abs(y-yp)>tr:
+                    good_new=self.last_good
+            self.last_good=good_new
             self.p0 = good_new.reshape(-1,1,2)
             self.old_gray=frame_gray
             return (x,y)
         else:
-            self.old_gray=None
+            self.old_gray=frame_gray
+            self.p0=self.last_good.reshape(-1,1,2)
+            if self.last_good is not None:
+                return self.last_good[0].ravel()
+        #else:
+        #    self.old_gray=None
 
        
 
