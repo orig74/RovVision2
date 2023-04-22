@@ -4,11 +4,12 @@ import numpy as np
 class OF(object):
     def __init__(self):
         # Parameters for lucas kanade optical flow
-        self.lk_params = dict( winSize  = (7,7),
-                          maxLevel = 2,
+        self.lk_params = dict( winSize  = (15,15),
+                          maxLevel = 3,
                           criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
         self.old_gray=None    
         self.last_good=None
+        self.bad_count=0
 # Take first frame and find corners in it
     def set(self,gray_img,pt):
         self.old_gray=gray_img
@@ -16,10 +17,13 @@ class OF(object):
         self.last_good=self.p0
 
     def reset(self):
-        self.old_gray=None    
+        self.old_gray=None 
+        self.bad_count=0
 
 
     def track(self,frame_gray):
+        if self.bad_count>5:
+            self.reset()
         if self.old_gray is None:
             return None
         p1, st, err = cv2.calcOpticalFlowPyrLK(self.old_gray, frame_gray, self.p0, None, **self.lk_params)
@@ -38,6 +42,7 @@ class OF(object):
         else:
             self.old_gray=frame_gray
             self.p0=self.last_good.reshape(-1,1,2)
+            self.bad_count+=1
             if self.last_good is not None:
                 return self.last_good[0].ravel()
         #else:
