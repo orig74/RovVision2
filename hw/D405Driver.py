@@ -23,11 +23,12 @@ socket_pub_ts=utils.publisher(zmq_topics.topic_main_cam_ts_port)
 time.sleep(2)
 FRAME_MOD = 1
 
-FPS = 15#90
 RES_X = 848
 RES_Y = 480
 
-KEEP_STROBE_FRAMES = True
+KEEP_STROBE_FRAMES = 2 #1 keep strob 2 dont keep strob 3 keepall
+
+FPS = 15 if KEEP_STROBE_FRAMES==1 else 30#90
 MIN_GAP_BETWEEN_KEEPS = 1 *FPS//15 #dectates maxmial keep frequency
 MAX_GAP_BETWEEN_KEEPS = 5 * FPS//15 #dectates minimal keep frequency
 SAVE_RATIO = 3 *FPS//15
@@ -140,10 +141,14 @@ if __name__ == "__main__":
         val = float(col_img.mean())
         bd.add(val)
         keep_gap = frame_cnt-last_kept_num
-        if keep_gap<MIN_GAP_BETWEEN_KEEPS:
-            continue
-        if not bd.is_bright(val) and keep_gap<MAX_GAP_BETWEEN_KEEPS:
-            continue
+        if KEEP_STROBE_FRAMES==1:
+            if keep_gap<MIN_GAP_BETWEEN_KEEPS:
+                continue
+            if not bd.is_bright(val) and keep_gap<MAX_GAP_BETWEEN_KEEPS:
+                continue
+        if KEEP_STROBE_FRAMES==2: #keep dark
+            if bd.is_bright(val) and keep_gap<MAX_GAP_BETWEEN_KEEPS:
+                continue
         last_kept_num = frame_cnt
         keep_frame_cnt += 1
         #print('===',bd.is_bright(val))

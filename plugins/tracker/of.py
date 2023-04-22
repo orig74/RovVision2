@@ -4,7 +4,7 @@ import numpy as np
 class OF(object):
     def __init__(self):
         # Parameters for lucas kanade optical flow
-        self.lk_params = dict( winSize  = (15,15),
+        self.lk_params = dict( winSize  = (7,7),
                           maxLevel = 2,
                           criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
         self.old_gray=None    
