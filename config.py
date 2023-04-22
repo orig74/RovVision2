@@ -36,7 +36,7 @@ if rov_type==4:
         [0,0,1]]
     grip_pos_rel_mm=(50,0,20) #range left up in mm
     #grip_pos_rel_mm=(1220,20,20) #range left up in mm
-    valid_range_mm=(50,150)
+    valid_range_mm=(50,2500)
     
 cam_fps=8
 send_modulo=1
