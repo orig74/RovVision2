@@ -15,6 +15,7 @@ import zmq_wrapper as utils
 subs_socks=[]
 subs_socks.append(utils.subscribe([zmq_topics.topic_record_state],zmq_topics.topic_record_state_port))
 subs_socks.append(utils.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
+subs_socks.append(utils.subscribe([zmq_topics.topic_remote_cmd],zmq_topics.topic_remote_cmd_port))
 socket_pub = utils.publisher(zmq_topics.topic_main_cam_port)
 socket_pub_ts=utils.publisher(zmq_topics.topic_main_cam_ts_port)
 
@@ -26,11 +27,11 @@ FRAME_MOD = 1
 RES_X = 848
 RES_Y = 480
 
-KEEP_STROBE_FRAMES = 2 #1 keep strob 2 dont keep strob 3 keepall
+KEEP_STROBE_FRAMES = 1 #1 keep strob 2 dont keep strob 3 keepall
 
-FPS = 15 if KEEP_STROBE_FRAMES==1 else 30#90
+FPS = 15 if KEEP_STROBE_FRAMES==1 else 15#90
 MIN_GAP_BETWEEN_KEEPS = 1 *FPS//15 #dectates maxmial keep frequency
-MAX_GAP_BETWEEN_KEEPS = 5 * FPS//15 #dectates minimal keep frequency
+MAX_GAP_BETWEEN_KEEPS = 10 * FPS//15 #dectates minimal keep frequency
 SAVE_RATIO = 3 *FPS//15
 SEND_RATIO = 1 *FPS//15
 SAVE = False
@@ -110,6 +111,15 @@ if __name__ == "__main__":
                     fd_frame_data=open(record_state+'d405_frame_data.txt','w')
                     open(record_state+'camera_main.txt','w').write(str(intrinsics_color))
                     open(record_state+'camera_depth.txt','w').write(str(intrinsics_depth))
+            if topic==zmq_topics.topic_remote_cmd:
+                if data['cmd']=='strob_mode':
+                    print('setting strob mode',data)
+                    KEEP_STROBE_FRAMES=data['keep_mode'] 
+                if data['cmd']=='d405param':
+                    if 'exposure' in data:
+                        print('setting setting d405 exposure',data)
+                        exp=min(data['exposure']*1000,int(1e6//FPS)) 
+                        sens.set_option(rs.option.exposure, exp)  # Set exposure to inter-frame time
  
         frames = pipeline.wait_for_frames()
         color_frame = frames.get_color_frame()

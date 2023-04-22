@@ -109,6 +109,12 @@ class rovCommandHandler(object):
 
     def set_thruster_limit(self,val):
         self.pub({'cmd':'thruster_limit','value':val})
+
+    def set_strob_mode(self,val):
+        self.pub({'cmd':'strob_mode','keep_mode':val})
+
+    def set_exposure_d405(self,val):
+        self.pub({'cmd':'d405param','exposure':val})
 #    def start_recording(self):
 #        self.pub({'cmd':'start_recording'})
 #

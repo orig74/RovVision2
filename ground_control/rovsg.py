@@ -140,9 +140,13 @@ def main():
             [sg.Checkbox('H',key='HSV_H',tooltip='h from hsv on cam 1')],
             [sg.Combo(list('RGBrgb'),key='CHANNEL',enable_events=True ,default_value='B',
                     tooltip='detect rope from grey image channel'),
-             sg.Combo(list('01'),key='ROPE_TO_HSV',default_value='0',enable_events=True,
-                    tooltip='detect rope from hsv image channel (h) or in h')],
- 
+            sg.Combo(list('01'),key='ROPE_TO_HSV',default_value='0',enable_events=True,
+                    tooltip='detect rope from hsv image channel (h) or in h'),
+            sg.Combo(list('123'),key='KEEP_STROBE_MODE',enable_events=True ,default_value='N',
+                    tooltip='select 1-keep strobe 2-keep dark 3-keep all'),
+            sg.Input(key='D405EXP',default_text='0',size=(4,1),enable_events=True,
+                tooltip='d405 exposure milis')
+            ] 
             ]
     #yaw_source_options=['VNAV','DVL']
     config_column = [
@@ -399,6 +403,10 @@ def main():
                 rovCommander.set_rope_tracker_to_grey(chan='RGBrgb'.index(values['CHANNEL']))
             if event=='ROPE_TO_HSV':
                 rovCommander.set_rope_tracker_to_hsv(int(values['ROPE_TO_HSV']))
+            if event=='KEEP_STROBE_MODE':
+                rovCommander.set_strob_mode(int(values['KEEP_STROBE_MODE']))
+            if event=='D405EXP':
+                rovCommander.set_exposure_d405(int(values['D405EXP']))
             
             for i,p_type in [(0,'X_HOLD'),(1,'Y_HOLD')]:
                 pb=rovHandler.plot_buffers[zmq_topics.topic_pos_hold_pid_fmt%i]
