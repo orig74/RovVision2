@@ -123,7 +123,7 @@ def main():
                 sg.Text('Range:'),
                 sg.Input(key='Lrange',default_text='0.35',size=(4,1)),
                 sg.Text('Pxy:'),
-                sg.Input(key='Pxy',default_text='0.03',size=(4,1))
+                sg.Input(key='Pxy',default_text='0.015',enable_events=True,size=(5,1))
                 ],
             [ 
                 sg.Button('Ml',tooltip='tracker max lock'),
@@ -335,6 +335,9 @@ def main():
                     rovCommander.vertical_object_lock(rng=float(values['Lrange']),Pxy=float(values['Pxy']))
                 else:
                     rovCommander.vertical_object_unlock()
+
+            if event=='Pxy':
+                rovCommander.update_pxy(float(values['Pxy']))
 
             window['V_LOCK'](rovCommander.vertical_object_lock_state)
 

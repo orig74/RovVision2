@@ -21,7 +21,7 @@ socket_pub_ts=utils.publisher(zmq_topics.topic_main_cam_ts_port)
 
 
 #WRITE_DIR = '/local/D405/' #'/home/uav/data/D405/'
-time.sleep(2)
+time.sleep(6)
 FRAME_MOD = 1
 
 RES_X = 848

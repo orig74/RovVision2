@@ -80,11 +80,12 @@ async def recv_and_process():
     prev_ts=time.time()
     path_vec_idx=0
     dvl_internal_last_pos=None
-
+    msg_cnt=0
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.005)[0]
         for sock in socks:
             ret=sock.recv_multipart()
+            msg_cnt+=1
             if ret[0]==zmq_topics.topic_dvl_cmd:
                 print('got dvl command ',ret[1])
                 if ret[1]==reset_cmd:
@@ -117,7 +118,16 @@ async def recv_and_process():
                     dvl_last_vel=dd
                     last_vel_report=time.time()
                     t=dd['tov']/1e6
-                    xy=drs(t,(dd['vx'],dd['vy']),D2R(yaw))
+                    vel_valid = abs(dd['vx'])<config.dvl_max_valid_speed
+                    vel_valid = vel_valid and abs(dd['vy'])<config.dvl_max_valid_speed
+                    if not vel_valid:
+                        #mark as non valid
+                        dd['valid']=b'n'
+                        printer(f"{msg_cnt}: dvl vel err {dd['vx']:.3f},{dd['vy']:.3f}")
+                    #else:
+                    #    printer(f"{msg_cnt}: dvl vel good {dd['vx']:.3f},{dd['vy']:.3f}")
+
+                    xy=drs(t,(dd['vx'],dd['vy']) if vel_valid else (0,0),D2R(yaw))
                     #external dvl position calculation based on vel only
                     dvl_last_pos  = {'x':xy[0],'y':xy[1],'yaw':D2R(yaw)}
                     #print('++++',dvl_last_pos,t,(dd['vx'],dd['vy']),yaw)
@@ -195,6 +205,10 @@ async def recv_and_process():
                 if data['cmd']=='tracker_vert_object_lock':
                     tracker_lock_range = data['range']
                     Pxy=data['Pxy']
+
+                if data['cmd']=='Pxy update':
+                    Pxy=data['Pxy']
+                    printer(f'Pxy changed to {Pxy}')
                 
                 if data['cmd']=='tracker_vert_object_unlock':
                     tracker_lock_range = None
