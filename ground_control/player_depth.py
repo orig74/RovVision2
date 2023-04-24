@@ -45,6 +45,19 @@ fnums=[int(l) for l in os.popen(f'cd {args.path} && ls -1 *.jpg |cut -d"." -f1')
 fnums.sort()
 i=args.start_frame
 
+def rope_detect_depth(depth_img,start_row=150,nrows=100):
+    #np.save('/tmp/imgd.npy',depth_img)
+    marg=100
+    imt=depth_img[start_row:start_row+nrows,:].sum(axis=0).flatten()/nrows
+    #prioritizing center
+    r=600
+    imtp=imt+np.abs(np.linspace(-r,r,len(imt)))
+    #blur line
+    imtp=np.convolve(imtp,np.ones(20)/20,mode='same')
+    col=np.argmin(imtp[marg:-marg])+marg
+    return imt[col],col,imtp
+
+
 refPt=None
 def click(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
@@ -60,12 +73,18 @@ while 1:
     i=np.clip(i,0,len(fnums)-1)
     fnum=fnums[i]
     rgb_img=cv2.imread(args.path+f'/{fnum:06d}.jpg')
+    posx=0
     if rgb_img is not None:
         shape=rgb_img.shape[:2]
-        depth_img=np.frombuffer(open(args.path+f'/d{fnum:06d}.bin','rb').read(),'uint16').astype('float').reshape(shape)*scale_to_mm
-        print('maxmin',depth_img.max(),depth_img.min())
+        depth_img=np.frombuffer(open(args.path+f'/d{fnum:06d}.bin','rb').read(),'uint16').astype('float').reshape(shape)*scale_to_mm*config.water_scale
+        depth_img[depth_img<1]=10000 #10 meters
+
+        ret=rope_detect_depth(depth_img)
+        posx=ret[1]
+        print('maxmin',depth_img.max(),depth_img.min(),ret[0],ret[1])
     else:
         rgb_img=np.zeros(shape,'uint8')
+    cv2.line(rgb_img,(posx,30),(posx,40),(255,255,255),thickness=4)
     cv2.imshow('rgb',rgb_img)
     cv2.imshow('depth',torgb(depth_img))
     k=cv2.waitKey(0)%0xff
