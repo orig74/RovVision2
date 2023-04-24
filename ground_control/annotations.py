@@ -359,3 +359,17 @@ def draw_depth(img,x,y,depth,tdepth):
     font = cv2.FONT_HERSHEY_SIMPLEX
     cv2.putText(img,'%.2f'%depth \
             ,(x,l+y+20), font, 0.7,(255,0,255),2,cv2.LINE_AA)
+
+
+def draw_main(img,rov_data):
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    rows,cols=img.shape[:2]
+    rng=rov_data.get_rope_range()
+    if rng is not None:
+        line=f'RR{rng:03.2f}'
+        cv2.putText(img,line,(20,rows-20), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+    xpos=rov_data.get_rope_xpos()
+    if xpos is not None:
+        cv2.line(img,(int(xpos*cols),30),(int(xpos*cols),40),(255,255,255),thickness=4)
+
+

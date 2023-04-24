@@ -177,7 +177,7 @@ class rovDataHandler(object):
         self.subs_socks.append(utils.subscribe([zmq_topics.topic_stereo_camera_ts], zmq_topics.topic_camera_ts_port)) #for sync perposes
         self.subs_socks.append(utils.subscribe([zmq_topics.topic_main_cam_ts], zmq_topics.topic_main_cam_ts_port)) #for sync perposes
         self.subs_socks.append(utils.subscribe([zmq_topics.topic_tracker], zmq_topics.topic_tracker_port))
-        self.subs_socks.append(utils.subscribe([zmq_topics.topic_main_tracker], zmq_topics.topic_main_tracker_port))
+        self.subs_socks.append(utils.subscribe([zmq_topics.topic_main_tracker,zmq_topics.topic_tracker], zmq_topics.topic_main_tracker_port))
         self.subs_socks.append(utils.subscribe([zmq_topics.topic_telem], zmq_topics.topic_telem_port))
         self.subs_socks.append(utils.subscribe([zmq_topics.topic_hw_stats], zmq_topics.topic_hw_stats_port))
         self.subs_socks.append(utils.subscribe([zmq_topics.topic_gps], zmq_topics.topic_gps_port))
@@ -361,11 +361,18 @@ class rovDataHandler(object):
                 target_xy[i]=0
         return target_xy
 
-    def get_track_range(self):
+    def get_rope_range(self):
         if zmq_topics.topic_tracker in self.telemtry:
             trdata = self.telemtry[zmq_topics.topic_tracker]
             if trdata['valid']:
                 return trdata['range']
+
+    def get_rope_xpos(self):
+        if zmq_topics.topic_tracker in self.telemtry:
+            trdata = self.telemtry[zmq_topics.topic_tracker]
+            if trdata['valid']:
+                return trdata['rope_col']
+
 
     def get_track_dy(self):
         if zmq_topics.topic_tracker in self.telemtry:
@@ -376,7 +383,6 @@ class rovDataHandler(object):
     def get_main_track_pt(self):
         if zmq_topics.topic_main_tracker in self.telemtry:
             trdata = self.telemtry[zmq_topics.topic_main_tracker]
-            #print('==trdata==',trdata)
             return trdata
 
     def get_depth(self):

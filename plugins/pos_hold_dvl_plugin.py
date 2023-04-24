@@ -273,7 +273,7 @@ if __name__=='__main__':
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_dvl_raw],zmq_topics.topic_dvl_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_remote_cmd],zmq_topics.topic_remote_cmd_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_tracker],zmq_topics.topic_tracker_port))
-    subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_main_tracker],zmq_topics.topic_main_tracker_port))
+    subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_main_tracker,zmq_topics.topic_tracker],zmq_topics.topic_main_tracker_port))
 
     ### plugin outputs
     thrusters_source = zmq_wrapper.push_source(zmq_topics.thrusters_sink_port) 

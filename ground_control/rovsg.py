@@ -19,7 +19,7 @@ sys.path.append('../utils')
 sys.path.append('..')
 
 import config
-from annotations import draw_mono
+from annotations import draw_mono,draw_main
 import numpy as np
 import cv2
 from select import select
@@ -261,6 +261,7 @@ def main():
                 uv=np.array(config.cam_main_int) @ np.array([[gleft,gup,grng]]).T
                 uv=(uv/uv[2,0]).flatten()[:2]*((main_image_size[0]/config.cam_main_sx),(main_image_size[1]/config.cam_main_sy))
                 cv2.circle(main_image,(int(uv[0]),int(uv[1])),4,(0,255,0),1)
+                draw_main(main_image,rovHandler)
 
                 if tr_main and tr_main['xy'] is not None:
                     x,y=tr_main['xy']

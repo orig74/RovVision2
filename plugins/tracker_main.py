@@ -17,10 +17,22 @@ import config
 from tracker.of import OF
 
 printer_source = zmq_wrapper.push_source(zmq_topics.printer_sink_port)
+
 def printer(txt,c=None):
     print('printing:',txt)
     printer_source.send_pyobj({'txt':txt,'c':c})
 
+def rope_detect_depth(depth_img,start_row=150,nrows=100):
+    #np.save('/tmp/imgd.npy',depth_img)
+    marg=100
+    imt=depth_img[start_row:start_row+nrows,:].sum(axis=0).flatten()/nrows
+    #prioritizing center
+    r=600
+    imtp=imt+np.abs(np.linspace(-r,r,len(imt)))
+    #blur line
+    imtp=np.convolve(imtp,np.ones(20)/20,mode='same')
+    col=np.argmin(imtp[marg:-marg])+marg
+    return imt[col],col,imtp
 
 async def recv_and_process():
     keep_running=True
@@ -78,19 +90,28 @@ async def recv_and_process():
 
                         if config.valid_range_mm[0]<d<config.valid_range_mm[1]:
                             xw,yw,s=(np.linalg.inv(np.array(config.cam_main_int)) @ np.array([[_ret[0]*d,_ret[1]*d,d]]).T).flatten()
-                            #print('===+===',xw,yw,s,_ret)
+                            print('===+===',xw,yw,s,_ret)
                         else:
                             d=None
                     _ret=[_ret[0]/cols,_ret[1]/rows]
 
                 res={'xy':_ret,'range':d,'left':xw,'up':yw}
-                #print('returning: ',ret)
+                #print('returning: ',res)
                 sock_pub.send_multipart([zmq_topics.topic_main_tracker,pickle.dumps(res)])
 
             if ret[0]==zmq_topics.topic_main_cam_depth:
                 _,scale_to_mm,shape = pickle.loads(ret[1])
                 last_depth16=np.frombuffer(ret[2],'uint16').reshape(shape)
+                scaled_d = last_depth16.astype('float')*scale_to_mm*config.water_scale
+                scaled_d[scaled_d<1]=10000 #10 meters
+                #import ipdb;ipdb.set_trace()
+                d,col,_=rope_detect_depth(scaled_d)
+                xw,yw,s=(np.linalg.inv(np.array(config.cam_main_int)) @ np.array([[col*d,0*d,d]]).T).flatten()
+                res={'rope_col':col/last_depth16.shape[1],'range':s/1000,'dy':xw/1000,'valid':True}
+                print('returning rope position: ',res)
+                sock_pub.send_multipart([zmq_topics.topic_tracker,pickle.dumps(res)])
 
+                
 
         await asyncio.sleep(0.001)
  
