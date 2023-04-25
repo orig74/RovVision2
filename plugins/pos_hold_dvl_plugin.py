@@ -61,10 +61,19 @@ class DRxy(object):
         self.last_t=t
         return self.x
 D2R=np.radians
+
+def pid_init(ind):
+    pid = PID(**pos_pids[ind])
+    fname='xyz'[ind]+'_hold_pid.json'
+    if os.path.isfile(fname):
+        pid.load(fname)
+    printer(f"reset and reload pid hold {'xyz'[ind]}")
+    return pid
+
 async def recv_and_process():
     keep_running=True
     target_pos=np.zeros(3)
-    pids=[None]*2
+    pids=[pid_init(ind) for ind in [0,1]]
     drs=DRxy() #dr on x, dr on y
     system_state={'mode':[]}
 
@@ -91,11 +100,10 @@ async def recv_and_process():
                 if ret[1]==reset_cmd:
                     print('got dvl reset cmd')
                     dvl_last_pos=None
-                    if dvl_last_pos is not None:
-                        for ind in range(len(pids)):
-                            pids[ind] = PID(**pos_pids[ind])
                     target_pos=np.zeros(3)
                     drs.reset(D2R(yaw))
+                    for ind in [0,1]:
+                        pids[ind] = pid_init(ind)
                     printer(f'reset dvl {yaw}')
                 continue
 
@@ -138,8 +146,10 @@ async def recv_and_process():
                     for ind in range(len(pids)):
                         pid_states=['RX_HOLD','RY_HOLD','RZ_HOLD']
                         is_override = False
+                        override_value=0
                         if ind<2: #only apply for x and y hold
-                            is_override = abs(jm.joy_mix()[('fb','lr')[ind]])>0.03 
+                            override_value=abs(jm.joy_mix()[('fb','lr')[ind]])
+                            is_override = override_value>0.03 
 
                         mod_active = pid_states[ind] in system_state['mode']
                         is_autonav = 'AUTONAV' in system_state['mode'] 
@@ -149,12 +159,13 @@ async def recv_and_process():
                         #        (pid_states[ind]=='RY_HOLD' and abs(jm.joy_mix()['lr'])>0.1 and 'AUTONAV' not in system_state['mode']):
                         
                         #reset pid
-                        if not mod_active or is_override:
-                            pids[ind] = PID(**pos_pids[ind])
-                            fname='xyz'[ind]+'_hold_pid.json'
-                            if os.path.isfile(fname):
-                                pids[ind].load(fname)
+                        #if not mod_active or is_override:
+                        if is_override:
+                            if override_value>0.95:
+                                pids[ind] = pid_init(ind)
+                                printer(f'{msg_cnt} strong override {ind} val {override_value}')
                             target_pos[ind]=dvl_last_pos['xyz'[ind]]
+
                         elif dvl_last_vel['valid']==b'y':
                             x,v=dvl_last_pos['xyz'[ind]],dvl_last_vel['v'+'xyz'[ind]]
                             tetha = -np.radians(dvl_last_pos['yaw'])
