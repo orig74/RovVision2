@@ -8,3 +8,4 @@ scripts/pingviewer-x86_64.AppImage
 *.pyc
 *.avi
 sim/pybullet_data
+*.json
