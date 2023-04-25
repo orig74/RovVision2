@@ -139,7 +139,7 @@ async def recv_and_process():
                         pid_states=['RX_HOLD','RY_HOLD','RZ_HOLD']
                         is_override = False
                         if ind<2: #only apply for x and y hold
-                            is_override = abs(jm.joy_mix()[('fb','lr')[ind]])>0.1 
+                            is_override = abs(jm.joy_mix()[('fb','lr')[ind]])>0.03 
 
                         mod_active = pid_states[ind] in system_state['mode']
                         is_autonav = 'AUTONAV' in system_state['mode'] 

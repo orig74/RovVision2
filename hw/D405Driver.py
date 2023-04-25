@@ -21,7 +21,7 @@ socket_pub_ts=utils.publisher(zmq_topics.topic_main_cam_ts_port)
 
 
 #WRITE_DIR = '/local/D405/' #'/home/uav/data/D405/'
-time.sleep(6)
+#time.sleep(6)
 FRAME_MOD = 1
 
 RES_X = 848
@@ -83,8 +83,11 @@ if __name__ == "__main__":
 
     sens=pipeline.get_active_profile().get_device().query_sensors()[0]
     sens.set_option(rs.option.enable_auto_exposure, False)
+    time.sleep(1.0)
     sens.set_option(rs.option.exposure, int(1e6//FPS))  # Set exposure to inter-frame time
+    time.sleep(1.0)
     sens.set_option(rs.option.gain, 10)
+    time.sleep(1.0)
     
     depth_scale = depth_sensor.get_depth_scale()
 

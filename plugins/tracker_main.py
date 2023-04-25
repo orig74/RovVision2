@@ -23,7 +23,7 @@ def printer(txt,c=None):
     print('printing:',txt)
     printer_source.send_pyobj({'txt':txt,'c':c})
 
-def rope_detect_depth(depth_img,scale_to_mm,start_row=150,nrows=50):
+def rope_detect_depth(depth_img,scale_to_mm,start_row=150,nrows=100):
     #np.save('/tmp/imgd.npy',depth_img)
     marg=100
     sliceimg=depth_img[start_row:start_row+nrows,:]
@@ -86,7 +86,7 @@ async def recv_and_process():
                 rows,cols=main_image.shape[:2]
                 #im_gray=cv2.cvtColor(main_image, cv2.COLOR_BGR2GRAY)
                 l,t,r,b=crop_ltrb
-                im_gray=main_image[t:-b,l:-r,1].copy()
+                im_gray=cv2.cvtColor(main_image[t:-b,l:-r,:].copy(),cv2.COLOR_BGR2GRAY) 
                 #im_gray=main_image[l:-r,t:-b,1].copy()
                 
                 _ret=of.track(im_gray)

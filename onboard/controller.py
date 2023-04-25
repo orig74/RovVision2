@@ -27,6 +27,16 @@ def printer(txt,c=None):
     printer_source.send_pyobj({'txt':txt,'c':c})
 
 
+async def set_gripper(data, system_state):
+    system_state['gripper']=data['val']
+    printer("Gripper delay: " + str(data['val']))
+    if data['val'] == 1:
+       pub_sock.send_multipart([zmq_topics.topic_gripper_cmd,pickle.dumps(0)])
+       await asyncio.sleep(0.01)
+    pub_sock.send_multipart([zmq_topics.topic_gripper_cmd,pickle.dumps(data['val'])])
+    printer(f"controller:\n gripper {system_state['gripper']}")
+
+
 
 async def recv_and_process():
     keep_running=True
@@ -132,9 +142,7 @@ async def recv_and_process():
                         printer(f"controller:\n lights- {system_state['lights']}")
 
                     if data['cmd']=='gripper':
-                        system_state['gripper']=data['val']
-                        pub_sock.send_multipart([zmq_topics.topic_gripper_cmd,pickle.dumps(data['val'])])
-                        printer(f"controller:\n gripper {system_state['gripper']}")
+                         asyncio.get_event_loop().create_task(set_gripper(data, system_state))
 
                     if data['cmd']=='thruster_limit':
                         THRSTR_LIMIT=data['value']
@@ -159,13 +167,8 @@ async def recv_and_process():
                     if jm.dvl_reset_event():
                         pub_sock.send_multipart([zmq_topics.topic_dvl_cmd,b'wcr\n'])
 
-                    if jm.gripper():
-                        system_state['gripper']=jm.gripper()
-                        pub_sock.send_multipart([zmq_topics.topic_gripper_cmd,pickle.dumps(jm.gripper())])
-                        #print('gripper ', jm.gripper())
-
-
-
+                    if jm.gripper_open() or jm.gripper_close():
+                         asyncio.get_event_loop().create_task(set_gripper({'val': jm.gripper_close()}, system_state))
 
 
         tic=time.time()

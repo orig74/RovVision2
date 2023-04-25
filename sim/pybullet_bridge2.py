@@ -409,7 +409,7 @@ def main():
         real_time = time.time()-sim_start
         rt_delta=sim_time-real_time
         if rt_delta>0:
-            #print('sleeping',rt_delta)
+            print('sleeping',rt_delta)
             time.sleep(rt_delta)
         else:
             time.sleep(0.001)
