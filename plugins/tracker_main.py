@@ -104,7 +104,8 @@ async def recv_and_process():
                             d=0
 
                         if config.valid_range_mm[0]<d<config.valid_range_mm[1]:
-                            xw,yw,s=(np.linalg.inv(np.array(config.cam_main_int)) @ np.array([[_ret[0]*d,_ret[1]*d,d]]).T).flatten()
+                            #xw,yw,s=(np.linalg.inv(np.array(config.cam_main_int)) @ np.array([[_ret[0]*d,_ret[1]*d,d]]).T).flatten()
+                            xw,yw,s=(cam_main_inv @ np.array([[_ret[0]*d,_ret[1]*d,d]]).T).flatten()
                             #print('===+===',xw,yw,s,_ret)
                         else:
                             d=None
