@@ -28,6 +28,8 @@ def printer(txt,c=None):
 
 
 async def set_gripper(data, system_state):
+    if not system_state['arm']:
+        return
     system_state['gripper']=data['val']
     printer("Gripper delay: " + str(data['val']))
     if data['val'] == 1:

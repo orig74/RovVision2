@@ -154,13 +154,13 @@ class Joy_map:
         return False
 
     def gripper_open(self):
-        if jtype=='xbox':
+        if jtype=='xbox' and self.__right_shift():
             axis=self.axis
             return (axis[5]+1)/2 > 0
         return False
 
     def gripper_close(self):
-        if jtype=='xbox':
+        if jtype=='xbox' and self.__right_shift():
             axis=self.axis
             return (axis[2]+1)/2 > 0
         return False
