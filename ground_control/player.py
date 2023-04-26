@@ -31,8 +31,9 @@ parser.add_argument("--nosingle",help="dont use the single files only the stream
 #parser.add_argument("--pub_data", help="publish data", action='store_true')
 #parser.add_argument("--pub_camera", help="publish camera", action='store_true')
 #parser.add_argument("--runtracker", help="run tracker on recorded vid", action='store_true')
-parser.add_argument("--bs",help="history buff size",type=int ,default=1000)
-parser.add_argument("--cc",help="color orrection matrix file",default=None)
+#parser.add_argument("--bs",help="history buff size",type=int ,default=1000)
+parser.add_argument("-s",help="start frame",type=int ,default=0)
+#parser.add_argument("--cc",help="color orrection matrix file",default=None)
 parser.add_argument("--ccr",help="the efect of the color correction 0 to 1.0 (max 1.0)",type=float,default=1.0)
 parser.add_argument("path",help="dir path")
 args = parser.parse_args()
@@ -87,6 +88,7 @@ map_port_topic[zmq_topics.topic_gps_port]=[zmq_topics.topic_gps]
 map_port_topic[zmq_topics.topic_pos_hold_port]=[zmq_topics.topic_pos_hold_pid_fmt%i for i in range(3)]
 map_port_topic[zmq_topics.topic_att_hold_port]=[zmq_topics.topic_att_hold_yaw_pid,zmq_topics.topic_att_hold_pitch_pid,zmq_topics.topic_att_hold_roll_pid]
 map_port_topic[zmq_topics.topic_depth_hold_port]=[zmq_topics.topic_depth_hold_pid]
+map_port_topic[zmq_topics.topic_telem_port]=[zmq_topics.topic_telem]
 
 map_topic_port={}
 map_port_publisher={}
