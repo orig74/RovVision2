@@ -283,6 +283,9 @@ def draw_depth(img,x,y,depth,tdepth):
     font = cv2.FONT_HERSHEY_SIMPLEX
     cv2.putText(img,'%.2f'%depth \
             ,(x,l+y+20), font, 0.7,(255,0,255),2,cv2.LINE_AA)
+    cv2.putText(img,'t%.2f'%tdepth \
+            ,(x,l+y+40), font, 0.6,(255,0,200),2,cv2.LINE_AA)
+
 
 
 def draw_main(img,rov_data):
