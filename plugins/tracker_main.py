@@ -120,7 +120,7 @@ async def recv_and_process():
                 last_depth16=np.frombuffer(ret[2],'uint16').reshape(shape)
                 d,col,_=rope_detect_depth(last_depth16,scale_to_mm)
                 xw,yw,s=(cam_main_inv @ np.array([[col*d,0*d,d]]).T).flatten()
-                if 1:
+                if config.valid_range_mm[0]<d<config.valid_range_mm[1]:
                     #import ipdb;ipdb.set_trace()
                     #d,col,_=rope_detect_depth(scaled_d)
                     res={'rope_col':col/last_depth16.shape[1],'range':s/1000,'dy':xw/1000,'valid':True}
