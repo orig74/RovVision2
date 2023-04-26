@@ -159,8 +159,7 @@ async def recv_and_process():
                         #        (pid_states[ind]=='RY_HOLD' and abs(jm.joy_mix()['lr'])>0.1 and 'AUTONAV' not in system_state['mode']):
                         
                         #reset pid
-                        #if not mod_active or is_override:
-                        if is_override:
+                        if not mod_active or is_override:
                             if override_value>0.95:
                                 pids[ind] = pid_init(ind)
                                 printer(f'{msg_cnt} strong override {ind} val {override_value}')

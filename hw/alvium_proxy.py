@@ -475,7 +475,7 @@ if __name__ == '__main__':
                 _,system_state=data
             if topic==zmq_topics.topic_lights:
                 multicam_handler_thread.setStrobeLevel(data)
-            time.sleep(0.001)
+            time.sleep(0.01)
     print('done running thread exited')
  
     multicam_handler_thread.join()

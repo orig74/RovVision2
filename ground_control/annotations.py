@@ -129,7 +129,7 @@ def draw_mono(img,message_dict,fmt_cnt_l):
             prev_fps_time = time.time()
         line+=' {:>.2f}Cfps, {:>.2f}Rfps'.format(cfps, cfps / config.save_modulo)
         #print('fpsline',line)
-        cv2.putText(img,line,(sy(10),sx(560+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+        cv2.putText(img,line,(sy(10),sx(560+voff)), font, 0.7,(255,0,0),2,cv2.LINE_AA)
     
     if 'dvl_deadrecon' in message_dict:
         dvl_yaw_deg=message_dict['dvl_deadrecon']['yaw']
@@ -160,11 +160,11 @@ def draw_mono(img,message_dict,fmt_cnt_l):
     #    cv2.putText(img,line,(sy(450),sx(560+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
     if zmq_topics.topic_record_state in message_dict:
         if message_dict[zmq_topics.topic_record_state]:
-            cv2.putText(img,'REC',(sy(10),sx(40)), font, 0.7,(0,0,255),2,cv2.LINE_AA)
+            cv2.putText(img,'REC',(sy(10),sx(40)), font, 0.7,(255,255,0),2,cv2.LINE_AA)
     if zmq_topics.topic_system_state in message_dict:
         ss = message_dict[zmq_topics.topic_system_state][1]
         cv2.putText(img,'ARM' if ss['arm'] else 'DISARM' \
-                ,(sy(20),sx(20)), font, 0.7,(0,0,255) if ss['arm'] else (0,255,0),2,cv2.LINE_AA)
+                ,(sy(20),sx(20)), font, 0.7,(0,0,255) if ss['arm'] else (255,0,0),2,cv2.LINE_AA)
         modes = sorted(ss['mode'])
         if len(modes)==0:
             modes_str='MANUAL'
@@ -196,7 +196,7 @@ def draw_mono(img,message_dict,fmt_cnt_l):
  
     if zmq_topics.topic_hw_stats in message_dict:
         line=hw_stats_tools.get_hw_str(message_dict[zmq_topics.topic_hw_stats][1])
-        cv2.putText(img,line,(sy(670+500),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+        cv2.putText(img,line,(sy(670+500),sx(580+voff)), font, 0.7,(255,0,0),2,cv2.LINE_AA)
     if zmq_topics.topic_thrusters_comand in message_dict:
         thrst_cmnd = message_dict[zmq_topics.topic_thrusters_comand][1]
         #try:
