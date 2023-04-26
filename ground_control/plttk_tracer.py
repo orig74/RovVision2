@@ -91,6 +91,9 @@ class Plotter(object):
         self.ignore_yaw=ignore_yaw
         self.rad=4.0
 
+    def update_rad(self,rad):
+        self.rad=rad
+
     def initPlots(self):
         self.ax1.clear()
         self.hdl_pos = self.ax1.plot([1,2],[1,2],'-')
@@ -100,7 +103,7 @@ class Plotter(object):
         self.canvas.draw()
 
     def center(self):
-        gdata.map_center = gdata.curr_pos[:]
+        gdata.map_center = gdata.curr_pos[::-1]
         
     def clear_trace(self):
         gdata.pos_hist.clear() 
@@ -142,7 +145,9 @@ class Plotter(object):
         #hdl_last_pos
         self.hdl_arrow.remove()
         #self.hdl_arrow = self.ax1.arrow(gdata.curr_pos[0],gdata.curr_pos[1],ch*0.005,-sh*0.005,width=0.1,alpha=0.4)
-        self.hdl_arrow = self.ax1.arrow(gdata.curr_pos[1],gdata.curr_pos[0],ch*0.005,-sh*0.005,width=0.1,alpha=0.4)
+        rad_sc=0.005*self.rad*3
+        width_sc=0.1*self.rad/6
+        self.hdl_arrow = self.ax1.arrow(gdata.curr_pos[1],gdata.curr_pos[0],ch*rad_sc,-sh*rad_sc,width=width_sc,alpha=0.4)
 
         if self.target_pos is None:
             self.target_pos=(0,0)

@@ -34,80 +34,6 @@ def draw_seperate(imgl,imgr,message_dict):
     if zmq_topics.topic_tracker in message_dict:
         tracker.draw_track_rects(message_dict[zmq_topics.topic_tracker],imgl,imgr)
 
-def draw(img,message_dict,fmt_cnt_l,fmt_cnt_r):
-    global prev_fps_time, prev_frame_cnt, cfps
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    #print('-2-',md)
-    #line1='{:08d}'.format(fmt_cnt_l)
-    #cv2.putText(img,line1,(10,50), font, 0.5,(0,0,255),1,cv2.LINE_AA)
-
-    voff=113
-    #if vd.get('record_state',False):
-    #    cv2.putText(img,'REC '+vd['disk_usage'],(10,200),font, 0.5,(0,0,255),1,cv2.LINE_AA)
-    if prev_frame_cnt is None:
-        prev_fps_time=time.time()
-        prev_frame_cnt=fmt_cnt_l
-    if fmt_cnt_l is not None:
-        line=' {:>8}'.format(fmt_cnt_l)
-        if fmt_cnt_l >= prev_frame_cnt+50:
-            cfps = (fmt_cnt_l - prev_frame_cnt) / (time.time() - prev_fps_time)
-            prev_frame_cnt = fmt_cnt_l
-            prev_fps_time = time.time()
-        line+=' {:>.2f}Cfps'.format(cfps)
-        cv2.putText(img,line,(sy(10),sx(575+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
-    if zmq_topics.topic_imu in message_dict:
-        m=message_dict[zmq_topics.topic_imu]
-        yaw,pitch,roll=m['yaw'],m['pitch'],m['roll']
-        draw_compass(img,sy(1000+155),sx(438+voff),yaw,pitch,roll)
-    if zmq_topics.topic_depth in message_dict:
-        target_depth = message_dict.get(zmq_topics.topic_depth_hold_pid,{}).get('T',0)
-        draw_depth(img,0,0,message_dict[zmq_topics.topic_depth]['depth'],target_depth)
-    if zmq_topics.topic_sonar in message_dict and 'sonar' in message_dict[zmq_topics.topic_sonar]:
-        sonar_rng = message_dict[zmq_topics.topic_sonar]['sonar']
-        line=' {:>.2f},{:>.2f} SRng'.format(*sonar_rng)
-        cv2.putText(img,line,(sy(450),sx(575+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
-    if zmq_topics.topic_record_state in message_dict:
-        if message_dict[zmq_topics.topic_record_state]:
-            cv2.putText(img,'REC',(sy(25),sx(20)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
-    if zmq_topics.topic_system_state in message_dict:
-        ss = message_dict[zmq_topics.topic_system_state][1]
-        cv2.putText(img,'ARM' if ss['arm'] else 'DISARM' \
-                ,(sy(100),sx(20)), font, 0.7,(0,0,255) if ss['arm'] else (0,255,0),2,cv2.LINE_AA)
-        modes = sorted(ss['mode'])
-        if len(modes)==0:
-            modes_str='MANUAL'
-        else:
-            modes_str=' '.join(modes)
-        cv2.putText(img, modes_str\
-                ,(sy(240),sx(20)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
-    if zmq_topics.topic_tracker in message_dict:
-        rng  = message_dict[zmq_topics.topic_tracker].get('range_f',-1.0)
-        line='{:>.2f} TRng'.format(rng)
-        cv2.putText(img,line,(sy(400),sx(600+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
-    if zmq_topics.topic_telem in message_dict:
-        v=message_dict[zmq_topics.topic_telem]['V']
-        i=message_dict[zmq_topics.topic_telem]['I']
-        leak=message_dict[zmq_topics.topic_telem]['leak']
-        if leak:
-            pos=(90, 90)
-            cv2.circle(img, pos, 52, (0, 0, 255), -1)
-            cv2.putText(img,"LEAK!",(pos[0]-42, pos[1]+10), font, 1.0,(255,255,255),3,cv2.LINE_AA)
-        line='{:>.2f}V {:>.2f}I'.format(v,i)
-        cv2.putText(img,line,(sy(50),sx(600+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
-    if zmq_topics.topic_hw_stats in message_dict:
-        line=hw_stats_tools.get_hw_str(message_dict[zmq_topics.topic_hw_stats][1])
-        cv2.putText(img,line,(sy(670+500),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
-    if zmq_topics.topic_thrusters_comand in message_dict:
-        thrst_cmnd = message_dict[zmq_topics.topic_thrusters_comand][1]
-        draw_thrusters(img, (650, 350), thrst_cmnd)
-    if zmq_topics.topic_lights in message_dict:
-        lights=message_dict[zmq_topics.topic_lights]
-        cv2.putText(img,'L'+str(lights),(sy(670+360),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
-    if zmq_topics.topic_dvl_vel in message_dict:
-        dd = message_dict[zmq_topics.topic_dvl_vel]
-        avg_vel = math.sqrt(dd['vx']**2 + dd['vy']**2 + dd['vz']**2)
-        cv2.putText(img,'VEL: '+str(round(avg_vel, 2)),(sy(670+120),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
-
 def draw_mono(img,message_dict,fmt_cnt_l):
     global prev_fps_time, prev_frame_cnt, cfps
     font = cv2.FONT_HERSHEY_SIMPLEX
@@ -131,11 +57,11 @@ def draw_mono(img,message_dict,fmt_cnt_l):
         #print('fpsline',line)
         cv2.putText(img,line,(sy(10),sx(560+voff)), font, 0.7,(255,0,0),2,cv2.LINE_AA)
     
-    if 'dvl_deadrecon' in message_dict:
-        dvl_yaw_deg=message_dict['dvl_deadrecon']['yaw']
-        dvl_pos_std=message_dict['dvl_deadrecon']['pos_std']
-        line=f'{dvl_pos_std:03.2f}Dstd'
-        cv2.putText(img,line,(sy(680),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+    #if 'dvl_deadrecon' in message_dict:
+    #    dvl_yaw_deg=message_dict['dvl_deadrecon']['yaw']
+    #    dvl_pos_std=message_dict['dvl_deadrecon']['pos_std']
+    #    line=f'{dvl_pos_std:03.2f}Dstd'
+    #    cv2.putText(img,line,(sy(680),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
 
     else:
         dvl_yaw_deg=None
@@ -164,14 +90,14 @@ def draw_mono(img,message_dict,fmt_cnt_l):
     if zmq_topics.topic_system_state in message_dict:
         ss = message_dict[zmq_topics.topic_system_state][1]
         cv2.putText(img,'ARM' if ss['arm'] else 'DISARM' \
-                ,(sy(20),sx(20)), font, 0.7,(0,0,255) if ss['arm'] else (255,0,0),2,cv2.LINE_AA)
+                ,(sy(20),sx(20)), font, 0.7,(255,0,0) if ss['arm'] else (0,255,0),2,cv2.LINE_AA)
         modes = sorted(ss['mode'])
         if len(modes)==0:
             modes_str='MANUAL'
         else:
             modes_str=' '.join(modes)
         cv2.putText(img, modes_str\
-                ,(sy(140),sx(20)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+                ,(sy(140),sx(20)), font, 0.7,(255,0,155),2,cv2.LINE_AA)
     if zmq_topics.topic_tracker in message_dict:
         rng  = message_dict[zmq_topics.topic_tracker].get('range_f',-1.0)
         line='{:>.2f} TRng'.format(rng)
@@ -182,7 +108,10 @@ def draw_mono(img,message_dict,fmt_cnt_l):
     #    i=message_dict[zmq_topics.topic_volt]['I']
     #    line='{:>.2f}V {:>.2f}I'.format(v,i)
     #    cv2.putText(img,line,(sy(50),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
-
+    if zmq_topics.topic_thrusters_comand in message_dict:
+        thrst_cmnd = message_dict[zmq_topics.topic_thrusters_comand][1]
+        draw_thrusters(img, (40, 32), thrst_cmnd)
+ 
     if zmq_topics.topic_telem in message_dict:
         v=message_dict[zmq_topics.topic_telem]['V']
         i=message_dict[zmq_topics.topic_telem]['I']
@@ -197,12 +126,7 @@ def draw_mono(img,message_dict,fmt_cnt_l):
     if zmq_topics.topic_hw_stats in message_dict:
         line=hw_stats_tools.get_hw_str(message_dict[zmq_topics.topic_hw_stats][1])
         cv2.putText(img,line,(sy(670+500),sx(580+voff)), font, 0.7,(255,0,0),2,cv2.LINE_AA)
-    if zmq_topics.topic_thrusters_comand in message_dict:
-        thrst_cmnd = message_dict[zmq_topics.topic_thrusters_comand][1]
-        #try:
-        #    print('drawing thrusters...')
-        draw_thrusters(img, (40, 32), thrst_cmnd)
-        #except Exception as e:
+       #except Exception as e:
         #    print('draw_thrusters error',e)
  
 from math import cos,sin,pi

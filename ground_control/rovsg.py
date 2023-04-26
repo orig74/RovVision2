@@ -173,7 +173,7 @@ def main():
         ]
 
     matplot_column2 = [
-        [sg.Button('cnt',key='CENTER_TRACE',tooltip='center trace'),sg.Button('clr',key='CLEAR_TRACE',tooltip='clear trace')],
+        [sg.Button('cnt',key='CENTER_TRACE',tooltip='center trace'),sg.Button('clr',key='CLEAR_TRACE',tooltip='clear trace'),sg.Combo([f'{i}' for i in range(1,10)],key='PLOTER_RAD',enable_events=True,tooltip='map radius in meters')],
         [sg.Canvas(key="-TRACE-CANVAS-", size=(300,300))]
         ]
 
@@ -361,7 +361,6 @@ def main():
             if event=='AUTO_NEXT':
                 track_thread.auto_next=values['AUTO_NEXT']
                 printer(f'set auto next to {track_thread.auto_next}')
-                
 
             if event=='Mn':
                 track_thread.do_next()
@@ -375,6 +374,9 @@ def main():
 
             if event=='CLEAR_TRACE':
                 trace_plotter.clear_trace()
+
+            if event=='PLOTER_RAD':
+                trace_plotter.update_rad(float(values['PLOTER_RAD']))
 
             if event=='Reset-DVL':
                 rovCommander.reset_dvl()
