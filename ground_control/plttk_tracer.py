@@ -80,7 +80,7 @@ def get_rot(yaw,pitch,roll):
     return R
 
 class Plotter(object):
-    def __init__(self,canvas):
+    def __init__(self,canvas,ignore_yaw=True):
         self.figure1 = Figure(figsize=(4,4), dpi=100)
         self.ax1 = self.figure1.add_subplot(111)
         self.canvas = FigureCanvasTkAgg(self.figure1, master=canvas)
@@ -88,6 +88,7 @@ class Plotter(object):
         self.initPlots()
         self.runPlotsFlag = True
         self.yaw_rad=0
+        self.ignore_yaw=ignore_yaw
         self.rad=4.0
 
     def initPlots(self):
@@ -116,36 +117,51 @@ class Plotter(object):
             self.yaw_rad = np.radians(ldata['yaw'])
             self.target_pos=target_pos
 
+    def update_pos_data(self,curr_pos,target_pos,yaw_deg=None):
+        gdata.pos_hist.add(curr_pos)
+        gdata.trace_hist.add(curr_pos)
+        gdata.curr_pos=curr_pos
+        #self.yaw_rad = np.radians(ldata['yaw'] if yaw_deg is None else yaw_deg)
+        if self.ignore_yaw:
+            self.yaw_rad=0
+        else:
+            self.yaw_rad = np.radians(yaw_deg)
+        self.target_pos=target_pos
+
     def redraw(self):
+        yaw_rad=self.yaw_rad
+        ch=np.cos(yaw_rad-np.pi/2)
+        sh=np.sin(yaw_rad-np.pi/2)
 
-            yaw_rad=self.yaw_rad
-            ch=np.cos(yaw_rad-np.pi/2)
-            sh=np.sin(yaw_rad-np.pi/2)
+        pos_arr = gdata.pos_hist()
+        #pos_arr=pos_arr-pos_arr[0,:]
+        #self.hdl_pos[0].set_ydata(pos_arr[:,1])
+        #self.hdl_pos[0].set_xdata(pos_arr[:,0])
+        self.hdl_pos[0].set_ydata(pos_arr[:,0])
+        self.hdl_pos[0].set_xdata(pos_arr[:,1])
+        #hdl_last_pos
+        self.hdl_arrow.remove()
+        #self.hdl_arrow = self.ax1.arrow(gdata.curr_pos[0],gdata.curr_pos[1],ch*0.005,-sh*0.005,width=0.1,alpha=0.4)
+        self.hdl_arrow = self.ax1.arrow(gdata.curr_pos[1],gdata.curr_pos[0],ch*0.005,-sh*0.005,width=0.1,alpha=0.4)
 
-            pos_arr = gdata.pos_hist()
-            #pos_arr=pos_arr-pos_arr[0,:]
-            self.hdl_pos[0].set_ydata(pos_arr[:,1])
-            self.hdl_pos[0].set_xdata(pos_arr[:,0])
-            #hdl_last_pos
-            self.hdl_arrow.remove()
-            self.hdl_arrow = self.ax1.arrow(gdata.curr_pos[0],gdata.curr_pos[1],ch*0.005,-sh*0.005,width=0.1,alpha=0.4)
+        if self.target_pos is None:
+            self.target_pos=(0,0)
 
-            if self.target_pos is None:
-                self.target_pos=(0,0)
+        ch=np.cos(-yaw_rad+np.pi/2)
+        sh=np.sin(-yaw_rad+np.pi/2)
+        x,y = self.target_pos[:2]
+        x,y = x*ch-y*sh,x*sh+y*ch
 
-            ch=np.cos(-yaw_rad+np.pi/2)
-            sh=np.sin(-yaw_rad+np.pi/2)
-            x,y = self.target_pos[:2]
-            x,y = x*ch-y*sh,x*sh+y*ch
-            
-            self.hdl_target_pos[0].set_ydata(-x)
-            self.hdl_target_pos[0].set_xdata(y)
+        #self.hdl_target_pos[0].set_ydata(-x)
+        #self.hdl_target_pos[0].set_xdata(y)
+        self.hdl_target_pos[0].set_ydata(y)
+        self.hdl_target_pos[0].set_xdata(-x)
 
-            cx,cy = gdata.map_center[:2]
-            rad=self.rad
-            self.ax1.set_xlim(-rad+cx,rad+cx)
-            self.ax1.set_ylim(-rad+cy,rad+cy)
-            self.canvas.draw()
+        cx,cy = gdata.map_center[:2]
+        rad=self.rad
+        self.ax1.set_xlim(-rad+cx,rad+cx)
+        self.ax1.set_ylim(-rad+cy,rad+cy)
+        self.canvas.draw()
 
 
 

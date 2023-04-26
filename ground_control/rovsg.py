@@ -432,8 +432,9 @@ def main():
             rovHandler.next()
 
             rov_telem=rovHandler.getTelemtry()
-            if 'dvl_deadrecon' in rov_telem :
-                trace_plotter.update_dvl_data(rov_telem['dvl_deadrecon'],target_pos=target_xy[::-1],yaw_deg=current_yaw_deg)
+            #if 'dvl_deadrecon' in rov_telem :
+            #    trace_plotter.update_dvl_data(rov_telem['dvl_deadrecon'],target_pos=target_xy[::-1],yaw_deg=current_yaw_deg)
+            trace_plotter.update_pos_data(rovHandler.get_pos_xy2(),rovHandler.get_target_xy(),current_yaw_deg)
             if time.time()-last_plot_dvl>0.3:
                 last_plot_dvl=time.time()
                 trace_plotter.redraw()

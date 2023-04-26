@@ -175,6 +175,7 @@ def main():
 
     pb.configureDebugVisualizer(pb.COV_ENABLE_RENDERING, 1)
     sim_start=time.time()
+    topic=None
     while keep_running:
         tic_cycle = time.time()
         if 1:
@@ -184,6 +185,8 @@ def main():
             for sock in socks:
                 _ret = sock.recv_multipart()
                 topic = _ret[0]
+                if topic == zmq_topics.topic_dvl_cmd:
+                    continue
                 data = pickle.loads(_ret[1])
                 if topic==zmq_topics.topic_thrusters_comand:
                     #_,current_command=pickle.loads(data[1])
@@ -198,7 +201,7 @@ def main():
                     #if not record_state and new_record_state_str:
                     #    os.mkdir(args.data_path+'/'+new_record_state_str)
                     record_state=(args.data_path+'/'+new_record_state_str+'/') if new_record_state_str else None
- 
+
 
 
         scene.update()
