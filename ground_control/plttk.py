@@ -39,8 +39,8 @@ class Plotter(object):
             ax.set_ylim(-ylim,ylim)
         else:
             #ignore timetag thats why 1:
-            min_y = data[:,1:].min()-0.01
-            max_y = data[:,1:].max()+0.01
+            min_y = data[-400:,1:].min()-0.01
+            max_y = data[-400:,1:].max()+0.01
             ax.set_ylim(min_y,max_y)
 
 
