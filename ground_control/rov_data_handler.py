@@ -402,7 +402,12 @@ class rovDataHandler(object):
         self.pub_record_state.send_multipart([zmq_topics.topic_record_state,pickle.dumps(self.record_state)])
         self.telemtry[zmq_topics.topic_record_state]=self.record_state
 
-        self.printer('record'+str(self.record_state))
+        self.printer('record '+str(self.record_state))
+
+    def dump_gui_event(self,data):
+        if self.data_file_fd is not None:
+            pickle.dump([b'gui_event',time.time(),data],self.data_file_fd,-1)
+
 
     def process_telem(self):
         message_dict={}
@@ -416,6 +421,9 @@ class rovDataHandler(object):
                     data=sock.recv_pyobj()
                     print('got...',data)
                     self.printer(data['txt'],data['c'])
+                    if self.data_file_fd is not None:
+                        pickle.dump([b'printer_sink',time.time(),data],self.data_file_fd,-1)
+
                 else:
                     ret = sock.recv_multipart()
                     topic, data = ret
@@ -465,7 +473,6 @@ class rovDataHandler(object):
                         dvl_data = dvl_parse_line(data['dvl_raw']) 
                         if dvl_data is not None and dvl_data['type']=='deadreacon':
                             self.telemtry['dvl_deadrecon']=dvl_data
-            
 
                     if self.data_file_fd is not None:
                         pickle.dump([topic,data_receive_ts,data],self.data_file_fd,-1)

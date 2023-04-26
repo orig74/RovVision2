@@ -224,6 +224,8 @@ def main():
             main_image_size=(config.cam_main_sx,config.cam_main_sy) if values['LAYOUT2'] else (config.cam_main_gui_sx,config.cam_main_gui_sy)
             if event == "Exit" or event == sg.WIN_CLOSED:
                 break
+            
+            rovHandler.dump_gui_event([event,values])
 
             scaley=None if values['AUTOSCALEY'] else 1.0
             if image_shape is not None and event.startswith('-IMAGE-0'):

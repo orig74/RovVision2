@@ -317,8 +317,12 @@ def main():
                 cv2.waitKey(1)
 
             if record_state:
-                cv2.imwrite(record_state + f'/{frame_main_cnt:06d}.jpg',imgm)
-                open(record_state+f'/d{frame_main_cnt:06d}.bin','wb').write(depth_to_send.tobytes())
+                try:
+                    cv2.imwrite(record_state + f'/{frame_main_cnt:06d}.jpg',imgm)
+                    open(record_state+f'/d{frame_main_cnt:06d}.bin','wb').write(depth_to_send.tobytes())
+                except FileNotFoundError:
+                    print('Error writing to ',record_state)
+
 
             zmq_pub_main_camera.send_multipart([zmq_topics.topic_main_cam_depth,pickle.dumps(
                 [frame_main_cnt,scale_to_mm,depth_to_send.shape]),depth_to_send.tostring()],copy=False)
