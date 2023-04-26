@@ -203,6 +203,12 @@ async def recv_and_process():
                     target_pos[0]-=Pxy*dx
                     target_pos[1]+=Pxy*dy
 
+            #### joy hat control 
+            jh_x,jh_y=jm.xy_hat_event()
+            target_pos[0]+=jh_x*0.02
+            target_pos[1]+=jh_y*0.01
+            if (abs(jh_x)+abs(jh_y)):
+                printer(f'hat event {jh_x,jh_y}')
 
             if topic==zmq_topics.topic_remote_cmd:
                 if data['cmd']=='go':

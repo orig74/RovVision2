@@ -120,6 +120,22 @@ class Joy_map:
     def track_lock_event(self):
         return self.__test_togle(self._green) and self.__left_shift()
 
+    def xy_hat_event(self):
+        x,y=0,0
+        if jtype=='xbox':
+            axis=self.axis
+            if time.time()-self.last_hat>0.1:
+                self.last_hat=time.time()
+                if axis[7]<-0.9: 
+                    x-=1
+                if axis[7]>0.9: 
+                    x+=1
+                if axis[6]>0.9: 
+                    y+=1
+                if axis[6]<-0.9: 
+                    y-=1
+        return x,y
+
     def inc_lights_event(self):
         if jtype=='xbox':
             axis=self.axis
