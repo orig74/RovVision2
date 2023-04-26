@@ -474,7 +474,10 @@ class rovDataHandler(object):
                         dvl_data = dvl_parse_line(data['dvl_raw']) 
                         if dvl_data is not None and dvl_data['type']=='deadreacon':
                             self.telemtry['dvl_deadrecon']=dvl_data
-
+                        if dvl_data is not None and dvl_data['type']=='vel':
+                            if dvl_data['valid']==b'y':
+                                self.telemtry['dvl_alt']=dvl_data['alt']
+         
                     if self.data_file_fd is not None:
                         pickle.dump([topic,data_receive_ts,data],self.data_file_fd,-1)
 

@@ -82,8 +82,14 @@ def draw_mono(img,message_dict,fmt_cnt_l):
 
     #if zmq_topics.topic_sonar in message_dict:
     #    sonar_rng = message_dict[zmq_topics.topic_sonar]
-    #    line=' {:>.2f},{:>.2f} SRng'.format(*sonar_rng)
-    #    cv2.putText(img,line,(sy(450),sx(560+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
+    #    line='SR{:04.1f},{:04.1f}'.format(*sonar_rng)
+    #    cv2.putText(img,line,(sy(300),sx(160)), font, 0.6,(255,255,255),2,cv2.LINE_AA)
+
+    if 'dvl_alt' in message_dict:
+        line='alt{:04.1f}'.format(message_dict['dvl_alt'])
+        cv2.putText(img,line,(sy(500),sx(460)), font, 0.6,(255,0,155),2,cv2.LINE_AA)
+
+    
     if zmq_topics.topic_record_state in message_dict:
         if message_dict[zmq_topics.topic_record_state]:
             cv2.putText(img,'REC',(sy(10),sx(40)), font, 0.7,(255,255,0),2,cv2.LINE_AA)
