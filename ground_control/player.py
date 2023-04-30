@@ -67,13 +67,14 @@ def get_next_image(stream,rcnt):
             if rcnt==cnt:
                 #print('===',rcnt)
                 return img
-            if (cnt+30)<rcnt:
-                print('skeeping 30',cnt,rcnt)
-                for _ in range(30):
+            delta=rcnt-cnt
+            if delta>0:
+                print(f'skeeping {delta}',cnt,rcnt)
+                for _ in range(delta):
                     stream.get_img(skip=True)
 
-            if cnt<rcnt:
-                #print('error2 stream',cnt,rcnt)
+            if delta<0:
+                print('error2 stream',cnt,rcnt)
                 continue
         time.sleep(0.001)
 
@@ -116,40 +117,43 @@ if __name__=='__main__':
     vid_main_cnt=-1
     vid_main=gst2.FileReader(args.path+'/vid_main.mp4')
     vid_main_depth=gst2.FileReader(args.path+'/vid_main_depth.mp4')
-    vid_stereo_cnt=-1
     vid_l=gst2.FileReader(args.path+'/vid_l.mp4',pad_lines=config.cam_res_gst_pad_lines)
     vid_r=gst2.FileReader(args.path+'/vid_r.mp4',pad_lines=config.cam_res_gst_pad_lines)
     time.sleep(2)
     
     start_time_rec=vdata[0][1]
-    start_time_rt=time.time()
+    last_print=time.time()
+    start_time_rt=None
+    vid_main_sampled=False
+    vid_stereo_sampled=False
     for v in vdata[1:]:
         rec_ts=v[1]-start_time_rec
         if rec_ts<args.start_time:
             #print('rec_ts=',rec_ts,args.start_time)
             continue
-        rt_ts=time.time()-start_time_rt+args.start_time
-        rt_delta=rec_ts-rt_ts
-        #print('==rtd=',rt_ts,rec_ts,rt_delta,v[1],start_time_rec,vdata[0])
-        if rt_delta>0 and not args.nowait:
-            print('sleeping...',rt_delta)
-            time.sleep(rt_delta)
-
+        if time.time()-last_print>2:
+            last_print=time.time()
+            print(f'record time = {rec_ts}')
+ 
         data=v[2]
         if v[0]==zmq_topics.topic_stereo_camera_ts:
             cnt=data[0]
             #print('==getting stereo',cnt)
             iml=get_next_image(vid_l,cnt)
             imr=get_next_image(vid_r,cnt)
+
             if imr is not None and iml is not None:
+                vid_stereo_sampled=True
                 #print('sending stereo...',cnt)
                 zmq_pub_stereo.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([cnt,iml.shape]),iml.tostring(),imr.tostring()],copy=False)
         if v[0]==zmq_topics.topic_main_cam_ts:
             cnt=data[0]
             #print('==getting main',cnt)
+            grab_tic=time.time()
             imm=get_next_image(vid_main,cnt)
             imd=get_next_image(vid_main_depth,cnt)
             if imm is not None and imd is not None:
+                vid_main_sampled=True
                 #print('sending main...',cnt)
                 zmq_pub_main_camera.send_multipart([zmq_topics.topic_main_cam_depth,pickle.dumps(
                     [cnt,None,imd.shape]),imd.tostring()],copy=False)
@@ -161,4 +165,16 @@ if __name__=='__main__':
         if v[0] == b'printer_sink':
             #print('*=*='*50,data)
             printer_source.send_pyobj(data)
+
+        #move to the end to ignore initialization time
+        if vid_stereo_sampled and vid_main_sampled:
+            if start_time_rt is None:
+                start_time_rt=time.time()
+            rt_ts=time.time()-start_time_rt+args.start_time
+            rt_delta=rec_ts-rt_ts
+            #print('==rtd=',rt_ts,rec_ts,rt_delta,v[1],start_time_rec,vdata[0])
+            if rt_delta>0 and not args.nowait:
+                #print('sleeping...',rt_delta)
+                time.sleep(rt_delta)
+
 
