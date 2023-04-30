@@ -152,10 +152,11 @@ def update_pid(ax_hdls,topic,ylim=None):
     if ylim is not None:
         ax.set_ylim(-ylim,ylim)
     else:
-        min_y = data.min()
-        max_y = data.max()
+        min_y = data[-40:,:].min()
+        max_y = data[-40:,:].max()
+        print('=======ylim=====',min_y,max_y)
         ax.set_ylim(min_y,max_y)
-
+jjj
     ax2,hdls2 = ax_hdls[1][0],ax_hdls[1][1:]
     data = msgs[topic].get_data(['T','N','R'])
     xs = np.arange(data.shape[0])
