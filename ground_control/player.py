@@ -104,6 +104,7 @@ for p in map_port_topic:
         map_topic_port[t]=p
 
 
+printer_source = zmq_wrapper.push_source(zmq_topics.printer_sink_port)
 
 if __name__=='__main__':
     vdata = read_pkl(args.path+'/viewer_data.pkl')
@@ -141,7 +142,7 @@ if __name__=='__main__':
             iml=get_next_image(vid_l,cnt)
             imr=get_next_image(vid_r,cnt)
             if imr is not None and iml is not None:
-                print('sending stereo...',cnt)
+                #print('sending stereo...',cnt)
                 zmq_pub_stereo.send_multipart([zmq_topics.topic_stereo_camera,pickle.dumps([cnt,iml.shape]),iml.tostring(),imr.tostring()],copy=False)
         if v[0]==zmq_topics.topic_main_cam_ts:
             cnt=data[0]
@@ -149,11 +150,15 @@ if __name__=='__main__':
             imm=get_next_image(vid_main,cnt)
             imd=get_next_image(vid_main_depth,cnt)
             if imm is not None and imd is not None:
-                print('sending main...',cnt)
+                #print('sending main...',cnt)
                 zmq_pub_main_camera.send_multipart([zmq_topics.topic_main_cam_depth,pickle.dumps(
                     [cnt,None,imd.shape]),imd.tostring()],copy=False)
                 zmq_pub_main_camera.send_multipart([zmq_topics.topic_main_cam,pickle.dumps([cnt,imm.shape]),imm.tostring()],copy=False)
 
         if v[0] in map_topic_port:
             map_port_publisher[map_topic_port[v[0]]].send_multipart([v[0],pickle.dumps(data)])
+
+        if v[0] == b'printer_sink':
+            #print('*=*='*50,data)
+            printer_source.send_pyobj(data)
 
