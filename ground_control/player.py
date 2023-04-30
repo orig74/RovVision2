@@ -25,14 +25,14 @@ import zmq_topics
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--nowait",help="run all not wait for keyboard untill framenum or 0 till the end", default=0, type=int)
+parser.add_argument("--nowait",help="dont sleep if not realtime", action='store_true')
 parser.add_argument("--nosingle",help="dont use the single files only the stream", action='store_true')
 #parser.add_argument("--nosync", help="dont sync videos", action='store_true')
 #parser.add_argument("--pub_data", help="publish data", action='store_true')
 #parser.add_argument("--pub_camera", help="publish camera", action='store_true')
 #parser.add_argument("--runtracker", help="run tracker on recorded vid", action='store_true')
 #parser.add_argument("--bs",help="history buff size",type=int ,default=1000)
-parser.add_argument("-s",help="start frame",type=int ,default=0)
+parser.add_argument("-s",'--start_time',help="skip time in sec",type=float ,default=0)
 #parser.add_argument("--cc",help="color orrection matrix file",default=None)
 parser.add_argument("--ccr",help="the efect of the color correction 0 to 1.0 (max 1.0)",type=float,default=1.0)
 parser.add_argument("path",help="dir path")
@@ -67,8 +67,13 @@ def get_next_image(stream,rcnt):
             if rcnt==cnt:
                 #print('===',rcnt)
                 return img
+            if (cnt+30)<rcnt:
+                print('skeeping 30',cnt,rcnt)
+                for _ in range(30):
+                    stream.get_img(skip=True)
+
             if cnt<rcnt:
-                print('error2 stream',cnt,rcnt)
+                #print('error2 stream',cnt,rcnt)
                 continue
         time.sleep(0.001)
 
@@ -102,6 +107,7 @@ for p in map_port_topic:
 
 if __name__=='__main__':
     vdata = read_pkl(args.path+'/viewer_data.pkl')
+    #import ipdb;ipdb.set_trace()
     keys=set()
     for v in vdata:
         keys.add(v[0])
@@ -112,16 +118,20 @@ if __name__=='__main__':
     vid_stereo_cnt=-1
     vid_l=gst2.FileReader(args.path+'/vid_l.mp4',pad_lines=config.cam_res_gst_pad_lines)
     vid_r=gst2.FileReader(args.path+'/vid_r.mp4',pad_lines=config.cam_res_gst_pad_lines)
-    time.sleep(4)
+    time.sleep(2)
     
     start_time_rec=vdata[0][1]
     start_time_rt=time.time()
     for v in vdata[1:]:
         rec_ts=v[1]-start_time_rec
-        rt_ts=time.time()-start_time_rt
+        if rec_ts<args.start_time:
+            #print('rec_ts=',rec_ts,args.start_time)
+            continue
+        rt_ts=time.time()-start_time_rt+args.start_time
         rt_delta=rec_ts-rt_ts
         #print('==rtd=',rt_ts,rec_ts,rt_delta,v[1],start_time_rec,vdata[0])
-        if rt_delta>0:
+        if rt_delta>0 and not args.nowait:
+            print('sleeping...',rt_delta)
             time.sleep(rt_delta)
 
         data=v[2]

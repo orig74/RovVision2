@@ -125,7 +125,7 @@ class FileReader(object):
         self.width,self.height=width,height
         self.pad_lines=pad_lines
 
-    def get_img(self):
+    def get_img(self,skip=False):
         sx,sy=self.width,self.height
         if len(select.select([self.rpipe],[],[],0.001)[0])>0:
             data=b''
@@ -133,8 +133,9 @@ class FileReader(object):
                 try:
                     data+=os.read(self.rpipe,sx*sy*3-len(data))
                 except BlockingIOError:
-                    print('bloking....',sx*sy*3-len(data))
-            if data:
+                    time.sleep(0.001)
+                    #print('bloking....',sx*sy*3-len(data))
+            if data and not skip:
                 img=np.frombuffer(data,'uint8').reshape([sy,sx,3])
                 if self.pad_lines>0:
                     img=img[:-self.pad_lines,:,:]
