@@ -162,6 +162,8 @@ if __name__=='__main__':
         if v[0] in map_topic_port:
             map_port_publisher[map_topic_port[v[0]]].send_multipart([v[0],pickle.dumps(data)])
 
+            #if v[0]==zmq_topics.topic_tracker:
+            #    print('---range----',data['range'])
         if v[0] == b'printer_sink':
             #print('*=*='*50,data)
             printer_source.send_pyobj(data)
