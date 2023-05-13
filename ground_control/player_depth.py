@@ -210,7 +210,6 @@ while 1:
             if telem_data is not None:
                 td=telem_data[i]
                 depth=td.get('depth',-1)
-                print('gggg',depth)
                 cv2.putText(rgb_img,f'Depth{depth:.1f}',(10,20), font, 0.7,(255,0,0),2,cv2.LINE_AA)
             
             wins['rgb']={'img':rgb_img,'redraw':True,'file_path':fname}
@@ -225,6 +224,7 @@ while 1:
                     img[:,:,1]=img[:,:,1]*wins[wname]['mask']
                 cv2.imshow(wname,img)
                 wins[wname]['redraw']=False
+            print('step index',i)
 
     k=cv2.waitKey(10)%0xff
     #k=cv2.pollKey()%0xff
