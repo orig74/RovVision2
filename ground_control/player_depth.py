@@ -130,6 +130,14 @@ cv2.setMouseCallback("depth", click)
 cv2.setMouseCallback("rgb", click)
 shape=[100,100]
 cobjs=[]
+
+def get_mask_stats(mask):
+    output = cv2.connectedComponentsWithStats(1-mask,ltype = cv2.CV_16U)
+    (numLabels, labels, stats, centroids) = output
+    n_componnets=len([s for s in stats if 30<s[-1]<100000])
+    return (numLabels,stats, centroids,n_componnets)
+    
+
 while 1:
     if pkl_data is not None:
         i=np.clip(i,0,len(pkl_data)-1) 
@@ -240,29 +248,30 @@ while 1:
         break
     elif k in [ord('m')]:
         mark_mode=not mark_mode
-    elif k in [ord('s')]:
-        #save data
+    elif k in [ord('c')]:
+        for wname in wins:
+            w=wins[wname]
+            if 'mask' in w and w['mask'].min()==0:
+
+                print('wname=',wname)
+                #print('number of objects is :',centroids)
+                print('number of objects=',get_mask_stats(w['mask'])[3])
+                    
+                #cv2.imshow('kkkk',labels)
+    if k!=254:
         for wname in wins:
             w=wins[wname]
             if 'mask' in w:
-                mask_fname=w['file_path'][:-3]+'mask'
-                if w['mask'].min()==0: #means active mask
+                mask_fname=w['file_path'][:-3]+'mask.npy'
+                n_objs=get_mask_stats(w['mask'])[3]
+                if n_objs>0: #means active mask
                     print('saving mask',mask_fname)
                     np.save(mask_fname,w['mask'])
                 else:
                     if os.path.isfile(mask_fname):
                         print('deleting mask file',mask_fname)
-    elif k in [ord('c')]:
-        for wname in wins:
-            w=wins[wname]
-            if 'mask' in w and w['mask'].min()==0:
-                output = cv2.connectedComponentsWithStats(1-w['mask'],ltype = cv2.CV_16U)
-                (numLabels, labels, stats, centroids) = output
-                print('wname=',wname)
-                #print('number of objects is :',centroids)
-                print('number of objects=',len([s for s in stats if 30<s[-1]<100000]))
-                    
-                #cv2.imshow('kkkk',labels)
+                        os.remove(mask_fname)
+
 
 
 
