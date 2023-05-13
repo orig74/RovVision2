@@ -113,13 +113,13 @@ class ClickWin(object):
 
     def click(self,event, x, y, flags, param):
         if self.draw_state:
-            print('====',self.wname,x,y,event)
+            #print('====',self.wname,x,y,event)
             if 'mask' in wins[self.wname]:
                 mim=wins[self.wname]['mask']
-                mg=5
-                mim[y-mg:y+mg,x-mg:x+mg]=0 if mark_mode else 1
+                mg=3
+                #mim[y-mg:y+mg,x-mg:x+mg]=0 if mark_mode else 1
+                cv2.circle(mim,(x,y),mg,0 if mark_mode else 1 ,mg)
                 wins[self.wname]['redraw']=True
-                #cv2.circle(mim,(x,y),mg,0,4)
 
         if event == cv2.EVENT_MBUTTONDOWN:
             self.draw_state=True
@@ -252,6 +252,17 @@ while 1:
                 else:
                     if os.path.isfile(mask_fname):
                         print('deleting mask file',mask_fname)
+    elif k in [ord('c')]:
+        for wname in wins:
+            w=wins[wname]
+            if 'mask' in w and w['mask'].min()==0:
+                output = cv2.connectedComponentsWithStats(1-w['mask'],ltype = cv2.CV_16U)
+                (numLabels, labels, stats, centroids) = output
+                print('wname=',wname)
+                #print('number of objects is :',centroids)
+                print('number of objects=',len([s for s in stats if 30<s[-1]<100000]))
+                    
+                #cv2.imshow('kkkk',labels)
 
 
 
