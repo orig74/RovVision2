@@ -224,7 +224,7 @@ while 1:
                     img[:,:,1]=img[:,:,1]*wins[wname]['mask']
                 cv2.imshow(wname,img)
                 wins[wname]['redraw']=False
-            print('step index',i)
+            print('current index',i)
 
     k=cv2.waitKey(10)%0xff
     #k=cv2.pollKey()%0xff
