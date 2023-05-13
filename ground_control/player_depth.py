@@ -43,19 +43,25 @@ df=pd.read_csv(args.path+'/d405_frame_data.txt',delimiter=',',header=None)
 def read_pkl(pkl_file):
     fd = open(pkl_file,'rb')
     ret=[]
+    telem_data=[]
+    telem={}
     while 1:
         try:
             d=pickle.load(fd)
+            if d[0]==zmq_topics.topic_depth:
+                telem['depth']=d[2]['depth']
             if d[0] in [zmq_topics.topic_main_cam_ts , zmq_topics.topic_stereo_camera_ts]:
                 ret.append(d)
+                telem_data.append(telem.copy())
         except EOFError:
             break
-    return ret
+    return ret,telem_data
 
 try:
-    pkl_data = read_pkl(args.path+'/viewer_data.pkl')
+    pkl_data,telem_data = read_pkl(args.path+'/viewer_data.pkl')
 except FileNotFoundError:
     pkl_data = None
+    telem_data = None
     print('no pickle data file')
 
 #import ipdb;ipdb.set_trace()
@@ -82,6 +88,7 @@ def rope_detect_depth(depth_img,start_row=150,nrows=100):
 refPt=None
 last_click_data=None
 delta_click=None
+wins={}
 def click(event, x, y, flags, param):
     global delta_click,last_click_data
     if event == cv2.EVENT_LBUTTONDOWN:
@@ -92,12 +99,12 @@ def click(event, x, y, flags, param):
         if last_click_data is not None:
             delta_click=click_data-last_click_data
         last_click_data=click_data
+        wins['rgb']['redraw']=True
         #print('===+===',xw,yw,s,delta_click)
     #if event == cv2.EVENT_MBUTTONDOWN:
         #k=cv2.pollKey()
         #print('===',k)
 
-wins={}
 mark_mode = True
 class ClickWin(object):
     def __init__(self,wname):
@@ -170,38 +177,44 @@ while 1:
 
     if is_depth_image:
         fname = args.path+f'/{fnum:06d}.jpg'
-        rgb_img=None
-        if os.path.isfile(fname):
-            rgb_img=cv2.imread(args.path+f'/{fnum:06d}.jpg')
-        #print('===',args.path+f'/{fnum:06d}.jpg')
-        posx=0
-        if rgb_img is not None:
-            shape=rgb_img.shape[:2]
-            depth_img=np.frombuffer(open(args.path+f'/d{fnum:06d}.bin','rb').read(),'uint16').astype('float').reshape(shape)*scale_to_mm*config.water_scale
-            depth_img[depth_img<1]=10000 #10 meters
+        if not ('rgb' in wins and wins['rgb'].get('file_path')==fname) or wins['rgb'].get('redraw'):
+            rgb_img=None
+            if os.path.isfile(fname):
+                rgb_img=cv2.imread(args.path+f'/{fnum:06d}.jpg')
+            #print('===',args.path+f'/{fnum:06d}.jpg')
+            posx=0
+            if rgb_img is not None:
+                shape=rgb_img.shape[:2]
+                depth_img=np.frombuffer(open(args.path+f'/d{fnum:06d}.bin','rb').read(),'uint16').astype('float').reshape(shape)*scale_to_mm*config.water_scale
+                depth_img[depth_img<1]=10000 #10 meters
 
-            ret=rope_detect_depth(depth_img)
-            posx=ret[1]
-            #cv2.imshow('depth',torgb(depth_img))
-            wins['depth']={'img':torgb(depth_img),'redraw':True}
-            #print('maxmin',depth_img.max(),depth_img.min(),ret[0],ret[1])
-        else:
-            #rgb_img=np.zeros(shape,'uint8')
-            i+=1
-            continue
-        cv2.line(rgb_img,(posx,30),(posx,40),(255,255,255),thickness=4)
-        line=''
-        if last_click_data is not None:
-            x,y,z=last_click_data
-            line=f'xyr {x:.1f},{y:.1f},{z:.1f}' 
-            cv2.putText(rgb_img,line,(10,400), font, 0.7,(255,0,0),2,cv2.LINE_AA)
-            if delta_click is not None:
-                x,y,z=delta_click
-                line=f'delta xyr {x:.1f},{y:.1f},{z:.1f}' 
-                cv2.putText(rgb_img,line,(10,420), font, 0.7,(255,0,0),2,cv2.LINE_AA)
+                ret=rope_detect_depth(depth_img)
+                posx=ret[1]
+                #cv2.imshow('depth',torgb(depth_img))
+                wins['depth']={'img':torgb(depth_img),'redraw':True}
+                #print('maxmin',depth_img.max(),depth_img.min(),ret[0],ret[1])
+            else:
+                #rgb_img=np.zeros(shape,'uint8')
+                i+=1
+                continue
+            cv2.line(rgb_img,(posx,30),(posx,40),(255,255,255),thickness=4)
+            line=''
+            if last_click_data is not None:
+                x,y,z=last_click_data
+                line=f'xyr {x:.1f},{y:.1f},{z:.1f}' 
+                cv2.putText(rgb_img,line,(10,400), font, 0.7,(255,0,0),2,cv2.LINE_AA)
+                if delta_click is not None:
+                    x,y,z=delta_click
+                    line=f'delta xyr {x:.1f},{y:.1f},{z:.1f}' 
+                    cv2.putText(rgb_img,line,(10,420), font, 0.7,(255,0,0),2,cv2.LINE_AA)
+            if telem_data is not None:
+                td=telem_data[i]
+                depth=td.get('depth',-1)
+                print('gggg',depth)
+                cv2.putText(rgb_img,f'Depth{depth:.1f}',(10,20), font, 0.7,(255,0,0),2,cv2.LINE_AA)
             
-        wins['rgb']={'img':rgb_img,'redraw':True}
-        #cv2.imshow('rgb',rgb_img)
+            wins['rgb']={'img':rgb_img,'redraw':True,'file_path':fname}
+            #cv2.imshow('rgb',rgb_img)
 
     for wname in wins:
         if wins[wname] and wins[wname].get('redraw'):
