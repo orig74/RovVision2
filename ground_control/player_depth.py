@@ -229,7 +229,7 @@ while 1:
     k=cv2.waitKey(10)%0xff
     #k=cv2.pollKey()%0xff
     if k in [ord(','),81,52]:
-        i=i-1
+        i=i-3
     elif k in [ord('<')]:
         i=i-10
     elif k in [ord('.'),54,83]:
