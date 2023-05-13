@@ -92,18 +92,28 @@ def click(event, x, y, flags, param):
         if last_click_data is not None:
             delta_click=click_data-last_click_data
         last_click_data=click_data
-        print('===+===',xw,yw,s,delta_click)
-    if event == cv2.EVENT_MBUTTONDOWN:
-        k=cv2.pollKey()
-        print('===',k)
+        #print('===+===',xw,yw,s,delta_click)
+    #if event == cv2.EVENT_MBUTTONDOWN:
+        #k=cv2.pollKey()
+        #print('===',k)
 
+wins={}
+mark_mode = True
 class ClickWin(object):
     def __init__(self,wname):
         self.wname=wname
         self.draw_state=False
+
     def click(self,event, x, y, flags, param):
         if self.draw_state:
             print('====',self.wname,x,y,event)
+            if 'mask' in wins[self.wname]:
+                mim=wins[self.wname]['mask']
+                mg=5
+                mim[y-mg:y+mg,x-mg:x+mg]=0 if mark_mode else 1
+                wins[self.wname]['redraw']=True
+                #cv2.circle(mim,(x,y),mg,0,4)
+
         if event == cv2.EVENT_MBUTTONDOWN:
             self.draw_state=True
         if event == cv2.EVENT_MBUTTONUP:
@@ -112,7 +122,6 @@ class ClickWin(object):
 cv2.setMouseCallback("depth", click)
 cv2.setMouseCallback("rgb", click)
 shape=[100,100]
-wins={}
 cobjs=[]
 while 1:
     if pkl_data is not None:
@@ -121,8 +130,8 @@ while 1:
             fnum=pkl_data[i][2][0]
             is_depth_image=True
         else:
-            #print('main image')
-            fmt=args.path+f'/{pkl_data[i][2][0]:06d}'+'*.pgm'
+            main_ind=pkl_data[i][2][0]
+            fmt=args.path+f'/{main_ind:06d}'+'*.pgm'
             #print('====',fmt)
             img_files=glob.glob(args.path+f'/{pkl_data[i][2][0]:06d}'+'*.pgm')
             #print(img_files)
@@ -133,10 +142,23 @@ while 1:
                     cw=ClickWin(wname)
                     cv2.setMouseCallback(wname,cw.click)
                     cobjs.append(cw)
-                    #wins[wname]=None
-                pgm=cv2.imread(img_fl,cv2.IMREAD_GRAYSCALE)
-                wins[wname]={'img':cv2.cvtColor(pgm,cv2.COLOR_BAYER_BG2BGR)}
-                #cv2.imshow(wname,cv2.cvtColor(pgm,cv2.COLOR_BAYER_BG2BGR))
+                    wins[wname]={'img':None,'file_path':None,'redraw':True}
+
+                if wins[wname]['file_path']!=img_fl:
+                    print('main image',main_ind)
+                    pgm=cv2.imread(img_fl,cv2.IMREAD_GRAYSCALE)
+                    if pgm is not None:
+                        mask_fname=img_fl[:-3]+'mask.npy'
+                        if os.path.isfile(mask_fname):
+                            mask=np.load(mask_fname)
+                        else:
+                            mask=np.ones_like(pgm)
+                        wins[wname]={
+                                'img':cv2.cvtColor(pgm,cv2.COLOR_BAYER_BG2BGR),
+                                'file_path':img_fl,
+                                'mask':mask,
+                                'redraw':True}
+                    #cv2.imshow(wname,cv2.cvtColor(pgm,cv2.COLOR_BAYER_BG2BGR))
 
             #cv2.imread()
             is_depth_image=False
@@ -147,8 +169,11 @@ while 1:
         is_depth_image=True
 
     if is_depth_image:
-        rgb_img=cv2.imread(args.path+f'/{fnum:06d}.jpg')
-        print('===',args.path+f'/{fnum:06d}.jpg')
+        fname = args.path+f'/{fnum:06d}.jpg'
+        rgb_img=None
+        if os.path.isfile(fname):
+            rgb_img=cv2.imread(args.path+f'/{fnum:06d}.jpg')
+        #print('===',args.path+f'/{fnum:06d}.jpg')
         posx=0
         if rgb_img is not None:
             shape=rgb_img.shape[:2]
@@ -158,8 +183,8 @@ while 1:
             ret=rope_detect_depth(depth_img)
             posx=ret[1]
             #cv2.imshow('depth',torgb(depth_img))
-            wins['depth']={'img':torgb(depth_img)}
-            print('maxmin',depth_img.max(),depth_img.min(),ret[0],ret[1])
+            wins['depth']={'img':torgb(depth_img),'redraw':True}
+            #print('maxmin',depth_img.max(),depth_img.min(),ret[0],ret[1])
         else:
             #rgb_img=np.zeros(shape,'uint8')
             i+=1
@@ -175,13 +200,20 @@ while 1:
                 line=f'delta xyr {x:.1f},{y:.1f},{z:.1f}' 
                 cv2.putText(rgb_img,line,(10,420), font, 0.7,(255,0,0),2,cv2.LINE_AA)
             
-        wins['rgb']={'img':rgb_img}
+        wins['rgb']={'img':rgb_img,'redraw':True}
         #cv2.imshow('rgb',rgb_img)
 
     for wname in wins:
-        if wins[wname]:
-            cv2.imshow(wname,wins[wname]['img'])
-    k=cv2.waitKey(100)%0xff
+        if wins[wname] and wins[wname].get('redraw'):
+            img=wins[wname]['img']
+            if img is not None:
+                if 'mask' in wins[wname]:
+                    img=img.copy()
+                    img[:,:,1]=img[:,:,1]*wins[wname]['mask']
+                cv2.imshow(wname,img)
+                wins[wname]['redraw']=False
+
+    k=cv2.waitKey(10)%0xff
     #k=cv2.pollKey()%0xff
     if k in [ord(','),81,52]:
         i=i-1
@@ -193,8 +225,22 @@ while 1:
         i=i+10
     elif k in [ord('q')]:
         break
-    else:
-        time.sleep(0.5)
-        print('i',i)
+    elif k in [ord('m')]:
+        mark_mode=not mark_mode
+    elif k in [ord('s')]:
+        #save data
+        for wname in wins:
+            w=wins[wname]
+            if 'mask' in w:
+                mask_fname=w['file_path'][:-3]+'mask'
+                if w['mask'].min()==0: #means active mask
+                    print('saving mask',mask_fname)
+                    np.save(mask_fname,w['mask'])
+                else:
+                    if os.path.isfile(mask_fname):
+                        print('deleting mask file',mask_fname)
+
+
+
 cv2.destroyAllWindows()
 
