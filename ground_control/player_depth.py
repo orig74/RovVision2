@@ -9,6 +9,7 @@ import sys,os,time,traceback
 from datetime import datetime
 sys.path.append('../')
 sys.path.append('../utils')
+sys.path.append('../plugins')
 import zmq
 import pickle
 import select
@@ -23,6 +24,8 @@ import gst2
 import zmq_wrapper
 import zmq_topics
 import glob
+
+from tracker.rope_detect import rope_detect_depth
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 
@@ -72,17 +75,17 @@ fnums=[int(l) for l in os.popen(f'cd {args.path} && ls -1 *.jpg |cut -d"." -f1')
 fnums.sort()
 i=args.start_frame
 
-def rope_detect_depth(depth_img,start_row=150,nrows=100):
-    #np.save('/tmp/imgd.npy',depth_img)
-    marg=100
-    imt=depth_img[start_row:start_row+nrows,:].sum(axis=0).flatten()/nrows
-    #prioritizing center
-    r=600
-    imtp=imt+np.abs(np.linspace(-r,r,len(imt)))
-    #blur line
-    imtp=np.convolve(imtp,np.ones(20)/20,mode='same')
-    col=np.argmin(imtp[marg:-marg])+marg
-    return imt[col],col,imtp
+#def rope_detect_depth(depth_img,start_row=150,nrows=100):
+#    #np.save('/tmp/imgd.npy',depth_img)
+#    marg=100
+#    imt=depth_img[start_row:start_row+nrows,:].sum(axis=0).flatten()/nrows
+#    #prioritizing center
+#    r=600
+#    imtp=imt+np.abs(np.linspace(-r,r,len(imt)))
+#    #blur line
+#    imtp=np.convolve(imtp,np.ones(20)/20,mode='same')
+#    col=np.argmin(imtp[marg:-marg])+marg
+#    return imt[col],col,imtp
 
 
 refPt=None
@@ -196,10 +199,12 @@ while 1:
                 depth_img=np.frombuffer(open(args.path+f'/d{fnum:06d}.bin','rb').read(),'uint16').astype('float').reshape(shape)*scale_to_mm*config.water_scale
                 depth_img[depth_img<1]=10000 #10 meters
 
-                ret=rope_detect_depth(depth_img)
-                posx=ret[1]
+                ret=rope_detect_depth(depth_img,scale_to_mm,config.water_scale)
+                d,posx,up_validation,down_validation,_=ret
                 #cv2.imshow('depth',torgb(depth_img))
                 wins['depth']={'img':torgb(depth_img),'redraw':True}
+                line=f'range {d:.1f},{up_validation:.1f},{down_validation:.1f}' 
+                cv2.putText(rgb_img,line,(10,40), font, 0.7,(255,0,0),2,cv2.LINE_AA)
                 #print('maxmin',depth_img.max(),depth_img.min(),ret[0],ret[1])
             else:
                 #rgb_img=np.zeros(shape,'uint8')

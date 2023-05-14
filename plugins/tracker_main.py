@@ -16,27 +16,14 @@ import zmq_topics
 import config
 from tracker.of import OF
 
+from tracker.rope_detect import rope_detect_depth
+
 cam_main_inv=np.linalg.inv(np.array(config.cam_main_int))
 printer_source = zmq_wrapper.push_source(zmq_topics.printer_sink_port)
 
 def printer(txt,c=None):
     print('printing:',txt)
     printer_source.send_pyobj({'txt':txt,'c':c})
-
-def rope_detect_depth(depth_img,scale_to_mm,start_row=150,nrows=100):
-    #np.save('/tmp/imgd.npy',depth_img)
-    marg=100
-    sliceimg=depth_img[start_row:start_row+nrows,:]
-    scaled_d = sliceimg*scale_to_mm*config.water_scale
-    scaled_d[scaled_d<1]=10000 #10 meters
-    imt=scaled_d.sum(axis=0).flatten()/nrows
-    #prioritizing center
-    r=600
-    imtp=imt+np.abs(np.linspace(-r,r,len(imt)))
-    #blur line
-    imtp=np.convolve(imtp,np.ones(20)/20,mode='same')
-    col=np.argmin(imtp[marg:-marg])+marg
-    return imt[col],col,imtp
 
 crop_ltrb=(200,100,200,2)
 
@@ -118,12 +105,14 @@ async def recv_and_process():
             if ret[0]==zmq_topics.topic_main_cam_depth:
                 _,scale_to_mm,shape = pickle.loads(ret[1])
                 last_depth16=np.frombuffer(ret[2],'uint16').reshape(shape)
-                d,col,_=rope_detect_depth(last_depth16,scale_to_mm)
+                d,col,up_validation,down_validation,_=rope_detect_depth(last_depth16,scale_to_mm,config.water_scale)
                 xw,yw,s=(cam_main_inv @ np.array([[col*d,0*d,d]]).T).flatten()
+                range_valid=abs(d-up_validation)<config.range_validation_up_down_mm and \
+                        abs(d-down_validation) < config.range_validation_up_down_mm
                 if config.valid_range_mm[0]<d<config.valid_range_mm[1]:
                     #import ipdb;ipdb.set_trace()
                     #d,col,_=rope_detect_depth(scaled_d)
-                    res={'rope_col':col/last_depth16.shape[1],'range':s/1000,'dy':xw/1000,'valid':True}
+                    res={'rope_col':col/last_depth16.shape[1],'range':s/1000,'dy':xw/1000,'valid':range_valid}
                     #print('returning rope position: ',res)
                     sock_pub.send_multipart([zmq_topics.topic_tracker,pickle.dumps(res)])
 

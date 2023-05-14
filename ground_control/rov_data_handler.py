@@ -365,14 +365,13 @@ class rovDataHandler(object):
     def get_rope_range(self):
         if zmq_topics.topic_tracker in self.telemtry:
             trdata = self.telemtry[zmq_topics.topic_tracker]
-            if trdata['valid']:
-                return trdata['range']
+            return trdata['range']
 
     def get_rope_xpos(self):
         if zmq_topics.topic_tracker in self.telemtry:
             trdata = self.telemtry[zmq_topics.topic_tracker]
-            if trdata['valid']:
-                return trdata['rope_col']
+            return trdata['rope_col'],trdata['valid']
+        return None,False
 
 
     def get_track_dy(self):

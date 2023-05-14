@@ -71,3 +71,30 @@ def rope_global_extrema(extrema,start_row,nrows,im,clear_freqs=5):
     debug={}
     debug['ifft']=im2r
     return extrema,new_col,debug
+
+def rope_detect_depth(depth_img,scale_to_mm,water_scale,start_row=150,nrows=100,validation_rows=50):
+    #np.save('/tmp/imgd.npy',depth_img)
+    marg=100
+    sliceimg=depth_img[start_row-validation_rows:start_row+nrows+validation_rows,:]
+    scaled_d = sliceimg*scale_to_mm*water_scale
+    scaled_d[scaled_d<1]=10000 #10 meters
+    imt=scaled_d[validation_rows:-validation_rows].sum(axis=0).flatten()/nrows
+    #prioritizing center
+    r=600
+    imtp=imt+np.abs(np.linspace(-r,r,len(imt)))
+    #blur line
+    imtp=np.convolve(imtp,np.ones(20)/20,mode='same')
+    col=np.argmin(imtp[marg:-marg])+marg
+
+    #up_validation=scaled_d[:validation_rows,col].sum()/validation_rows
+    #down_validation=scaled_d[-validation_rows:,col].sum()/validation_rows
+    
+    #width_check
+    wc=20
+    up_validation=scaled_d[:validation_rows,col-wc:col+wc].sum(axis=0)/validation_rows
+    down_validation=scaled_d[-validation_rows:,col-wc:col+wc].sum(axis=0)/validation_rows
+
+    return imt[col],col,up_validation.min(),down_validation.min(),imtp
+
+
+

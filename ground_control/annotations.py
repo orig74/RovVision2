@@ -301,8 +301,9 @@ def draw_main(img,rov_data):
     if rng is not None:
         line=f'RR{rng:03.2f}'
         cv2.putText(img,line,(20,rows-20), font, 0.7,(255,255,255),2,cv2.LINE_AA)
-    xpos=rov_data.get_rope_xpos()
+    xpos,rope_valid=rov_data.get_rope_xpos()
     if xpos is not None:
-        cv2.line(img,(int(xpos*cols),30),(int(xpos*cols),40),(255,255,255),thickness=4)
+        cv2.line(img,(int(xpos*cols),30),(int(xpos*cols),40),
+                (255,255,255) if rope_valid else (255,0,0),thickness=4)
 
 
