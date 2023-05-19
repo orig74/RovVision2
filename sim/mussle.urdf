@@ -23,7 +23,8 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-	 <sphere radius="0.008"/>
+          <!--<sphere radius="0.008"/>-->
+          <box size="0.008 0.008 0.048"/>
       </geometry>
     </collision>
   </link>

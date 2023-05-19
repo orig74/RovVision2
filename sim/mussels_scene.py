@@ -125,9 +125,9 @@ class MusseleRopesScene(object):
             #for j in range(rows):
         #    for i in range(cols):
         #        ret+=gen_rope(2+j*3,i*1)
-
-        mussle_pos = np.array([1.46,0,2])
-        self.mmm=[Mussle(mussle_pos)]
+        self.mmm=[]
+        for mussle_pos in [[1.46,0,2],[1.46,0.1,2.1],[1.46,-0.1,1.9],[1.46,-0.07,2.02]]:
+            self.mmm.append(Mussle(np.array(mussle_pos)))
 
     def update(self):
         for m in self.mmm:
