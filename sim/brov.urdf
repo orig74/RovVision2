@@ -120,13 +120,13 @@
   <joint name="base_to_cam1" type="fixed">
     <parent link="base_link"/>
     <child link="cam1"/>
-    <origin rpy="0 0 0" xyz="0.2 0.05 -0.15"/>
+    <origin rpy="0 0 0" xyz="0.2 0.05 0.09"/>
   </joint>
 
   <joint name="base_to_cam2" type="fixed">
     <parent link="base_link"/>
     <child link="cam2"/>
-    <origin rpy="0 0 0" xyz="0.2 -0.05 -0.15"/>
+    <origin rpy="0 0 0" xyz="0.2 -0.05 0.09"/>
   </joint>
 
   <joint name="base_to_main_cam" type="fixed">
@@ -139,20 +139,20 @@
   <joint name="base_to_right_tube" type="fixed">
     <parent link="cm"/>
     <child link="right_tube"/>
-    <origin rpy="0 0 0" xyz="0.2 0.05 -0.15"/>
+    <origin rpy="0 0 0" xyz="0.2 0.05 0.25"/>
   </joint>
 
   <joint name="base_to_left_tube" type="fixed">
     <parent link="cm"/>
     <child link="left_tube"/>
-    <origin rpy="0 0 0" xyz="0.2 -0.05 -0.15"/>
+    <origin rpy="0 0 0" xyz="0.2 -0.05 0.25"/>
   </joint>
 
     
 <joint name="gripper_extension" type="fixed">
     <parent link="base_link"/>
     <child link="gripper_pole"/>
-    <origin rpy="0 -0.4 0" xyz="0.25 0.03 -0.07"/>
+    <origin rpy="0 -0.4 0" xyz="0.25 0.00 -0.12"/>
   </joint>
 
   <link name="gripper_pole">

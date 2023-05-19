@@ -66,12 +66,38 @@ def gen_rope(x,y):
 
     return ret
 
+class Mussle(object):
+    def __init__(self,mussle_pos):
+        self.mussle_pos=mussle_pos
+        self.mmm=pb.loadURDF("mussle.urdf",basePosition=self.mussle_pos)
+        pb.changeDynamics(self.mmm,-1,linearDamping=1,angularDamping=15)
+        #self.ccc=pb.createConstraint(self.mmm, -1, -1, -1, pb.JOINT_FIXED, [0, 0, 0], -self.mussle_pos, [0, 0, 0])
+        self.ccc=pb.createConstraint(self.mmm, -1, -1, -1, pb.JOINT_FIXED, [0, 0, 0], [0,0,0] , self.mussle_pos)
+        pb.changeConstraint(self.ccc,maxForce=0.3)
+
+        visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_SPHERE,
+                                        rgbaColor=[0,0,1,0.2],
+                                        radius=0.1)
+        self.mussle_clue=pb.createMultiBody(baseMass=0,
+                              baseVisualShapeIndex=visualShapeId,
+                              basePosition=self.mussle_pos,
+                              useMaximalCoordinates=True)
+
+    def update(self):
+        pb.applyExternalForce(self.mmm,-1,[0,0,-0.001],[0,0,0],pb.WORLD_FRAME)
+        if self.ccc is not None:
+            pos,rot=pb.getBasePositionAndOrientation(self.mmm)
+            if np.linalg.norm(pos-self.mussle_pos)>0.1:
+                pb.removeConstraint(self.ccc)
+                self.ccc=None
+
+
+
 class MusseleRopesScene(object):
     def __init__(self,rows=2,cols=5):
         ret=[]
         meshScale = np.ones(3)*1
         #self.mussle_pos = np.array([1.8,0,0])
-        self.mussle_pos = np.array([1.46,0,2])
         vfo=pb.getQuaternionFromEuler(np.deg2rad([90, 0, 0]))
         visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
                                             fileName="pybullet_data/seabed2.obj",
@@ -84,19 +110,6 @@ class MusseleRopesScene(object):
                               basePosition=[0,0,0],
                               useMaximalCoordinates=True))
      
-        if 0:
-            vfo=pb.getQuaternionFromEuler(np.deg2rad([0, 0, 90]))
-            visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
-                                                fileName="pybullet_data/blueplane.obj",
-                                                visualFramePosition=[80,0,0],
-                                                visualFrameOrientation=vfo,
-                                                meshScale=meshScale)#set the center of mass frame (loadURDF sets base link frame) startPos/Ornp.resetBasePositionAndOrientation(boxId, startPos, startOrientation)
-            ret.append(pb.createMultiBody(baseMass=0,
-                                  baseInertialFramePosition=[0, 0, 0],
-                                  baseVisualShapeIndex=visualShapeId,
-                                  basePosition=[0,0,0],
-                                  useMaximalCoordinates=True))
-
         vfo=pb.getQuaternionFromEuler(np.deg2rad([0, 0, 180]))
         visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
                                             fileName="pybullet_data/mussels3Dmodel.obj",
@@ -113,29 +126,10 @@ class MusseleRopesScene(object):
         #    for i in range(cols):
         #        ret+=gen_rope(2+j*3,i*1)
 
-        self.mmm=pb.loadURDF("mussle.urdf",basePosition=self.mussle_pos)
-        pb.changeDynamics(self.mmm,-1,linearDamping=1,angularDamping=15)
-        #self.ccc=pb.createConstraint(self.mmm, -1, -1, -1, pb.JOINT_FIXED, [0, 0, 0], -self.mussle_pos, [0, 0, 0])
-        self.ccc=pb.createConstraint(self.mmm, -1, -1, -1, pb.JOINT_FIXED, [0, 0, 0], [0,0,0] , self.mussle_pos)
-        pb.changeConstraint(self.ccc,maxForce=0.3)
-
-        if 1: #mussle position clue
-            visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_SPHERE,
-                                        rgbaColor=[0,0,1,0.2],
-                                        radius=0.1)
-            ret.append(pb.createMultiBody(baseMass=0,
-                              baseVisualShapeIndex=visualShapeId,
-                              basePosition=self.mussle_pos,
-                              useMaximalCoordinates=True))
-
+        mussle_pos = np.array([1.46,0,2])
+        self.mmm=[Mussle(mussle_pos)]
 
     def update(self):
-        #small force to emulate gravity
-        pb.applyExternalForce(self.mmm,-1,[0,0,-0.001],[0,0,0],pb.WORLD_FRAME)
-        if self.ccc is not None:
-            pos,rot=pb.getBasePositionAndOrientation(self.mmm)
-            if np.linalg.norm(pos-self.mussle_pos)>0.1:
-                pb.removeConstraint(self.ccc)
-                self.ccc=None
-
+        for m in self.mmm:
+            m.update()
 
