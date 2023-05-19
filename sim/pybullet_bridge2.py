@@ -142,7 +142,7 @@ def bgr2rgb(im):
 
 grip=False
 fps=5
-fps_main=5
+fps_main=8
 imu_fps=100
 dvl_pos_fps=5
 dvl_vel_fps=10
@@ -157,7 +157,7 @@ def main():
     frame_main_cnt=0
     
 
-    resize_fact=0.5
+    resize_fact=0.3
     mono=False
     cvshow=False
 
@@ -284,7 +284,7 @@ def main():
                 cv2.imshow('depth',img_show)
                 cv2.waitKey(1)
             frame_cnt+=1
-            #print(cnt,'cam_time',time.time()-cam_tic)
+            print(cnt,'cam_time',time.time()-cam_tic)
 
         if ratio(fps_main):
             main_cam_tic=time.time()
@@ -416,7 +416,7 @@ def main():
         real_time = time.time()-sim_start
         rt_delta=sim_time-real_time
         if rt_delta>0:
-            print('sleeping',rt_delta)
+            #print('sleeping',rt_delta)
             time.sleep(rt_delta)
         else:
             time.sleep(0.001)
