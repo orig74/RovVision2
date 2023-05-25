@@ -59,9 +59,23 @@ pub_sonar = utils.publisher(zmq_topics.topic_sonar_port)
 #cvshow=False
 current_command=[0 for _ in range(8)] # 8 thrusters
 #pybullet init
-render = pb.GUI if args.show_gui else pb.DIRECT # pb.GUI
+#render = pb.GUI if args.show_gui else pb.DIRECT # pb.GUI
+#physicsClient = pb.connect(render)#or p.DIRECT for non-graphical versio
+if args.show_gui:
+    pb.connect(pb.GUI)
+else:
+    pb.connect(pb.DIRECT)
+    import pkgutil
+    pb.setAdditionalSearchPath(pybullet_data.getDataPath())
+
+    egl = pkgutil.get_loader('eglRenderer')
+    if (egl):
+      pluginId = pb.loadPlugin(egl.get_filename(), "_eglRendererPlugin")
+    else:
+      pluginId = pb.loadPlugin("eglRendererPlugin")
+    print("pluginId=",pluginId)
+
 #render = pb.GUI
-physicsClient = pb.connect(render)#or p.DIRECT for non-graphical versio
 pb.configureDebugVisualizer(0,0,[0,0,100],rgbBackground=[43/255+0.26,84/255+0.26,132/255+0.26])
 pb.configureDebugVisualizer(pb.COV_ENABLE_GUI, 0)
 pb.configureDebugVisualizer(pb.COV_ENABLE_TINY_RENDERER, 0)
@@ -157,7 +171,7 @@ def main():
     frame_main_cnt=0
     
 
-    resize_fact=0.3
+    resize_fact=0.5
     mono=False
     cvshow=False
 
