@@ -63,6 +63,9 @@ current_command=[0 for _ in range(8)] # 8 thrusters
 #physicsClient = pb.connect(render)#or p.DIRECT for non-graphical versio
 if args.show_gui:
     pb.connect(pb.GUI)
+    pb.configureDebugVisualizer(0,0,[0,0,100],rgbBackground=[43/255+0.26,84/255+0.26,132/255+0.26])
+    pb.configureDebugVisualizer(pb.COV_ENABLE_GUI, 0)
+    pb.configureDebugVisualizer(pb.COV_ENABLE_TINY_RENDERER, 0)
 else:
     pb.connect(pb.DIRECT)
     import pkgutil
@@ -76,10 +79,7 @@ else:
     print("pluginId=",pluginId)
 
 #render = pb.GUI
-pb.configureDebugVisualizer(0,0,[0,0,100],rgbBackground=[43/255+0.26,84/255+0.26,132/255+0.26])
-pb.configureDebugVisualizer(pb.COV_ENABLE_GUI, 0)
-pb.configureDebugVisualizer(pb.COV_ENABLE_TINY_RENDERER, 0)
-#pb.setPhysicsEngineParameter(enableFileCaching=0)
+pb.setPhysicsEngineParameter(enableFileCaching=0)
 pb.setRealTimeSimulation(False)
 sim_step=1/200
 sim_current=np.array([0 ,1.,0])*0.2*1
