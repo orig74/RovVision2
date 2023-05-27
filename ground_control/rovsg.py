@@ -416,6 +416,12 @@ def main():
                 rovCommander.set_gripper(0.0)
 
             if event=='Gc':
+                window['X_LOCK'](False)
+                window['Y_LOCK'](False)
+                window['D_LOCK'](False)
+                rovCommander.x_lock(False)
+                rovCommander.y_lock(False)
+                rovCommander.d_lock(False)
                 rovCommander.set_gripper(1.0)
 
             if event=='Tx':
