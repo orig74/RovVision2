@@ -83,13 +83,15 @@ async def recv_and_process():
     dvl_last_pos=None
     last_vel_report=time.time()
     tracker_lock_range=None
-    Pxy=0.1
+    Pxy=(0.01,0.01)
     yaw=0
     prev_target=None
     prev_ts=time.time()
     path_vec_idx=0
     dvl_internal_last_pos=None
+    last_t_main_tracker=time.time()
     msg_cnt=0
+    tr_main_lock={'x_lock':False,'y_lock':False}
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.005)[0]
         for sock in socks:
@@ -191,8 +193,8 @@ async def recv_and_process():
                     dy=data['dy']
                     #target_pos[0]=dvl_last_pos['x']-Pxy*dx
                     #target_pos[1]=dvl_last_pos['y']+Pxy*dy
-                    target_pos[0]-=Pxy*dx
-                    target_pos[1]+=Pxy*dy
+                    target_pos[0]-=Pxy[0]*dx
+                    target_pos[1]+=Pxy[1]*dy
 
             if topic==zmq_topics.topic_main_tracker:
                 if data['range']:
@@ -200,8 +202,11 @@ async def recv_and_process():
                     dx=np.clip((rng-data['range']),-10,10)/1000 #mm to m
                     dy=-(left-data['left'])/1000
                     #dz=up-data['up']
-                    target_pos[0]-=Pxy*dx
-                    target_pos[1]+=Pxy*dy
+                    if tr_main_lock['x_lock']:
+                        target_pos[0]-=Pxy[0]*dx
+                    if tr_main_lock['y_lock']:
+                        target_pos[1]+=Pxy[1]*dy
+                    last_t_main_tracker=time.time()
 
             #### joy hat control 
             jh_x,jh_y=jm.xy_hat_event()
@@ -228,6 +233,10 @@ async def recv_and_process():
                 
                 if data['cmd']=='tracker_vert_object_unlock':
                     tracker_lock_range = None
+
+                if data['cmd'] in ['x_lock','y_lock']:
+                    tr_main_lock[data['cmd']]=data['val']
+                    printer(f"{data['cmd']} changed to {data['val']}")
 
                 if data['cmd']=='exec' and data['script']==os.path.basename(__file__):
                     try:
