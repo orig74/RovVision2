@@ -16,10 +16,10 @@ def set_random_objects():
                 z = (random.random())*-10
                 try:
                     obj = pb.loadURDF(urdf,basePosition=[x,y,z],globalScaling=3,baseOrientation=[random.random() for _ in range(4)])
-                    robj.append(obj)
+                    obj.append(obj)
                     print('---loading--',urdf,x,y)
-                except:
-                    print('fail to load object',x,y)
+                except Exception as E:
+                    print('fail to load object',x,y,E)
                 #pb.resetBasePositionAndOrientation(obj,(x,y,z),pb.getQuaternionFromEuler((0,0,0,)))
 
 def rand(x,scl=0.03):
@@ -62,18 +62,17 @@ def gen_rope(x,y):
         #        [0,0,0],[0,0,0],[0,0,0,1],[0,0,0,1])
         ret.append(pb.createConstraint(ret[-1], -1, -1, -1, pb.JOINT_FIXED, [0, 0, 0], [0, 0, 0], [0, 0, 0]))
 
- 
 
     return ret
 
 class Mussle(object):
-    def __init__(self,mussle_pos):
+    def __init__(self,mussle_pos,ref_body):
         self.mussle_pos=mussle_pos
+        self.ref_body=ref_body
         self.mmm=pb.loadURDF("mussle.urdf",basePosition=self.mussle_pos)
         pb.changeDynamics(self.mmm,-1,linearDamping=1,angularDamping=15)
         #self.ccc=pb.createConstraint(self.mmm, -1, -1, -1, pb.JOINT_FIXED, [0, 0, 0], -self.mussle_pos, [0, 0, 0])
-        self.ccc=pb.createConstraint(self.mmm, -1, -1, -1, pb.JOINT_FIXED, [0, 0, 0], [0,0,0] , self.mussle_pos)
-        pb.changeConstraint(self.ccc,maxForce=0.3)
+        self.ccc=pb.createConstraint(self.mmm, -1, ref_body, -1, pb.JOINT_FIXED, [0, 0, 0], [0,0,0] , self.mussle_pos)
 
         visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_SPHERE,
                                         rgbaColor=[0,0,1,0.2],
@@ -82,20 +81,27 @@ class Mussle(object):
                               baseVisualShapeIndex=visualShapeId,
                               basePosition=self.mussle_pos,
                               useMaximalCoordinates=True)
+        self.cnt=0
 
     def update(self):
         pb.applyExternalForce(self.mmm,-1,[0,0,-0.001],[0,0,0],pb.WORLD_FRAME)
+        if self.cnt==100:
+            pb.changeConstraint(self.ccc,maxForce=0.3)
         if self.ccc is not None:
             pos,rot=pb.getBasePositionAndOrientation(self.mmm)
-            if np.linalg.norm(pos-self.mussle_pos)>0.1:
-                pb.removeConstraint(self.ccc)
+            pb.resetBasePositionAndOrientation(self.mussle_clue,pos,rot)
+            rpos,rrot=pb.getBasePositionAndOrientation(self.ref_body)
+            if self.cnt>100 and np.linalg.norm(pos-self.mussle_pos-rpos)>0.1:
+                #pb.removeConstraint(self.ccc) #couse segmentation fault
+                pb.changeConstraint(self.ccc,maxForce=0.0)
                 self.ccc=None
+                pb.removeBody(self.mussle_clue)
+        self.cnt+=1
 
 
 
 class MusseleRopesScene(object):
-    def __init__(self,rows=2,cols=5):
-        ret=[]
+    def __init__(self,rows=2,cols=4):
         meshScale = np.ones(3)*1
         #self.mussle_pos = np.array([1.8,0,0])
         vfo=pb.getQuaternionFromEuler(np.deg2rad([90, 0, 0]))
@@ -104,11 +110,12 @@ class MusseleRopesScene(object):
                                             visualFramePosition=[0,0,-5],
                                             visualFrameOrientation=vfo,
                                             meshScale=[2,2,2])#set the center of mass frame (loadURDF sets base link frame) startPos/Ornp.resetBasePositionAndOrientation(boxId, startPos, startOrientation)
-        ret.append(pb.createMultiBody(baseMass=0,
+        sb=pb.createMultiBody(baseMass=0,
                               baseInertialFramePosition=[0, 0, 0],
                               baseVisualShapeIndex=visualShapeId,
                               basePosition=[0,0,0],
-                              useMaximalCoordinates=True))
+                              useMaximalCoordinates=True)
+        self.sb=sb
      
         vfo=pb.getQuaternionFromEuler(np.deg2rad([0, 0, 180]))
         visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
@@ -116,20 +123,43 @@ class MusseleRopesScene(object):
                                             visualFramePosition=[1.5,0,0],
                                             visualFrameOrientation=vfo,
                                             meshScale=meshScale)#set the center of mass frame (loadURDF sets base link frame) startPos/Ornp.resetBasePositionAndOrientation(boxId, startPos, startOrientation)
-        for i in range(4):
-            ret.append(pb.createMultiBody(baseMass=0,
-                                  baseInertialFramePosition=[0, 0, 0],
+        self.vlines=[]
+        self.vlines_const=[]
+        for i in range(cols):
+            base_position = [0,1.4*i,0]
+            rr=pb.createMultiBody(baseMass=0.1,
+                                  #baseInertialFramePosition=base_position,
                                   baseVisualShapeIndex=visualShapeId,
-                                  basePosition=[0,1.4*i,0],
-                                  useMaximalCoordinates=True))
+                                  basePosition=base_position,
+                                  useMaximalCoordinates=True)
+            self.vlines.append(rr)
+            print('--1')
+            #if i==0:
+            #    base_position = [0,1.4*i,2]
+            cc=pb.createConstraint(rr, -1, sb, -1, pb.JOINT_FIXED, [0, 0, 0], [0,0,0],base_position)
+            self.vlines_const.append(cc)
+            print('--2')
             #for j in range(rows):
         #    for i in range(cols):
         #        ret+=gen_rope(2+j*3,i*1)
         self.mmm=[]
         for mussle_pos in [[1.46,0,2],[1.46,0.1,2.1],[1.46,-0.1,1.9],[1.46,-0.07,2.02]]:
-            self.mmm.append(Mussle(np.array(mussle_pos)))
+            self.mmm.append(Mussle(np.array(mussle_pos),self.vlines[0]))
+
+        self.cnt=0
 
     def update(self):
         for m in self.mmm:
             m.update()
+
+        if self.cnt>300:
+            #fd=1 if self.cnt%1000<500 else -1
+            fd=np.sin((self.cnt%1000-500)/1000*np.pi*2)
+            rpos,rrot=pb.getBasePositionAndOrientation(self.vlines[0])
+            rpos=np.array(rpos)
+            rpos+=[0,0,fd*0.0005]
+            pb.removeConstraint(self.vlines_const[0])
+            self.vlines_const[0]=pb.createConstraint(self.vlines[0], -1, self.sb, -1, pb.JOINT_FIXED, [0, 0, 0], [0,0,0],rpos)
+        self.cnt+=1
+
 

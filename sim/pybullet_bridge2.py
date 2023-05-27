@@ -180,7 +180,7 @@ def main():
     fov=42
 
     sim_time=0
-    scene=getscene(1,1)
+    scene=getscene()
     boxId,link_name_to_index,joint_name_to_index = getrov()
     start_depth=0.5
 
@@ -298,7 +298,7 @@ def main():
                 cv2.imshow('depth',img_show)
                 cv2.waitKey(1)
             frame_cnt+=1
-            print(cnt,'cam_time',time.time()-cam_tic)
+            #print(cnt,'cam_time',time.time()-cam_tic)
 
         if ratio(fps_main):
             main_cam_tic=time.time()
