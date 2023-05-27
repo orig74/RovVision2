@@ -57,6 +57,16 @@ class rovCommandHandler(object):
     def z_hold(self):
         self.pub({'cmd':'z_hold'})
 
+    def x_lock(self,v):
+        self.pub({'cmd':'x_lock','val':v})
+
+    def y_lock(self,v):
+        self.pub({'cmd':'y_lock','val':v})
+
+    def d_lock(self,v):
+        self.pub({'cmd':'d_lock','val':v})
+
+
     def go(self,p,relative=True):
         self.pub({'cmd':'go','point':p,'rel':relative})
 

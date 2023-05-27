@@ -145,13 +145,14 @@ def main():
     cmd_column+=TrackThreadSG.get_layout(track_thread)
     cmd_column+=[[sg.Button('Save',key='MISSION_SAVE',tooltip='save mission params')]]
     cmd_column+=[
-            [sg.Checkbox('H',key='HSV_H',tooltip='h from hsv on cam 1')],
-            [sg.Combo(list('RGBrgb'),key='CHANNEL',enable_events=True ,default_value='B',
-                    tooltip='detect rope from grey image channel'),
-            sg.Combo(list('01'),key='ROPE_TO_HSV',default_value='0',enable_events=True,
-                    tooltip='detect rope from hsv image channel (h) or in h'),
-            sg.Combo(list('123'),key='KEEP_STROBE_MODE',enable_events=True ,default_value='N',
-                    tooltip='select 1-keep strobe 2-keep dark 3-keep all'),
+            #[sg.Checkbox('H',key='HSV_H',tooltip='h from hsv on cam 1')],
+            [
+            #sg.Combo(list('RGBrgb'),key='CHANNEL',enable_events=True ,default_value='B',
+            #        tooltip='detect rope from grey image channel'),
+            #sg.Combo(list('01'),key='ROPE_TO_HSV',default_value='0',enable_events=True,
+            #        tooltip='detect rope from hsv image channel (h) or in h'),
+            #sg.Combo(list('123'),key='KEEP_STROBE_MODE',enable_events=True ,default_value='N',
+            #        tooltip='select 1-keep strobe 2-keep dark 3-keep all'),
             sg.Input(key='D405EXP',default_text='0',size=(4,1),enable_events=True,
                 tooltip='d405 exposure milis')
             ] 
@@ -255,7 +256,7 @@ def main():
                 image_shape=rawImg.shape
                 if last_im is not None:
                     window["-IMAGE-0-"].erase()
-                last_im=draw_image(window["-IMAGE-0-"],img_to_tk(rawImg,h_hsv=values['HSV_H']))#im_size[1]))
+                last_im=draw_image(window["-IMAGE-0-"],img_to_tk(rawImg))#,h_hsv=values['HSV_H']))#im_size[1]))
             frameId, rawImg = rovHandler.getSincedImages(1)
             if rawImg is not None:
                 window["-IMAGE-1-"].update(data=img_to_tk(rawImg,1.65 if values['LAYOUT2'] else 1))
@@ -311,6 +312,12 @@ def main():
                 rovCommander.y_hold()
             if event == 'Z-hold':
                 rovCommander.z_hold()
+            if event == 'X_LOCK':
+                rovCommander.x_lock(values['X_LOCK'])
+            if event == 'Y_LOCK':
+                rovCommander.y_lock(values['Y_LOCK'])
+            if event == 'D_LOCK':
+                rovCommander.d_lock(values['D_LOCK'])
             if event == sym_fwd:
                 rovCommander.go((float(values['Target-X']),0,0))
             if event == sym_back:
