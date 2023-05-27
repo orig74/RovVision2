@@ -25,6 +25,8 @@ import zmq_wrapper
 import zmq_topics
 import glob
 
+from tracker.of import OF
+tcv = None 
 from tracker.rope_detect import rope_detect_depth
 
 font = cv2.FONT_HERSHEY_SIMPLEX
@@ -92,8 +94,9 @@ refPt=None
 last_click_data=None
 delta_click=None
 wins={}
+of=OF()
 def click(event, x, y, flags, param):
-    global delta_click,last_click_data
+    global delta_click,last_click_data,tcv
     if event == cv2.EVENT_LBUTTONDOWN:
         d=depth_img[y,x]*config.water_scale
         print('---click',x,y,depth_img[y,x])
@@ -103,6 +106,13 @@ def click(event, x, y, flags, param):
             delta_click=click_data-last_click_data
         last_click_data=click_data
         wins['rgb']['redraw']=True
+        if rgb_img is not None:
+            of.set(gray_img,(x,y))
+            mg=5
+            bbox=(x-mg,y-mg,x+mg,y+mg)
+            #tcv=cv2.TrackerGOTURN_create()
+            #tcv.init(gray_img,bbox) 
+            print('setting track',x,y)
         #print('===+===',xw,yw,s,delta_click)
     #if event == cv2.EVENT_MBUTTONDOWN:
         #k=cv2.pollKey()
@@ -140,7 +150,6 @@ def get_mask_stats(mask):
     n_componnets=len([s for s in stats if 30<s[-1]<100000])
     return (numLabels,stats, centroids,n_componnets)
     
-
 while 1:
     if pkl_data is not None:
         i=np.clip(i,0,len(pkl_data)-1) 
@@ -192,6 +201,13 @@ while 1:
             rgb_img=None
             if os.path.isfile(fname):
                 rgb_img=cv2.imread(args.path+f'/{fnum:06d}.jpg')
+                gray_img=cv2.cvtColor(rgb_img, cv2.COLOR_BGR2GRAY)
+                _ret=of.track(gray_img)
+                #if tcv is not None:
+                #    print('hhh',tcv.update(gray_img))
+                if _ret is not None:
+                    x,y=map(int,_ret)
+                    cv2.circle(rgb_img, (x,y), 3, (0, 0, 255), -1)
             #print('===',args.path+f'/{fnum:06d}.jpg')
             posx=0
             if rgb_img is not None:

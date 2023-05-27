@@ -5,7 +5,7 @@ class OF(object):
     def __init__(self):
         # Parameters for lucas kanade optical flow
         self.lk_params = dict( winSize  = (15,15),
-                          maxLevel = 3,
+                          maxLevel = 2,
                           criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
         self.old_gray=None    
         self.last_good=None
@@ -22,24 +22,30 @@ class OF(object):
 
 
     def track(self,frame_gray):
-        if self.bad_count>5:
+        if self.bad_count>1:
             self.reset()
         if self.old_gray is None:
             return None
         p1, st, err = cv2.calcOpticalFlowPyrLK(self.old_gray, frame_gray, self.p0, None, **self.lk_params)
+        p0r, st, err = cv2.calcOpticalFlowPyrLK(frame_gray,self.old_gray,p1,None,**self.lk_params)
+        d = abs(self.p0-p0r).reshape(-1, 2).max(-1)
+
         good_new = p1[st==1]
-        if len(good_new)>0:
+        if d<3 and len(good_new)>0:
             x,y=good_new[0].ravel()
-            if self.last_good is not None:
-                xp,yp=self.last_good[0].ravel()
-                tr=20
-                if abs(x-xp)>tr or abs(y-yp)>tr:
-                    good_new=self.last_good
+            #if self.last_good is not None:
+            #    xp,yp=self.last_good[0].ravel()
+            #    tr=50
+            #    if abs(x-xp)>tr or abs(y-yp)>tr:
+            #        good_new=self.last_good
+            #        self.bad_count+=1
+            #        print('track fail...1')
             self.last_good=good_new
             self.p0 = good_new.reshape(-1,1,2)
             self.old_gray=frame_gray
             return (x,y)
         else:
+            print('track fail...',self.bad_count,d)
             self.old_gray=frame_gray
             self.p0=self.last_good.reshape(-1,1,2)
             self.bad_count+=1
