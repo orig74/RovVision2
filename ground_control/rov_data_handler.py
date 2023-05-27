@@ -75,7 +75,7 @@ class rovCommandHandler(object):
     def lock_max(self):
         self.pub({'cmd':'lock_max'})
 
-    def vertical_object_lock(self,rng=0.32,Pxy=0.1):
+    def vertical_object_lock(self,rng=0.32,Pxy=(0.01,0.01)):
         self.pub({'cmd':'tracker_vert_object_lock','range':rng,'Pxy':Pxy})
         self.vertical_object_lock_state=True
 

@@ -113,17 +113,25 @@ def main():
                 default_value=str(config.thruster_limit_controler),enable_events=True,
                     tooltip='set thruster limit for all thrusters')],
              [sg.Button('Depth-Hold'),
-                sg.Button(sym_up),sg.Button(sym_down),sg.Input(key='Target-Depth',default_text='0.1',size=(4,1))],
+                sg.Button(sym_up),sg.Button(sym_down),sg.Input(key='Target-Depth',default_text='0.1',size=(4,1)),
+                sg.Checkbox('L',key='D_LOCK',enable_events=True,tooltip='depth main tracker lock')],
+
             [sg.Button('Att-hold'),sg.Text('Pitch:'),sg.Input(key='Target-Pitch',default_text='0.0',size=(4,1))],
-            [sg.Button('X-hold'),sg.Button(sym_fwd),sg.Button(sym_back),sg.Input(key='Target-X',default_text='0.1',size=(4,1))],
-            [sg.Button('Y-hold'),sg.Button(sym_left),sg.Button(sym_right),sg.Input(key='Target-Y',default_text='0.1',size=(4,1))],
+
+            [sg.Button('X-hold'),sg.Button(sym_fwd),sg.Button(sym_back),sg.Input(key='Target-X',default_text='0.1',size=(4,1)),
+                sg.Checkbox('L',key='X_LOCK',enable_events=True,tooltip='x (range) main tracker lock')],
+
+            [sg.Button('Y-hold'),sg.Button(sym_left),sg.Button(sym_right),sg.Input(key='Target-Y',default_text='0.1',size=(4,1)),
+                sg.Checkbox('L',key='Y_LOCK',enable_events=True,tooltip='y (sideways main tracker lock')],
+
             [sg.Button(sym_yaw_left),sg.Button(sym_yaw_right),sg.Input(key='DeltaYawD',default_text='1.0',size=(4,1))],
             [
                 sg.Checkbox('V',key='V_LOCK',enable_events=True,tooltip='vertical object lock'),
                 sg.Text('Range:'),
                 sg.Input(key='Lrange',default_text='0.35',size=(4,1)),
                 sg.Text('Pxy:'),
-                sg.Input(key='Pxy',default_text='0.015',enable_events=True,size=(5,1))
+                sg.Input(key='Px',default_text='0.01',enable_events=True,size=(5,1)),
+                sg.Input(key='Py',default_text='0.01',enable_events=True,size=(5,1))
                 ],
             [ 
                 sg.Button('Ml',tooltip='tracker max lock'),
@@ -153,7 +161,7 @@ def main():
             [sg.Image(key="-IMAGE-2D-")],
             [sg.Button('Gc',tooltip="gripper close"),sg.Button('Go',tooltip="gripper open"),sg.Button('Tx',tooltip='stop main tracker')],
             [sg.Button('REC'),sg.Button('Reset-DVL'),sg.Button('Calib-DVL'),sg.Checkbox('L2',key='LAYOUT2',tooltip='layout2')],
-            [sg.Button('CF+'),sg.Button('CF-'),sg.Button('Lights+'),sg.Button('Lights-')],
+            #[sg.Button('CF+'),sg.Button('CF-'),sg.Button('Lights+'),sg.Button('Lights-')],
             [sg.Multiline(key='MESSEGES',s=(23,5) if scale_screen else (55,8), autoscroll=True, reroute_stdout=False, write_only=True)],
            ]
             #sg.Button('RTHSV',key='ROPE_TO_HSV',tooltip='detect rope from hsv image channel (h)')],
@@ -293,10 +301,10 @@ def main():
                 rovCommander.depth_command(-float(values['Target-Depth']))
             if event == 'Att-hold':
                 rovCommander.att_hold()
-            if event == 'CF+':
-                rovCommander.clear_freqs(1)
-            if event == 'CF-':
-                rovCommander.clear_freqs(-1)
+            #if event == 'CF+':
+            #    rovCommander.clear_freqs(1)
+            #if event == 'CF-':
+            #    rovCommander.clear_freqs(-1)
             if event == 'X-hold':
                 rovCommander.x_hold()
             if event == 'Y-hold':
@@ -335,12 +343,14 @@ def main():
             if event=='V_LOCK':
                 printer(f"got v_lock {values['V_LOCK']}")
                 if values['V_LOCK']:
-                    rovCommander.vertical_object_lock(rng=float(values['Lrange']),Pxy=float(values['Pxy']))
+                    rovCommander.vertical_object_lock(rng=float(values['Lrange']),
+                            Pxy=(float(values['Px']),float(values['Py']))
+                            )
                 else:
                     rovCommander.vertical_object_unlock()
 
-            if event=='Pxy':
-                rovCommander.update_pxy(float(values['Pxy']))
+            if event in ['Px','Py']:
+                rovCommander.update_pxy((float(values['Px']),float(values['Py'])))
 
             window['V_LOCK'](rovCommander.vertical_object_lock_state)
 

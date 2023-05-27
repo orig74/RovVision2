@@ -154,10 +154,11 @@ class MusseleRopesScene(object):
 
         if self.cnt>300:
             #fd=1 if self.cnt%1000<500 else -1
-            fd=np.sin((self.cnt%1000-500)/1000*np.pi*2)
+            T=2000
+            fd=np.sin((self.cnt%T-(T//2))/T*np.pi*2)
             rpos,rrot=pb.getBasePositionAndOrientation(self.vlines[0])
             rpos=np.array(rpos)
-            rpos+=[0,0,fd*0.0005]
+            rpos+=[0,0,fd*0.0002]
             pb.removeConstraint(self.vlines_const[0])
             self.vlines_const[0]=pb.createConstraint(self.vlines[0], -1, self.sb, -1, pb.JOINT_FIXED, [0, 0, 0], [0,0,0],rpos)
         self.cnt+=1
