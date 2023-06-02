@@ -202,6 +202,10 @@ async def recv_and_process():
                     dx=np.clip((rng-data['range']),-10,10)/1000 #mm to m
                     dy=-(left-data['left'])/1000
                     #dz=up-data['up']
+                    max_speed=0.04
+                    dx=np.clip(dx,-max_speed,max_speed)
+                    dy=np.clip(dy,-max_speed,max_speed)
+
                     if tr_main_lock['x_lock']:
                         target_pos[0]-=Pxy[0]*dx
                     if tr_main_lock['y_lock']:
