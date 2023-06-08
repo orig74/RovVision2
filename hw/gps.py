@@ -1,5 +1,6 @@
 from pyubx2 import UBXReader
 from serial import Serial
+from time import gmtime, strftime
 
 UBX_MSG_IDs = {'NAV-HPPOSLLH': {'class': b'\x01', 'id': b'\x014'}}
 
@@ -65,6 +66,23 @@ def gps_time_from_ubx_msg(ubx_msg):
     return ubx_msg.iTOW
 
 
+def raw_data_filename():
+    """Return the filepath to the raw data file location"""
+    return r'gps_listener_sfrbx_data.ubx'
+
+
+def write_to_raw_file(ubx_msg):
+    """Write the SFRBX raw data to the raw data file"""
+    assert ubx_msg.identity == "NAV-SFRBX", "UBX message is not the required NAV-SFRBX identity"
+    
+    # Serialise UBX message into bytes for file writing
+    msg_bytes = ubx_msg.serialise()
+
+    with open(raw_data_filename(), 'w') as rd_file:
+        rd_file.write(msg_bytes)
+
+
+
 def populate_parcel_from_ubx_msg(parcel, ubx_msg):
     """With the argument ubx_msg, populate the appropriate field in the parcel dictionary"""
     message = ubx_msg.identity
@@ -73,9 +91,6 @@ def populate_parcel_from_ubx_msg(parcel, ubx_msg):
     elif message == 'NAV-HPPOSLLH':
         parcel['lat'] = ubx_msg.lat
         parcel['lon'] = ubx_msg.lon
-    elif message == 'RXM-SFRBX':
-        # TODO: implement correctly
-        parcel['raw_gnss'] = None
 
 
 def gps_listener(ubr_obj):
@@ -84,28 +99,28 @@ def gps_listener(ubr_obj):
 
     parcel_dict = {'gpstime': '',
                    'lat': '',
-                   'lon': '',
-                   'raw_gnss': ''}
+                   'lon': ''}
 
-    listening = False
     while True:
         ubx_msg = ubr_obj.read()[1]
-        if not listening:
-            if ubx_msg.identity == 'NAV-TIMEGPS':
-                # Start listening and populating parcel
-                listening = True
+        try:
+            if ubx_msg.identity == 'NAV-SFRBX':
+                # Write raw GNSS SFRBX data directly to specified file
+                write_to_raw_file(ubx_msg)
+            else:
+                # It is a general message
                 populate_parcel_from_ubx_msg(parcel_dict, ubx_msg)
-        # We are in the listening mode
-        else:
-            populate_parcel_from_ubx_msg(parcel_dict, ubx_msg)
-            if is_parcel_full(parcel_dict):
-                # The parcel is fully populated and ready to send
-                listening = False
-                # TODO: pickle dict and send to ROV
-                # Temporary testing code
-                print(parcel_dict)
-                # Empty the parcel to get ready for next listening period
-                parcel_dict = emptied_parcel(parcel_dict)
+                if is_parcel_full(parcel_dict):
+                    # The parcel is fully populated and ready to send
+                    # TODO: pickle dict and send to ROV
+                    # Temporary testing code
+                    print(parcel_dict)
+                    # Empty the parcel to get ready for next listening period
+                    parcel_dict = emptied_parcel(parcel_dict)
+                    
+        except AttributeError as attr_err:
+                print(attr_err)
+                print(f"The UBX message was actually this: {str(ubx_msg)} / {repr(ubx_msg)}")
 
 
 if __name__ == "__main__":

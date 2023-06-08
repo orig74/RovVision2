@@ -9,3 +9,5 @@ scripts/pingviewer-x86_64.AppImage
 *.avi
 sim/pybullet_data
 *.json
+.idea/
+hw/.idea/
