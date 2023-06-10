@@ -128,7 +128,7 @@ def main():
             [
                 sg.Checkbox('V',key='V_LOCK',enable_events=True,tooltip='vertical object lock'),
                 sg.Text('Range:'),
-                sg.Input(key='Lrange',default_text='0.35',size=(4,1)),
+                sg.Input(key='Lrange',default_text='0.75',size=(4,1)),
                 sg.Text('Pxy:'),
                 sg.Input(key='Px',default_text='0.01',enable_events=True,size=(5,1)),
                 sg.Input(key='Py',default_text='0.01',enable_events=True,size=(5,1))
@@ -386,7 +386,7 @@ def main():
             #if event=='Mn':
             if values['AUTO_NEXT']:
                 #track_thread.do_next()
-                track_thread.run(float(values['Lrange']),
+                track_thread.run(float(values['Lrange']),float(values['k_max_alt']),
                         Pxy=(float(values['Px']),float(values['Py'])))
 
             #if not values['MISSION_PAUSE']:

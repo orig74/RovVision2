@@ -2,6 +2,7 @@ import time
 import json
 import numpy as np
 states = ['wait_start','stabilize','go_down','stabilize','slide','stabilize','go_up','stabilize','slide','stabilize']
+#states = ['stabilize','go_down','stabilize','slide','stabilize','go_up','stabilize','slide','stabilize']
 
 mission_vars_default=[
     ('horizontal_slide',0.8),
@@ -12,11 +13,13 @@ mission_vars_default=[
     ('vertical_step',0.1),
     ('slide_step',0.1),
     ('max_iters',3),
+    ('max_alt',3),
     ]
 
 tool_tips={
-        'horizontal_slide':'horizontal slide between ropes right is positive'
-        }
+        'horizontal_slide':'horizontal slide between ropes right is positive',
+        'max_alt':'maximum dvl alt from seabed'
+    }
 
 class FarmTrack(object):
     def __init__(self,iterations=1,rov_comander=None,rov_data_handler=None,printer=None):
@@ -63,6 +66,7 @@ class FarmTrack(object):
 
     def start(self):
         self.state_ind=0
+        self.iter=0
         self.__inc_step()
 
     #def do_next(self):
@@ -73,11 +77,13 @@ class FarmTrack(object):
         return time.time()-self.start_step_time 
 
     def __inc_step(self):
-        self.state_ind+=1
-        self.state_ind=self.state_ind%len(states)
-        if self.state_ind==0 and self.iter<self.max_iters:
+        if self.iter<self.max_iters:
             self.state_ind+=1
+        self.state_ind=self.state_ind%len(states)
+        if self.state_ind==0:# and self.iter<self.max_iters:
+            self.state_ind+=1 #skip wait start
             self.iter+=1
+
         self.printer(f'{self.iter} state is: {states[self.state_ind]}')
         self.done_step=self.auto_next
         self.start_step_time=time.time()
@@ -110,10 +116,10 @@ class FarmTrack(object):
         txy=dh.get_target_xy()
         dx = abs(xy[0]-txy[0])
         dy = abs(xy[1]-txy[1])
-        self.printer(f'dxdy {dx:.2f} {dy:.2f} {dx<tresh and dy<tresh}')
+        self.printer(f'dxdy {dx:.2f} {dy:.2f} {dx<tresh and dy<tresh} {self.iter}')
         return dx<tresh and dy<tresh
 
-    def run(self,range_to_target,Pxy):
+    def run(self,range_to_target,max_alt,Pxy):
         dh=self.rov_data_handler
         tic=time.time()
         if tic-self.last_run<0.5:
@@ -163,7 +169,12 @@ class FarmTrack(object):
 
         elif states[self.state_ind].startswith('go'):
             #self.printer(f'M: d_ach: {self.__target_depth_achived()} done_st: {self.done_step}')
-            if self.__target_depth_achived() and do_next:
+            too_close_to_seabed = False
+            if dh.get_alt() is not None and dh.get_alt()<max_alt:
+                too_close_to_seabed=True
+                self.rov_comander.depth_command(dh.get_depth(),relative=False)
+                self.printer(f'too close to seabed {dh.get_alt()}')
+            if (self.__target_depth_achived() and do_next) or too_close_to_seabed:
                 self.final_target_depth=None
                 self.__inc_step()
             else:

@@ -101,7 +101,7 @@ class Mussle(object):
 
 
 class MusseleRopesScene(object):
-    def __init__(self,rows=2,cols=4):
+    def __init__(self,rows=2,cols=6):
         meshScale = np.ones(3)*1
         self.seabed_pos=[0,0,-2]
         #self.mussle_pos = np.array([1.8,0,0])
