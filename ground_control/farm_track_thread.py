@@ -14,6 +14,10 @@ mission_vars_default=[
     ('max_iters',3),
     ]
 
+tool_tips={
+        'horizontal_slide':'horizontal slide between ropes right is positive'
+        }
+
 class FarmTrack(object):
     def __init__(self,iterations=1,rov_comander=None,rov_data_handler=None,printer=None):
         self.auto_next=False

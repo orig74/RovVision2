@@ -7,8 +7,8 @@ def get_layout(farm_obj,cols=2):
         if len(ret[-1])==(2*cols):
             ret.append([])
         if type(v) in [float,int]:
-            ret[-1].append(sg.Text(k+':'))
-            ret[-1].append(sg.Input(v,size=(4,1),key='k_'+k))
+            ret[-1].append(sg.Text(k+':',tooltip=ft.tool_tips.get(k,None)))
+            ret[-1].append(sg.Input(v,size=(4,1),key='k_'+k,tooltip=ft.tool_tips.get(k,None)))
     return ret
 #def set_layout():
 #    mv=ft.mission_vars_default
