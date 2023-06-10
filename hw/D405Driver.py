@@ -27,7 +27,7 @@ FRAME_MOD = 1
 RES_X = 848
 RES_Y = 480
 
-KEEP_STROBE_FRAMES = 1 #1 keep strob 2 dont keep strob 3 keepall
+KEEP_STROBE_FRAMES = 0 #1 keep strob 2 dont keep strob 0 keepall
 
 FPS = 15 if KEEP_STROBE_FRAMES==1 else 15#90
 MIN_GAP_BETWEEN_KEEPS = 1 *FPS//15 #dectates maxmial keep frequency
