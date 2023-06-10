@@ -103,11 +103,12 @@ class Mussle(object):
 class MusseleRopesScene(object):
     def __init__(self,rows=2,cols=4):
         meshScale = np.ones(3)*1
+        self.seabed_pos=[0,0,-2]
         #self.mussle_pos = np.array([1.8,0,0])
         vfo=pb.getQuaternionFromEuler(np.deg2rad([90, 0, 0]))
         visualShapeId = pb.createVisualShape(shapeType=pb.GEOM_MESH,
                                             fileName="pybullet_data/seabed2.obj",
-                                            visualFramePosition=[0,0,-5],
+                                            visualFramePosition=self.seabed_pos,
                                             visualFrameOrientation=vfo,
                                             meshScale=[2,2,2])#set the center of mass frame (loadURDF sets base link frame) startPos/Ornp.resetBasePositionAndOrientation(boxId, startPos, startOrientation)
         sb=pb.createMultiBody(baseMass=0,

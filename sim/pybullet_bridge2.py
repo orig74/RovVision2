@@ -362,7 +362,7 @@ def main():
 
         if ratio(dvl_vel_fps):
             pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps(
-                    {'ts':tic,'dvl_raw':vel_msg(*vel_linear_in_body,sim_time)})])
+                    {'ts':tic,'dvl_raw':vel_msg(*vel_linear_in_body,sim_time,-pos_com[2]-scene.seabed_pos[2])})])
         if ratio(dvl_pos_fps):
             pub_dvl.send_multipart([zmq_topics.topic_dvl_raw,pickle.dumps(
                     {'ts':tic,'dvl_raw':pos_msg(pos_com[0],pos_com[1],pos_com[2],-yaw)})])

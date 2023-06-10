@@ -398,6 +398,9 @@ class rovDataHandler(object):
     def get_depth(self):
         return self.telemtry[zmq_topics.topic_depth]['depth']
 
+    def get_alt(self):
+        return self.telemtry.get('dvl_alt',None)
+
     def get_target_depth(self):
         return self.telemtry.get(zmq_topics.topic_depth_hold_pid,{}).get('T',0)
 

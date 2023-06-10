@@ -1,9 +1,9 @@
 import numpy as np
 from scipy.spatial.transform import Rotation as Rot
 
-def vel_msg(vx,vy,vz,ts_sec):
+def vel_msg(vx,vy,vz,ts_sec,alt=2.0):
     return \
-    'wrz,{},{},{},y,1.99,0.006,3.65e-05;7.22e-06;7.22e-06;3.39e-06;2.46e-06;-8.5608e-07;7.223e-06;-8.560e-07;3.2363e-06,{},1550139816447957,188.80,0*XX\r\n'.format(vx,vy,vz,int(ts_sec*1e6)).encode()
+    'wrz,{},{},{},y,{},0.006,3.65e-05;7.22e-06;7.22e-06;3.39e-06;2.46e-06;-8.5608e-07;7.223e-06;-8.560e-07;3.2363e-06,{},1550139816447957,188.80,0*XX\r\n'.format(vx,vy,vz,alt,int(ts_sec*1e6)).encode()
 
 def pos_msg(x,y,z,yaw_deg):
     return  'wrp,1550139816.178,{},{},{},{},2.5,-3.7,{},0*XX\r\n'.\
@@ -35,7 +35,7 @@ class DVLSim(object):
         #print(f'1- vx={vx*c-vy*s},vy={vx*s+vy*c}')
         #vx,vy,vz = (R.T @ np.array([[vx,vy,vz]]).T).flatten() #velocity vector in body frame as defined 
         print(f'vx={vx},vy={vy},vz={vz}')
-        vel_msg='wrz,{},{},{},y,1.99,0.006,3.65e-05;7.22e-06;7.22e-06;3.39e-06;2.46e-06;-8.5608e-07;7.223e-06;-8.560e-07;3.2363e-06,{},1550139816447957,188.80,0*XX\r\n'.format(vx,vy,vz,int(self.t*1e6)).encode()
+        vel_msg='wrz,{},{},{},y,{},0.006,3.65e-05;7.22e-06;7.22e-06;3.39e-06;2.46e-06;-8.5608e-07;7.223e-06;-8.560e-07;3.2363e-06,{},1550139816447957,188.80,0*XX\r\n'.format(vx,vy,vz,self.curr_q[-2],int(self.t*1e6)).encode()
         return vel_msg
 
     def dvl_pos_msg(self):
