@@ -193,8 +193,14 @@ async def recv_and_process():
                     dy=data['dy']
                     #target_pos[0]=dvl_last_pos['x']-Pxy*dx
                     #target_pos[1]=dvl_last_pos['y']+Pxy*dy
-                    target_pos[0]-=Pxy[0]*dx
-                    target_pos[1]+=Pxy[1]*dy
+                    #target_pos[0]-=Pxy[0]*dx
+                    #target_pos[1]+=Pxy[1]*dy
+                    tar_x=dvl_last_pos['x']-dx
+                    tar_y=dvl_last_pos['y']+dy
+                    target_pos[0]+=np.clip(tar_x-target_pos[0],-Pxy[0],Pxy[0])
+                    target_pos[1]+=np.clip(tar_y-target_pos[0],-Pxy[1],Pxy[1])
+
+
 
             if topic==zmq_topics.topic_main_tracker:
                 if data['range']:
