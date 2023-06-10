@@ -186,6 +186,7 @@ async def recv_and_process():
                     thruster_cmd = mixer.mix(cmds[2],-cmds[1],-cmds[0],0,0,0,0,0)
                     thrusters_source.send_pyobj(['pos',time.time(),thruster_cmd])
 
+            #tracking rope
             if topic==zmq_topics.topic_tracker:
                 if data['valid'] and tracker_lock_range is not None:
                     dx=tracker_lock_range-data['range']
@@ -193,19 +194,15 @@ async def recv_and_process():
                     dy=data['dy']
                     #target_pos[0]=dvl_last_pos['x']-Pxy*dx
                     #target_pos[1]=dvl_last_pos['y']+Pxy*dy
-                    #target_pos[0]-=Pxy[0]*dx
-                    #target_pos[1]+=Pxy[1]*dy
-                    tar_x=dvl_last_pos['x']-dx
-                    tar_y=dvl_last_pos['y']+dy
-                    target_pos[0]+=np.clip(tar_x-target_pos[0],-Pxy[0],Pxy[0])
-                    target_pos[1]+=np.clip(tar_y-target_pos[0],-Pxy[1],Pxy[1])
+                    #printer(f'trope {Pxy[0]*dx,Pxy[1]*dy}')
+                    target_pos[0]-=Pxy[0]*dx
+                    target_pos[1]+=Pxy[1]*dy
 
-
-
+            #trackong point
             if topic==zmq_topics.topic_main_tracker:
                 if data['range']:
                     rng,left,up=config.grip_pos_rel_mm
-                    dx=np.clip((rng-data['range']),-10,10)/1000 #mm to m
+                    dx=(rng-data['range'])/1000 #mm to m
                     dy=-(left-data['left'])/1000
                     #dz=up-data['up']
                     max_speed=0.04
