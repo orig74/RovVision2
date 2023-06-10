@@ -134,11 +134,11 @@ def main():
                 sg.Input(key='Py',default_text='0.01',enable_events=True,size=(5,1))
                 ],
             [ 
-                sg.Button('Ml',tooltip='tracker max lock'),
-                sg.Button('Ms',tooltip='mission start'),
-                sg.Checkbox('Ma',key='AUTO_NEXT',enable_events=True,tooltip='auto next',default=False),
-                sg.Button('Mn',tooltip='mission next'),
-                sg.Checkbox('Mp',key='MISSION_PAUSE',enable_events=False,tooltip='pause mission',default=True)
+                #sg.Button('Ml',tooltip='tracker max lock'),
+                #sg.Button('Ms',tooltip='mission start'),
+                sg.Checkbox('Mission Start',key='AUTO_NEXT',enable_events=True,tooltip='start stop mission',default=False),
+                #sg.Button('Mn',tooltip='mission next'),
+                #sg.Checkbox('Mp',key='MISSION_PAUSE',enable_events=False,tooltip='pause mission',default=True)
                 ],
             [sg.Text('MState:'),sg.Text('WAIT',key='MSTATE')],
             ]
@@ -361,17 +361,17 @@ def main():
 
             window['V_LOCK'](rovCommander.vertical_object_lock_state)
 
-            if event=='Ml':
-                rovCommander.lock_max()
+            #if event=='Ml':
+            #    rovCommander.lock_max()
 
             #if (cnt%(1000//20))==0:
             if time.time()-last_heartbit>2.0:
                 last_heartbit=time.time()
                 rovCommander.heartbit()
 
-            if event=='Ms':
-                track_thread.set_params(TrackThreadSG.get_layout_values(values))
-                track_thread.start()
+            #if event=='Ms':
+            #    track_thread.set_params(TrackThreadSG.get_layout_values(values))
+            #    track_thread.start()
 
             if event=='MISSION_SAVE':
                 track_thread.set_params(TrackThreadSG.get_layout_values(values))
@@ -379,14 +379,20 @@ def main():
 
             if event=='AUTO_NEXT':
                 track_thread.auto_next=values['AUTO_NEXT']
+                track_thread.set_params(TrackThreadSG.get_layout_values(values))
+                track_thread.start()
                 printer(f'set auto next to {track_thread.auto_next}')
 
-            if event=='Mn':
-                track_thread.do_next()
-
-            if not values['MISSION_PAUSE']:
+            #if event=='Mn':
+            if values['AUTO_NEXT']:
+                #track_thread.do_next()
                 track_thread.run(float(values['Lrange']),
                         Pxy=(float(values['Px']),float(values['Py'])))
+
+            #if not values['MISSION_PAUSE']:
+            #    track_thread.run(float(values['Lrange']),
+            #            Pxy=(float(values['Px']),float(values['Py'])))
+            if 1:
                 window['MSTATE'](track_thread.get_state(),text_color='white',background_color='black')
 
             if event=='CENTER_TRACE':

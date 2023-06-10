@@ -20,13 +20,13 @@ tool_tips={
 
 class FarmTrack(object):
     def __init__(self,iterations=1,rov_comander=None,rov_data_handler=None,printer=None):
-        self.auto_next=False
+        self.auto_next=True
         self.set_params(mission_vars_default)
 
         self.rov_comander=rov_comander
         self.rov_data_handler=rov_data_handler
         self.printer=printer
-        self.override_do_next=False
+        #self.override_do_next=False
         self.reset()
 
     def set_params(self,mission_vars):
@@ -36,7 +36,7 @@ class FarmTrack(object):
 
     def reset(self):
         self.state_ind=0
-        self.done_step=self.auto_next
+        self.done_step=False
         self.iter=0
     #    self.current_y_command=0
     #    self.current_x_command=0
@@ -65,9 +65,9 @@ class FarmTrack(object):
         self.state_ind=0
         self.__inc_step()
 
-    def do_next(self):
-        self.done_step=True
-        self.override_do_next=True
+    #def do_next(self):
+    #    self.done_step=True
+        #self.override_do_next=True
 
     def step_time(self):
         return time.time()-self.start_step_time 
@@ -81,7 +81,7 @@ class FarmTrack(object):
         self.printer(f'{self.iter} state is: {states[self.state_ind]}')
         self.done_step=self.auto_next
         self.start_step_time=time.time()
-        self.override_do_next=False
+        #self.override_do_next=False
 
     def __target_depth_achived(self):
         dh=self.rov_data_handler
@@ -91,8 +91,8 @@ class FarmTrack(object):
         return abs(dh.get_depth()-self.final_target_depth)<0.2
 
     def __target_xy_achived(self,tresh=0.3):
-        if self.override_do_next:
-            return True
+        #if self.override_do_next:
+        #    return True
         dh=self.rov_data_handler
         xy=dh.get_pos_xy2()
         if self.final_target_slide is None:
@@ -131,7 +131,7 @@ class FarmTrack(object):
         do_next = self.done_step or self.auto_next
         do_next = do_next and self.__is_stable_xy()
         do_next = do_next and self.step_time()>self.minimal_step_time
-        do_next = do_next or self.override_do_next
+        #do_next = do_next or self.override_do_next
 
         if states[self.state_ind]=='stabilize':
             #self.printer(f'M: xy_ach: {self.__target_xy_achived()} done_st: {self.done_step}')
@@ -147,7 +147,7 @@ class FarmTrack(object):
 
                 if states[self.state_ind]=='go_down':
                     self.printer('going down')
-                    self.rov_comander.lock_max()
+                    #self.rov_comander.lock_max()
                     self.rov_comander.vertical_object_lock(rng=range_to_target,Pxy=Pxy)
                     self.final_target_depth=self.target_depth_down
                     self.tmp_target_depth=dh.get_depth()
@@ -155,7 +155,7 @@ class FarmTrack(object):
 
                 if states[self.state_ind]=='go_up':
                     self.printer('going up')
-                    self.rov_comander.lock_max()
+                    #self.rov_comander.lock_max()
                     self.rov_comander.vertical_object_lock(rng=range_to_target,Pxy=Pxy)
                     self.final_target_depth=self.target_depth_up
                     self.tmp_target_depth=dh.get_depth()
