@@ -385,7 +385,8 @@ def main():
                 track_thread.do_next()
 
             if not values['MISSION_PAUSE']:
-                track_thread.run(float(values['Lrange']),float(values['Pxy']))
+                track_thread.run(float(values['Lrange']),
+                        Pxy=(float(values['Px']),float(values['Py'])))
                 window['MSTATE'](track_thread.get_state(),text_color='white',background_color='black')
 
             if event=='CENTER_TRACE':
