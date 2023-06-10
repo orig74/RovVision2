@@ -198,22 +198,31 @@ async def recv_and_process():
                     target_pos[0]-=Pxy[0]*dx
                     target_pos[1]+=Pxy[1]*dy
 
-            #trackong point
+            #tracking point
             if topic==zmq_topics.topic_main_tracker:
                 if data['range']:
                     rng,left,up=config.grip_pos_rel_mm
-                    dx=(rng-data['range'])/1000 #mm to m
+                    dx=-(rng-data['range'])/1000 #mm to m
                     dy=-(left-data['left'])/1000
                     #dz=up-data['up']
-                    max_speed=0.04
-                    dx=np.clip(dx,-max_speed,max_speed)
-                    dy=np.clip(dy,-max_speed,max_speed)
+                    if 0:
+                        max_speed=0.04
+                        dx=np.clip(dx,-max_speed,max_speed)
+                        dy=np.clip(dy,-max_speed,max_speed)
 
-                    if tr_main_lock['x_lock']:
-                        target_pos[0]-=Pxy[0]*dx
-                    if tr_main_lock['y_lock']:
-                        target_pos[1]+=Pxy[1]*dy
-                    last_t_main_tracker=time.time()
+                        if tr_main_lock['x_lock']:
+                            target_pos[0]+=Pxy[0]*dx
+                        if tr_main_lock['y_lock']:
+                            target_pos[1]+=Pxy[1]*dy
+                    else:
+                        dx=np.clip(dx,-Pxy[0],Pxy[0])
+                        dy=np.clip(dy,-Pxy[1],Pxy[1])
+
+                        if tr_main_lock['x_lock']:
+                            target_pos[0]=dvl_last_pos['x']+dx
+                        if tr_main_lock['y_lock']:
+                            target_pos[1]=dvl_last_pos['y']+dy
+                        #last_t_main_tracker=time.time()
 
             #### joy hat control 
             jh_x,jh_y=jm.xy_hat_event()
