@@ -60,7 +60,8 @@ def emptied_parcel(parcel):
 
 
 def utc_time_from_nav_pvt(msg):
-    """Extract the GPS time from the message and convert to UTC time format string"""
+    """Extract the UTC time from message and return as datetime object, and also return
+    date and time validity and confirmation status information"""
     
     assert msg.identity == "NAV-PVT", "UBX message is not required NAV-PVT identity"
     utc_datetime = datetime(year=msg.year, 
@@ -71,7 +72,7 @@ def utc_time_from_nav_pvt(msg):
                             second=msg.second,
                             tzinfo=timezone.utc)
     # If date and time are invalid or not fully resolved, return indication of insufficiency
-    # Validity and confirmation fields are 1 when true, and 0 when false (ZED-F9P Integration Manual, pg.61, R12, 3-May-2022)
+    # Validity and confirmation fields are 1 when true, and 0 when false (ZED-F9P Integration Manual, pg.61, R12, 3-May-2022, https://content.u-blox.com/sites/default/files/ZED-F9P_IntegrationManual_UBX-18010802.pdf)
     valid_confirmed_status = 'FULLY RESOLVED AND VALID'
     if msg.confirmedAvai == 1:
         # Date and time validity and resolution status information are available in NAV-PVT message
@@ -99,9 +100,9 @@ def write_to_raw_file(ubx_msg):
     # Serialise UBX message into bytes for file writing
     msg_bytes = ubx_msg.serialize()
 
+    # TODO: why is this not writing to file?
     with open(raw_data_filename(), 'wb') as rd_file:
         rd_file.write(msg_bytes)
-
 
 
 def populate_parcel_from_ubx_msg(parcel, ubx_msg):
@@ -130,14 +131,15 @@ def gps_listener(ubr_obj):
                    'lon': ''}
 
     while True:
-        ubx_msg = ubr_obj.read()[1]
+        (raw_bytes, msg) = ubr_obj.read()
+        # TODO: change to it writes all messages to .ubx file
         try:
-            if ubx_msg.identity == 'RXM-SFRBX':
+            if msg.identity == 'RXM-SFRBX':
                 # Write raw GNSS SFRBX data directly to specified file
-                write_to_raw_file(ubx_msg)
+                write_to_raw_file(msg)
             else:
                 # It is a general message
-                populate_parcel_from_ubx_msg(parcel_dict, ubx_msg)
+                populate_parcel_from_ubx_msg(parcel_dict, msg)
                 if is_parcel_full(parcel_dict):
                     # The parcel is fully populated and ready to send
                     # TODO: pickle dict and send to ROV
@@ -146,9 +148,10 @@ def gps_listener(ubr_obj):
                     # Empty the parcel to get ready for next listening period
                     parcel_dict = emptied_parcel(parcel_dict)
                     
+        # TODO: better handle unknown messages as they arrive (just ignore and pass over them?)
         except AttributeError as attr_err:
-                print(attr_err)
-                print(f"The UBX message was actually this: {str(ubx_msg)} / {repr(ubx_msg)}")
+            print(attr_err)
+            print(f"The UBX message was actually this: {str(msg)} / {repr(msg)}")
 
 
 if __name__ == "__main__":
