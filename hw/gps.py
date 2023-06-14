@@ -1,8 +1,7 @@
-from pyubx2 import UBXReader
+from pyubx2 import UBXReader, ubxhelpers
 from serial import Serial
 from time import gmtime, strftime
-
-UBX_MSG_IDs = {'NAV-HPPOSLLH': {'class': b'\x01', 'id': b'\x014'}}
+from datetime import datetime, timezone
 
 
 def is_ubx_msg_this_type(msg_name, ubr_msg):
@@ -60,10 +59,32 @@ def emptied_parcel(parcel):
     return dict.fromkeys(parcel, '')
 
 
-def gps_time_from_ubx_msg(ubx_msg):
-    """Extract the GPS time from the message"""
-    #TODO: implement correctly
-    return ubx_msg.iTOW
+def utc_time_from_nav_pvt(msg):
+    """Extract the GPS time from the message and convert to UTC time format string"""
+    
+    assert msg.identity == "NAV-PVT", "UBX message is not required NAV-PVT identity"
+    utc_datetime = datetime(year=msg.year, 
+                            month=msg.month, 
+                            day=msg.day, 
+                            hour=msg.hour, 
+                            minute=msg.min, 
+                            second=msg.second,
+                            tzinfo=timezone.utc)
+    # If date and time are invalid or not fully resolved, return indication of insufficiency
+    # Validity and confirmation fields are 1 when true, and 0 when false (ZED-F9P Integration Manual, pg.61, R12, 3-May-2022)
+    valid_confirmed_status = 'FULLY RESOLVED AND VALID'
+    if msg.confirmedAvai == 1:
+        # Date and time validity and resolution status information are available in NAV-PVT message
+        if msg.validTime != 1:
+            valid_confirmed_status = 'INVALID TIME'
+        elif msg.validDate != 1:
+            valid_confirmed_status = 'INVALID DATE'
+        elif msg.fullyResolved != 1:
+            valid_confirmed_status = 'NOT FULLY RESOLVED'
+    else:
+        valid_confirmed_status = 'DATE AND TIME VALIDITY AND RESOLUTION INFORMATION UNAVAILABLE'
+
+    return utc_datetime, valid_confirmed_status
 
 
 def raw_data_filename():
@@ -73,12 +94,12 @@ def raw_data_filename():
 
 def write_to_raw_file(ubx_msg):
     """Write the SFRBX raw data to the raw data file"""
-    assert ubx_msg.identity == "NAV-SFRBX", "UBX message is not the required NAV-SFRBX identity"
+    assert ubx_msg.identity == "RXM-SFRBX", "UBX message is not the required RXM-SFRBX identity"
     
     # Serialise UBX message into bytes for file writing
-    msg_bytes = ubx_msg.serialise()
+    msg_bytes = ubx_msg.serialize()
 
-    with open(raw_data_filename(), 'w') as rd_file:
+    with open(raw_data_filename(), 'wb') as rd_file:
         rd_file.write(msg_bytes)
 
 
@@ -86,25 +107,32 @@ def write_to_raw_file(ubx_msg):
 def populate_parcel_from_ubx_msg(parcel, ubx_msg):
     """With the argument ubx_msg, populate the appropriate field in the parcel dictionary"""
     message = ubx_msg.identity
-    if message == 'NAV-TIMEGPS':
-        parcel['gpstime'] = gps_time_from_ubx_msg(ubx_msg)
+    if message == 'NAV-PVT':
+        (utctime, status) = utc_time_from_nav_pvt(ubx_msg)
+        parcel['utctime'], parcel['utctime-status'] = utctime, status
     elif message == 'NAV-HPPOSLLH':
         parcel['lat'] = ubx_msg.lat
         parcel['lon'] = ubx_msg.lon
+    elif message == 'NAV-TIMEGPS':
+        parcel['gps-iTOW'] = ubx_msg.iTOW
+        parcel['gps-weeknum'] = ubx_msg.week
 
 
 def gps_listener(ubr_obj):
     """With ubr_obj as the UBX reader object, loop and listen to the incoming messages,
     sending pickled dictionaries to the ROV server"""
 
-    parcel_dict = {'gpstime': '',
+    parcel_dict = {'gps-iTOW': '',
+                   'gps-weeknum': '',
+                   'utctime': '',
+                   'utctime-status': '',
                    'lat': '',
                    'lon': ''}
 
     while True:
         ubx_msg = ubr_obj.read()[1]
         try:
-            if ubx_msg.identity == 'NAV-SFRBX':
+            if ubx_msg.identity == 'RXM-SFRBX':
                 # Write raw GNSS SFRBX data directly to specified file
                 write_to_raw_file(ubx_msg)
             else:
