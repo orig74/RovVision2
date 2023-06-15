@@ -2,6 +2,7 @@ from pyubx2 import UBXReader, ubxhelpers
 from serial import Serial
 from time import gmtime, strftime
 from datetime import datetime, timezone
+import pickle
 
 
 def is_ubx_msg_this_type(msg_name, ubr_msg):
@@ -90,19 +91,13 @@ def utc_time_from_nav_pvt(msg):
 
 def raw_data_filename():
     """Return the filepath to the raw data file location"""
-    return r'gps_listener_sfrbx_data.ubx'
+    return r'hw/gps_listener_sfrbx_data.ubx'
 
 
 def write_to_raw_file(ubx_msg):
-    """Write the SFRBX raw data to the raw data file"""
-    assert ubx_msg.identity == "RXM-SFRBX", "UBX message is not the required RXM-SFRBX identity"
-    
-    # Serialise UBX message into bytes for file writing
-    msg_bytes = ubx_msg.serialize()
-
-    # TODO: why is this not writing to file?
-    with open(raw_data_filename(), 'wb') as rd_file:
-        rd_file.write(msg_bytes)
+    """Write the raw bytes representation of the UBX message into the specified file"""
+    with open(raw_data_filename(), 'ab') as rd_file:
+        rd_file.write(ubx_msg)
 
 
 def populate_parcel_from_ubx_msg(parcel, ubx_msg):
@@ -132,37 +127,35 @@ def gps_listener(ubr_obj):
 
     while True:
         (raw_bytes, msg) = ubr_obj.read()
-        # TODO: change to it writes all messages to .ubx file
         try:
-            if msg.identity == 'RXM-SFRBX':
-                # Write raw GNSS SFRBX data directly to specified file
-                write_to_raw_file(msg)
-            else:
-                # It is a general message
-                populate_parcel_from_ubx_msg(parcel_dict, msg)
-                if is_parcel_full(parcel_dict):
-                    # The parcel is fully populated and ready to send
-                    # TODO: pickle dict and send to ROV
-                    # Temporary testing code
-                    print(parcel_dict)
-                    # Empty the parcel to get ready for next listening period
-                    parcel_dict = emptied_parcel(parcel_dict)
-                    
+            # Write all incoming raw bytes format of UBX messages to .ubx file
+            write_to_raw_file(raw_bytes)
+            # Populate parcel with general information, pickle and send
+            populate_parcel_from_ubx_msg(parcel_dict, msg)
+            if is_parcel_full(parcel_dict):
+                # The parcel is fully populated and ready to send
+                # TODO: pickle dict and send to ROV
+                
+                # Temporary testing code
+                print(parcel_dict)
+                # Empty the parcel to get ready for next listening period
+                parcel_dict = emptied_parcel(parcel_dict)
+                        
         # TODO: better handle unknown messages as they arrive (just ignore and pass over them?)
         except AttributeError as attr_err:
             print(attr_err)
-            print(f"The UBX message was actually this: {str(msg)} / {repr(msg)}")
+            # print(f"The UBX message was actually this: {str(msg)} / {repr(msg)}")
 
 
 if __name__ == "__main__":
     stream = Serial("/dev/serial/by-id/usb-u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver-if00", 9600, timeout=5)
     ubr = UBXReader(stream)
-    msg = ubr.read()[1]
-
+    
     # Read latest UBX message and print the current iTOW
+    # msg = ubr.read()[1]
     # print_curr_iTOW(msg)
     # print_ubx_msg_attrs(msg)
     # print_x_messages_id(ubr, 5)
 
-    # Run GPS reader
+    # Run GPS listener
     gps_listener(ubr)

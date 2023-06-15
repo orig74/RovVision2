@@ -11,3 +11,4 @@ sim/pybullet_data
 *.json
 .idea/
 hw/.idea/
+*.ubx
