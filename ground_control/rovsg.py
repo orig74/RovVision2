@@ -79,17 +79,7 @@ def printer(text,color=None):
     print('printer:',text)
     sg.cprint(text,c='black on white')
 
-def main():
-    rovHandler = rovDataHandler(None,printer=printer,args=args)
-    rovCommander = rovCommandHandler()
-    track_thread = TrackThread(rov_comander=rovCommander,rov_data_handler=rovHandler,printer=printer)
-
-    if os.path.isfile(track_thread_file):
-        track_thread.load_params(track_thread_file)
-
-
-    last_heartbit=time.time()
-    #im_size = (960,600) 
+def get_layout(track_thread=None):
     im_size = (616,514)
     im_size2 = (config.cam_main_sx,config.cam_main_sy)
     row1_layout = [[
@@ -202,6 +192,7 @@ def main():
         [sg.Frame('',row2_layout)],
     ]
 
+ 
     
     window = sg.Window("ROV Viewer", 
             layout, finalize=True, 
@@ -209,23 +200,39 @@ def main():
             element_justification='left', 
             font='Helvetica 9' if scale_screen else 'Helvetica 10',
             size=(1600,900) if scale_screen else (1920,1080))
+ 
     if scale_screen:
         window.Maximize()
-            #size=(1600,900))
+    return window
+
+def main():
+    rovHandler = rovDataHandler(None,printer=printer,args=args)
+    rovCommander = rovCommandHandler()
+    track_thread = TrackThread(rov_comander=rovCommander,rov_data_handler=rovHandler,printer=printer)
+
+    if os.path.isfile(track_thread_file):
+        track_thread.load_params(track_thread_file)
+
+
+    last_heartbit=time.time()
+    #im_size = (960,600) 
+           #size=(1600,900))
     #window['-IMAGE-0-'].bind('<Button-1>','')
-    plotter = Plotter(window["-CANVAS-"].TKCanvas)
-    trace_plotter = TracePlotter(window["-TRACE-CANVAS-"].TKCanvas)
-    
+   
     last_im=None
     image_shape=None 
     cnt=0
 
     current_yaw_deg=0
     target_xy=[0,0]
-    sg.cprint_set_output_destination(window, 'MESSEGES')
 
     last_plot_pids=time.time()
     last_plot_dvl =time.time()
+    window = get_layout(track_thread)
+    sg.cprint_set_output_destination(window, 'MESSEGES')
+    plotter = Plotter(window["-CANVAS-"].TKCanvas)
+    trace_plotter = TracePlotter(window["-TRACE-CANVAS-"].TKCanvas)
+
     while True:
         try:
             cycle_tic=time.time()
