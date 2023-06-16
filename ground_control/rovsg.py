@@ -124,30 +124,18 @@ def get_layout(track_thread=None):
                 sg.Input(key='Py',default_text='0.01',enable_events=True,size=(5,1))
                 ],
             [ 
-                #sg.Button('Ml',tooltip='tracker max lock'),
-                #sg.Button('Ms',tooltip='mission start'),
                 sg.Checkbox('Mission Start',key='AUTO_NEXT',enable_events=True,tooltip='start stop mission',default=False),
-                #sg.Button('Mn',tooltip='mission next'),
-                #sg.Checkbox('Mp',key='MISSION_PAUSE',enable_events=False,tooltip='pause mission',default=True)
                 ],
             [sg.Text('MState:'),sg.Text('WAIT',key='MSTATE')],
             ]
     cmd_column+=TrackThreadSG.get_layout(track_thread)
     cmd_column+=[[sg.Button('Save',key='MISSION_SAVE',tooltip='save mission params')]]
     cmd_column+=[
-            #[sg.Checkbox('H',key='HSV_H',tooltip='h from hsv on cam 1')],
             [
-            #sg.Combo(list('RGBrgb'),key='CHANNEL',enable_events=True ,default_value='B',
-            #        tooltip='detect rope from grey image channel'),
-            #sg.Combo(list('01'),key='ROPE_TO_HSV',default_value='0',enable_events=True,
-            #        tooltip='detect rope from hsv image channel (h) or in h'),
-            #sg.Combo(list('123'),key='KEEP_STROBE_MODE',enable_events=True ,default_value='N',
-            #        tooltip='select 1-keep strobe 2-keep dark 3-keep all'),
             sg.Input(key='D405EXP',default_text='0',size=(4,1),enable_events=True,
                 tooltip='d405 exposure milis')
             ] 
             ]
-    #yaw_source_options=['VNAV','DVL']
     config_column = [
             [sg.Image(key="-IMAGE-2D-")],
             [sg.Button('Gc',tooltip="gripper close"),sg.Button('Go',tooltip="gripper open"),sg.Button('Tx',tooltip='stop main tracker')],
@@ -155,8 +143,6 @@ def get_layout(track_thread=None):
             #[sg.Button('CF+'),sg.Button('CF-'),sg.Button('Lights+'),sg.Button('Lights-')],
             [sg.Multiline(key='MESSEGES',s=(23,5) if scale_screen else (55,8), autoscroll=True, reroute_stdout=False, write_only=True)],
            ]
-            #sg.Button('RTHSV',key='ROPE_TO_HSV',tooltip='detect rope from hsv image channel (h)')],
-
     plot_options=['DEPTH','X_HOLD','Y_HOLD','YAW','PITCH','ROLL']
     matplot_column1 = [
         [sg.Text('PType:'),sg.Combo(plot_options,key='-PLOT-TYPE-',default_value=plot_options[0]),
@@ -167,7 +153,6 @@ def get_layout(track_thread=None):
             sg.Button('S',key='SAVE_PID'),
             sg.Checkbox('A',key='AUTOSCALEY',tooltip='auto scale y plot'),
             ],
-        #[ sg.Canvas(key="-CANVAS-", size=(300,200)), sg.Canvas(key="-TRACE-CANVAS-", size=(300,300))]]
         [sg.Canvas(key="-CANVAS-", size=(300,300))]
         ]
 
@@ -177,7 +162,6 @@ def get_layout(track_thread=None):
         ]
 
     row2_layout = [[
-            #sg.Canvas(key="-CANVAS-", size=(500,500)),
             sg.Column(matplot_column1),
             sg.VSeperator(),
             sg.Column(matplot_column2),
@@ -192,17 +176,16 @@ def get_layout(track_thread=None):
         [sg.Frame('',row2_layout)],
     ]
 
- 
-    
     window = sg.Window("ROV Viewer", 
             layout, finalize=True, 
             no_titlebar=False,#scale_screen,
             element_justification='left', 
             font='Helvetica 9' if scale_screen else 'Helvetica 10',
             size=(1600,900) if scale_screen else (1920,1080))
- 
+
     if scale_screen:
         window.Maximize()
+
     return window
 
 def main():
@@ -213,12 +196,7 @@ def main():
     if os.path.isfile(track_thread_file):
         track_thread.load_params(track_thread_file)
 
-
     last_heartbit=time.time()
-    #im_size = (960,600) 
-           #size=(1600,900))
-    #window['-IMAGE-0-'].bind('<Button-1>','')
-   
     last_im=None
     image_shape=None 
     cnt=0
@@ -240,7 +218,6 @@ def main():
             main_image_size=(config.cam_main_sx,config.cam_main_sy) if values['LAYOUT2'] else (config.cam_main_gui_sx,config.cam_main_gui_sy)
             if event == "Exit" or event == sg.WIN_CLOSED:
                 break
-            
             rovHandler.dump_gui_event([event,values])
 
             scaley=None if values['AUTOSCALEY'] else 1.0
@@ -250,31 +227,29 @@ def main():
                 y=y/image_shape[0]
                 print('---click--',x,y)
                 rovCommander.lock(x,y)
-            
+
             if event.startswith('-IMAGE-2'):
                 x,y=values['-IMAGE-2-']
                 x=x/main_image_size[0]
                 y=y/main_image_size[1]
                 printer(f'click2,{x},{y}')
                 rovCommander.main_track((x,y))
-            
+
             _, rawImg = rovHandler.getSincedImages(0)
             if rawImg is not None:
                 image_shape=rawImg.shape
                 if last_im is not None:
                     window["-IMAGE-0-"].erase()
-                last_im=draw_image(window["-IMAGE-0-"],img_to_tk(rawImg))#,h_hsv=values['HSV_H']))#im_size[1]))
+                last_im=draw_image(window["-IMAGE-0-"],img_to_tk(rawImg))
             frameId, rawImg = rovHandler.getSincedImages(1)
             if rawImg is not None:
                 window["-IMAGE-1-"].update(data=img_to_tk(rawImg,1.65 if values['LAYOUT2'] else 1))
             main_image = rovHandler.getMainImage()
             if main_image is not None:
-                #if config.cam_main_gui_sx!=config.cam_main_sx:
                 if not values['LAYOUT2']:
                     main_image=cv2.resize(main_image,(config.cam_main_gui_sx,config.cam_main_gui_sy),cv2.INTER_NEAREST) 
                 window["-IMAGE-2-"].erase()
                 tr_main=rovHandler.get_main_track_pt()
-                #print('tr_main is',tr_main)
                 grng,gleft,gup=config.grip_pos_rel_mm
                 uv=np.array(config.cam_main_int) @ np.array([[gleft,gup,grng]]).T
                 uv=(uv/uv[2,0]).flatten()[:2]*((main_image_size[0]/config.cam_main_sx),(main_image_size[1]/config.cam_main_sy))
@@ -295,10 +270,6 @@ def main():
             main_image_depth = rovHandler.getMainImageDepth()
             if main_image_depth is not None:
                 window["-IMAGE-2D-"].update(data=img_to_tk(main_image_depth,1))
-                #window["-IMAGE-2-"].update(data=img_to_tk(main_image,1))
-            
-                #print(f'=== tk images took {(time.time()-tic1)*1000:.1f} msec, grab  {(time.time()-tic2)*1000:.1f} msec')
-     
             if event == "Arm-Disarm":
                 rovCommander.armdisarm()
             if event == "Depth-Hold":
@@ -309,10 +280,6 @@ def main():
                 rovCommander.depth_command(-float(values['Target-Depth']))
             if event == 'Att-hold':
                 rovCommander.att_hold()
-            #if event == 'CF+':
-            #    rovCommander.clear_freqs(1)
-            #if event == 'CF-':
-            #    rovCommander.clear_freqs(-1)
             if event == 'X-hold':
                 rovCommander.x_hold()
             if event == 'Y-hold':
@@ -368,17 +335,9 @@ def main():
 
             window['V_LOCK'](rovCommander.vertical_object_lock_state)
 
-            #if event=='Ml':
-            #    rovCommander.lock_max()
-
-            #if (cnt%(1000//20))==0:
             if time.time()-last_heartbit>2.0:
                 last_heartbit=time.time()
                 rovCommander.heartbit()
-
-            #if event=='Ms':
-            #    track_thread.set_params(TrackThreadSG.get_layout_values(values))
-            #    track_thread.start()
 
             if event=='MISSION_SAVE':
                 track_thread.set_params(TrackThreadSG.get_layout_values(values))
@@ -390,15 +349,10 @@ def main():
                 track_thread.start()
                 printer(f'set auto next to {track_thread.auto_next}')
 
-            #if event=='Mn':
             if values['AUTO_NEXT']:
-                #track_thread.do_next()
                 track_thread.run(float(values['Lrange']),float(values['k_max_alt']),
                         Pxy=(float(values['Px']),float(values['Py'])))
 
-            #if not values['MISSION_PAUSE']:
-            #    track_thread.run(float(values['Lrange']),
-            #            Pxy=(float(values['Px']),float(values['Py'])))
             if 1:
                 window['MSTATE'](track_thread.get_state(),text_color='white',background_color='black')
 
@@ -473,8 +427,6 @@ def main():
             rovHandler.next()
 
             rov_telem=rovHandler.getTelemtry()
-            #if 'dvl_deadrecon' in rov_telem :
-            #    trace_plotter.update_dvl_data(rov_telem['dvl_deadrecon'],target_pos=target_xy[::-1],yaw_deg=current_yaw_deg)
             trace_plotter.update_pos_data(rovHandler.get_pos_xy2(),rovHandler.get_target_xy(),current_yaw_deg)
             if time.time()-last_plot_dvl>0.3:
                 last_plot_dvl=time.time()
@@ -488,7 +440,6 @@ def main():
             cnt+=1
             if 0:
                 print(f'=== tk images took {(time.time()-cycle_tic)*1000:.1f} msec')
-            #time.sleep(0.001)
         except Exception as E:
             print('*'*100)
             traceback.print_exc(file=sys.stdout)
