@@ -14,11 +14,6 @@ def get_layout(track_thread=None):
     im_size = (616,514)
     im_size2 = (config.cam_main_sx,config.cam_main_sy)
     row1_layout = [[
-        sg.Graph(im_size, graph_bottom_left=(0, im_size[1]), graph_top_right=(im_size[0],0) ,key="-IMAGE-0-",
-            change_submits=True,
-            enable_events=True,
-            ),
-        sg.Image(key="-IMAGE-1-"),#,sg.Image(key="-IMAGE-2-")],
         sg.Graph(im_size2, graph_bottom_left=(0, im_size2[1]), graph_top_right=(im_size2[0],0) ,key="-IMAGE-2-",
             change_submits=True,
             enable_events=True,

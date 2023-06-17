@@ -149,13 +149,13 @@ def main():
                 rovCommander.main_track((x,y))
 
             _, rawImg = rovHandler.getSincedImages(0)
-            if rawImg is not None:
+            if rawImg is not None and '-IMAGE-0-' in window.AllKeysDict:
                 image_shape=rawImg.shape
                 if last_im is not None:
                     window["-IMAGE-0-"].erase()
                 last_im=draw_image(window["-IMAGE-0-"],img_to_tk(rawImg))
             frameId, rawImg = rovHandler.getSincedImages(1)
-            if rawImg is not None:
+            if rawImg is not None and '-IMAGE-1-' in window.AllKeysDict:
                 window["-IMAGE-1-"].update(data=img_to_tk(rawImg,1.65 if values['LAYOUT2'] else 1))
             main_image = rovHandler.getMainImage()
             if main_image is not None:
