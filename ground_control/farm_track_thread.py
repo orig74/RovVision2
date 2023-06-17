@@ -55,14 +55,14 @@ class FarmTrack(object):
     def get_state(self):
         return states[self.state_ind]
 
-    def save_params(self,fname):
-        js=json.dumps({k:self.__dict__[k] for k,_ in mission_vars_default},indent=4)
-        open(fname,'wb').write(js.encode())
+    #def save_params(self,fname):
+    #    js=json.dumps({k:self.__dict__[k] for k,_ in mission_vars_default},indent=4)
+    #    open(fname,'wb').write(js.encode())
 
-    def load_params(self,fname):
-        js=json.loads(open(fname,'rb').read().strip())
-        for key in js:
-            setattr(self,key,js[key])
+    #def load_params(self,fname):
+    #    js=json.loads(open(fname,'rb').read().strip())
+    #    for key in js:
+    #        setattr(self,key,js[key])
 
     def start(self):
         self.state_ind=0

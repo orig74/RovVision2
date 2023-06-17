@@ -6,7 +6,7 @@ import time
 
 import sys
 import traceback
-
+import pickle
 
 sys.path.append('../onboard')
 sys.path.append('../hw')
@@ -33,11 +33,30 @@ from plttk_tracer import Plotter as TracePlotter
 import zmq_topics
 from farm_track_thread import FarmTrack as TrackThread
 import farm_track_sg as TrackThreadSG
-track_thread_file='farm_track_params.json'
+param_file='param_file.pkl'
 #scale_screen=None
 
 from sg_layout_eng import get_layout
 import sg_symbols as syms
+
+def save_sg_state(window):
+    d=window.AllKeysDict
+    to_save={}
+    for k in d:
+        if type(window[k]) in [sg.Input,sg.Checkbox]:
+            to_save[k]=window[k].get()
+    with open(param_file,'wb') as fd:
+        pickle.dump(to_save,fd,protocol=0)
+
+def load_sg_state(window):
+    if os.path.isfile(param_file):
+        di=pickle.load(open(param_file,'rb'))
+        d=window.AllKeysDict
+        for k in d:
+            if k in di and type(window[k]) in [sg.Input,sg.Checkbox]:
+                window[k](di[k])
+
+
 
 def img_to_tk(img,shrink=1,h_hsv=False):
     if h_hsv:
@@ -60,14 +79,18 @@ def printer(text,color=None):
     print('printer:',text)
     sg.cprint(text,c='black on white')
 
+def update_values_from_file(values):
+    if os.path.isfile(track_thread_file):
+        #track_thread.load_params(track_thread_file)
+        import json
+        js=json.loads(open(track_thread_file,'rb').read().strip())
+        for key in js:
+            values[key]=js[key]
 
 def main():
     rovHandler = rovDataHandler(None,printer=printer,args=args)
     rovCommander = rovCommandHandler()
     track_thread = TrackThread(rov_comander=rovCommander,rov_data_handler=rovHandler,printer=printer)
-
-    if os.path.isfile(track_thread_file):
-        track_thread.load_params(track_thread_file)
 
     last_heartbit=time.time()
     last_im=None
@@ -80,14 +103,17 @@ def main():
     last_plot_pids=time.time()
     last_plot_dvl =time.time()
     window = get_layout(track_thread)
+    load_sg_state(window)
     sg.cprint_set_output_destination(window, 'MESSEGES')
     plotter = Plotter(window["-CANVAS-"].TKCanvas)
     trace_plotter = TracePlotter(window["-TRACE-CANVAS-"].TKCanvas)
+    #import ipdb;ipdb.set_trace()
 
     while True:
         try:
             cycle_tic=time.time()
             event, values = window.read(timeout=2) #10 mili timeout
+
             main_image_size=(config.cam_main_sx,config.cam_main_sy) if values['LAYOUT2'] else (config.cam_main_gui_sx,config.cam_main_gui_sy)
             if event == "Exit" or event == sg.WIN_CLOSED:
                 break
@@ -213,8 +239,12 @@ def main():
                 rovCommander.heartbit()
 
             if event=='MISSION_SAVE':
-                track_thread.set_params(TrackThreadSG.get_layout_values(values))
-                track_thread.save_params(track_thread_file)
+                #track_thread.set_params(TrackThreadSG.get_layout_values(values))
+                #track_thread.save_params(track_thread_file)
+                #import json
+                #js=json.dumps({k:values[k] for k in values.keys()},indent=4)
+                #open(track_thread_file,'wb').write(js.encode())
+                save_sg_state(window)
 
             if event=='AUTO_NEXT':
                 track_thread.auto_next=values['AUTO_NEXT']
