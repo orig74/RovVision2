@@ -35,15 +35,19 @@ from farm_track_thread import FarmTrack as TrackThread
 import farm_track_sg as TrackThreadSG
 param_file='param_file.pkl'
 #scale_screen=None
+if os.environ.get('SG_LAYOUT','ENG')=='ENG':
+    from sg_layout_eng import get_layout
+else:
+    from sg_layout_oper import get_layout
 
-from sg_layout_eng import get_layout
+
 import sg_symbols as syms
 
 def save_sg_state(window):
     d=window.AllKeysDict
     to_save={}
     for k in d:
-        if type(window[k]) in [sg.Input,sg.Checkbox]:
+        if type(window[k]) in [sg.Input,sg.Checkbox,sg.Combo]:
             to_save[k]=window[k].get()
     with open(param_file,'wb') as fd:
         pickle.dump(to_save,fd,protocol=0)
@@ -242,7 +246,8 @@ def main():
             if event in ['Px','Py']:
                 rovCommander.update_pxy((float(values['Px']),float(values['Py'])))
 
-            window['V_LOCK'](rovCommander.vertical_object_lock_state)
+            if 'V_LOCK' in window.AllKeysDict:
+                window['V_LOCK'](rovCommander.vertical_object_lock_state)
 
             if time.time()-last_heartbit>2.0:
                 last_heartbit=time.time()
