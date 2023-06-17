@@ -1,14 +1,10 @@
 # image_viewer.py
-import io
 import os
 import PySimpleGUI as sg
 from PIL import Image,ImageTk
 import time
 
 import sys
-import socket
-import pickle
-import json
 import traceback
 
 
@@ -18,15 +14,10 @@ sys.path.append('../utils')
 sys.path.append('..')
 
 import config
-from annotations import draw_mono,draw_main
+from annotations import draw_main
 import numpy as np
 import cv2
-from select import select
-import zmq
-import image_enc_dec
-
 import argparse
-import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--data_path", help="path for data", default='../../data')
@@ -45,8 +36,8 @@ import farm_track_sg as TrackThreadSG
 track_thread_file='farm_track_params.json'
 #scale_screen=None
 
-from  sg_layout_eng import get_layout
-from sg_symbols import *
+from sg_layout_eng import get_layout
+import sg_symbols as syms
 
 def img_to_tk(img,shrink=1,h_hsv=False):
     if h_hsv:
@@ -156,9 +147,9 @@ def main():
                 rovCommander.armdisarm()
             if event == "Depth-Hold":
                 rovCommander.depth_hold()
-            if event == sym_down:
+            if event == syms.sym_down:
                 rovCommander.depth_command(float(values['Target-Depth']))
-            if event == sym_up:
+            if event == syms.sym_up:
                 rovCommander.depth_command(-float(values['Target-Depth']))
             if event == 'Att-hold':
                 rovCommander.att_hold()
@@ -174,17 +165,17 @@ def main():
                 rovCommander.y_lock(values['Y_LOCK'])
             if event == 'D_LOCK':
                 rovCommander.d_lock(values['D_LOCK'])
-            if event == sym_fwd:
+            if event == syms.sym_fwd:
                 rovCommander.go((float(values['Target-X']),0,0))
-            if event == sym_back:
+            if event == syms.sym_back:
                 rovCommander.go((-float(values['Target-X']),0,0))
-            if event == sym_right:
+            if event == syms.sym_right:
                 rovCommander.go((0,float(values['Target-Y']),0))
-            if event == sym_left:
+            if event == syms.sym_left:
                 rovCommander.go((0,-float(values['Target-Y']),0))
-            if event == sym_yaw_left:
+            if event == syms.sym_yaw_left:
                 rovCommander.att_cmd((-float(values['DeltaYawD']),0,0))
-            if event == sym_yaw_right:
+            if event == syms.sym_yaw_right:
                 rovCommander.att_cmd((float(values['DeltaYawD']),0,0))
             if event == 'MANUAL_LIMIT':
                 rovCommander.set_manual_control_limit(float(values['MANUAL_LIMIT']))
@@ -208,7 +199,7 @@ def main():
                 if values['V_LOCK']:
                     rovCommander.vertical_object_lock(rng=float(values['Lrange']),
                             Pxy=(float(values['Px']),float(values['Py']))
-                            )
+                    )
                 else:
                     rovCommander.vertical_object_unlock()
 

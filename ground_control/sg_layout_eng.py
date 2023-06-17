@@ -7,7 +7,7 @@ from PIL import Image,ImageTk
 import config
 
 import farm_track_sg as TrackThreadSG
-from sg_symbols import *
+import sg_symbols as syms
 
 def get_layout(track_thread=None):
     im_size = (616,514)
@@ -33,18 +33,18 @@ def get_layout(track_thread=None):
                 default_value=str(config.thruster_limit_controler),enable_events=True,
                     tooltip='set thruster limit for all thrusters')],
              [sg.Button('Depth-Hold'),
-                sg.Button(sym_up),sg.Button(sym_down),sg.Input(key='Target-Depth',default_text='0.1',size=(4,1)),
+                sg.Button(syms.sym_up),sg.Button(syms.sym_down),sg.Input(key='Target-Depth',default_text='0.1',size=(4,1)),
                 sg.Checkbox('L',key='D_LOCK',enable_events=True,tooltip='depth main tracker lock')],
 
             [sg.Button('Att-hold'),sg.Text('Pitch:'),sg.Input(key='Target-Pitch',default_text='0.0',size=(4,1))],
 
-            [sg.Button('X-hold'),sg.Button(sym_fwd),sg.Button(sym_back),sg.Input(key='Target-X',default_text='0.1',size=(4,1)),
+            [sg.Button('X-hold'),sg.Button(syms.sym_fwd),sg.Button(syms.sym_back),sg.Input(key='Target-X',default_text='0.1',size=(4,1)),
                 sg.Checkbox('L',key='X_LOCK',enable_events=True,tooltip='x (range) main tracker lock')],
 
-            [sg.Button('Y-hold'),sg.Button(sym_left),sg.Button(sym_right),sg.Input(key='Target-Y',default_text='0.1',size=(4,1)),
+            [sg.Button('Y-hold'),sg.Button(syms.sym_left),sg.Button(syms.sym_right),sg.Input(key='Target-Y',default_text='0.1',size=(4,1)),
                 sg.Checkbox('L',key='Y_LOCK',enable_events=True,tooltip='y (sideways main tracker lock')],
 
-            [sg.Button(sym_yaw_left),sg.Button(sym_yaw_right),sg.Input(key='DeltaYawD',default_text='1.0',size=(4,1))],
+            [sg.Button(syms.sym_yaw_left),sg.Button(syms.sym_yaw_right),sg.Input(key='DeltaYawD',default_text='1.0',size=(4,1))],
             [
                 sg.Checkbox('V',key='V_LOCK',enable_events=True,tooltip='vertical object lock'),
                 sg.Text('Range:'),
