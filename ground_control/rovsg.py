@@ -48,14 +48,22 @@ def save_sg_state(window):
     with open(param_file,'wb') as fd:
         pickle.dump(to_save,fd,protocol=0)
 
+params_file_data=None
 def load_sg_state(window):
+    global params_file_data
     if os.path.isfile(param_file):
         di=pickle.load(open(param_file,'rb'))
         d=window.AllKeysDict
         for k in d:
             if k in di and type(window[k]) in [sg.Input,sg.Checkbox]:
                 window[k](di[k])
+        params_file_data=di
 
+def update_default_sg_values(vals):
+    if params_file_data is not None:
+        for k in params_file_data:
+            if k not in vals:
+                vals[k]=params_file_data[k]
 
 
 def img_to_tk(img,shrink=1,h_hsv=False):
@@ -113,6 +121,8 @@ def main():
         try:
             cycle_tic=time.time()
             event, values = window.read(timeout=2) #10 mili timeout
+
+            update_default_sg_values(values) #diffrent layouts might not have the defaults values as inputs
 
             main_image_size=(config.cam_main_sx,config.cam_main_sy) if values['LAYOUT2'] else (config.cam_main_gui_sx,config.cam_main_gui_sy)
             if event == "Exit" or event == sg.WIN_CLOSED:
