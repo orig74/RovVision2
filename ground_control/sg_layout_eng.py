@@ -8,6 +8,7 @@ import config
 
 import farm_track_sg as TrackThreadSG
 import sg_symbols as syms
+sg.theme('DarkGrey1')
 
 def get_layout(track_thread=None):
     im_size = (616,514)
