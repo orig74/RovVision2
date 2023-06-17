@@ -1,7 +1,6 @@
 # image_viewer.py
 import os
 import PySimpleGUI as sg
-from PIL import Image,ImageTk
 import time
 
 import sys
@@ -18,6 +17,7 @@ from annotations import draw_main
 import numpy as np
 import cv2
 import argparse
+import sg_utils
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--data_path", help="path for data", default='../../data')
@@ -33,7 +33,6 @@ from plttk_tracer import Plotter as TracePlotter
 import zmq_topics
 from farm_track_thread import FarmTrack as TrackThread
 import farm_track_sg as TrackThreadSG
-param_file='param_file.pkl'
 #scale_screen=None
 if os.environ.get('SG_LAYOUT','ENG')=='ENG':
     from sg_layout_eng import get_layout
@@ -43,61 +42,9 @@ else:
 
 import sg_symbols as syms
 
-def save_sg_state(window):
-    d=window.AllKeysDict
-    to_save={}
-    for k in d:
-        if type(window[k]) in [sg.Input,sg.Checkbox,sg.Combo]:
-            to_save[k]=window[k].get()
-    with open(param_file,'wb') as fd:
-        pickle.dump(to_save,fd,protocol=0)
-
-params_file_data=None
-def load_sg_state(window):
-    global params_file_data
-    if os.path.isfile(param_file):
-        di=pickle.load(open(param_file,'rb'))
-        d=window.AllKeysDict
-        for k in d:
-            if k in di and type(window[k]) in [sg.Input,sg.Checkbox]:
-                window[k](di[k])
-        params_file_data=di
-
-def update_default_sg_values(vals):
-    if params_file_data is not None:
-        for k in params_file_data:
-            if k not in vals:
-                vals[k]=params_file_data[k]
-
-
-def img_to_tk(img,shrink=1,h_hsv=False):
-    if h_hsv:
-        img=cv2.cvtColor(img, cv2.COLOR_BGR2HSV)[:,:,0]
-    if shrink==1:
-        img = Image.fromarray(img)
-    else:
-        #img = Image.fromarray(img[::shrink,::shrink])
-        img=cv2.resize(img,(int(img.shape[1]/shrink),int(img.shape[0]/shrink)),cv2.INTER_NEAREST) 
-        img = Image.fromarray(img)
-    img = ImageTk.PhotoImage(img)
-    return img
-
-def draw_image(self, image):
-    id = self._TKCanvas2.create_image((image.width()//2,image.height()//2), image=image)
-    self.Images[id] = image
-    return id
-
 def printer(text,color=None):
     print('printer:',text)
     sg.cprint(text,c='black on white')
-
-def update_values_from_file(values):
-    if os.path.isfile(track_thread_file):
-        #track_thread.load_params(track_thread_file)
-        import json
-        js=json.loads(open(track_thread_file,'rb').read().strip())
-        for key in js:
-            values[key]=js[key]
 
 def main():
     rovHandler = rovDataHandler(None,printer=printer,args=args)
@@ -115,7 +62,7 @@ def main():
     last_plot_pids=time.time()
     last_plot_dvl =time.time()
     window = get_layout(track_thread)
-    load_sg_state(window)
+    sg_utils.load_sg_state(window)
     sg.cprint_set_output_destination(window, 'MESSEGES')
     plotter = Plotter(window["-CANVAS-"].TKCanvas)
     trace_plotter = TracePlotter(window["-TRACE-CANVAS-"].TKCanvas)
@@ -126,7 +73,7 @@ def main():
             cycle_tic=time.time()
             event, values = window.read(timeout=2) #10 mili timeout
 
-            update_default_sg_values(values) #diffrent layouts might not have the defaults values as inputs
+            sg_utils.update_default_sg_values(values) #diffrent layouts might not have the defaults values as inputs
 
             main_image_size=(config.cam_main_sx,config.cam_main_sy) if values['LAYOUT2'] else (config.cam_main_gui_sx,config.cam_main_gui_sy)
             if event == "Exit" or event == sg.WIN_CLOSED:
@@ -153,10 +100,10 @@ def main():
                 image_shape=rawImg.shape
                 if last_im is not None:
                     window["-IMAGE-0-"].erase()
-                last_im=draw_image(window["-IMAGE-0-"],img_to_tk(rawImg))
+                last_im=sg_utils.draw_image(window["-IMAGE-0-"],sg_utils.img_to_tk(rawImg))
             frameId, rawImg = rovHandler.getSincedImages(1)
             if rawImg is not None and '-IMAGE-1-' in window.AllKeysDict:
-                window["-IMAGE-1-"].update(data=img_to_tk(rawImg,1.65 if values['LAYOUT2'] else 1))
+                window["-IMAGE-1-"].update(data=sg_utils.img_to_tk(rawImg,1.65 if values['LAYOUT2'] else 1))
             main_image = rovHandler.getMainImage()
             if main_image is not None:
                 if not values['LAYOUT2']:
@@ -179,10 +126,10 @@ def main():
                         left=tr_main['left']
                         up=tr_main['up']
                         cv2.putText(main_image, f'rng{rng-grng:04.1f} up{up-gup:04.1f} left{left-gleft:04.1f} mm', (50,23), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 1, cv2.LINE_AA)
-                draw_image(window["-IMAGE-2-"],img_to_tk(main_image,1))#im_size[1]))
+                sg_utils.draw_image(window["-IMAGE-2-"],sg_utils.img_to_tk(main_image,1))#im_size[1]))
             main_image_depth = rovHandler.getMainImageDepth()
             if main_image_depth is not None:
-                window["-IMAGE-2D-"].update(data=img_to_tk(main_image_depth,1))
+                window["-IMAGE-2D-"].update(data=sg_utils.img_to_tk(main_image_depth,1))
             if event == "Arm-Disarm":
                 rovCommander.armdisarm()
             if event == "Depth-Hold":

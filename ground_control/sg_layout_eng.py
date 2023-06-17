@@ -118,3 +118,7 @@ def get_layout(track_thread=None):
         window.Maximize()
 
     return window
+
+
+def update_image(key,window,img):
+    pass
