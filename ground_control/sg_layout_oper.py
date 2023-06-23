@@ -9,19 +9,25 @@ import config
 import farm_track_sg as TrackThreadSG
 import sg_symbols as syms
 sg.theme('DarkGrey1')
-
+#sg.set_options(button_color=('white', 'red'))
 def get_main_image_sz(values):
-    return (config.cam_main_sx,config.cam_main_sy) 
-  
+    return (config.cam_main_sx*2,config.cam_main_sy*2) 
 
 def get_main_annotation_image_key():
     return "-IMAGE-2-"
 
+def _default_button_r(txt,**kargs):
+    return sg.Button(txt,size=(16,2),border_width=3,**kargs)
+
+def _default_button_b(txt,**kargs):
+    return sg.Button(txt,size=(2,2),border_width=3,**kargs)
+
 def get_layout(track_thread=None):
     im_size2 = (config.cam_main_sx*2,config.cam_main_sy*2)
     right_column = [
-            [sg.Button('Arm-Disarm',size=(16,2),border_width=3)],
-            [sg.Button('Hold')],
+            [_default_button_r('Arm-Disarm')],
+            [_default_button_r('Hold')],
+            [_default_button_r('REC')],
             [sg.Checkbox('Mission Start',key='AUTO_NEXT',enable_events=True,tooltip='start stop mission',default=False)],
             [sg.Text('MState:'),sg.Text('WAIT',key='MSTATE')],
         ]
@@ -35,18 +41,10 @@ def get_layout(track_thread=None):
         ],
         ]
 
-    cmd_column = []
-    cmd_column+=[
-            [
-            sg.Input(key='D405EXP',default_text='0',size=(4,1),enable_events=True,
-                tooltip='d405 exposure milis')
-            ] 
-            ]
     row2_layout = [
-            [sg.Button('Gc',tooltip="gripper close"),sg.Button('Go',tooltip="gripper open"),sg.Button('Tx',tooltip='stop main tracker'),
-            sg.Button('REC'),sg.Button('Reset-DVL'),sg.Button('Calib-DVL'),sg.Checkbox('L2',key='LAYOUT2',tooltip='layout2'),
-            #[sg.Button('CF+'),sg.Button('CF-'),sg.Button('Lights+'),sg.Button('Lights-')],
-            sg.Multiline(key='MESSEGES',s=(23,2) , autoscroll=True, reroute_stdout=False, write_only=True),
+            [_default_button_b('Gc'),_default_button_b('Go'),
+            sg.Multiline(key='MESSEGES',s=(23,2) , autoscroll=False, reroute_stdout=False, write_only=True),
+            sg.Combo([f'{i/10}' for i in range(0,10)],key='D405EXP',enable_events=True)
             ]]
 
     layout = [

@@ -167,6 +167,17 @@ def main():
                 rovCommander.y_lock(values['Y_LOCK'])
             if event == 'D_LOCK':
                 rovCommander.d_lock(values['D_LOCK'])
+
+            if event == 'Hold':
+                rovCommander.depth_hold()
+                rovCommander.att_hold()
+                rovCommander.x_hold()
+                rovCommander.y_hold()
+                rovCommander.main_track(None)
+                rovCommander.x_lock(values['X_LOCK'])
+                rovCommander.y_lock(values['Y_LOCK'])
+                rovCommander.d_lock(values['D_LOCK'])
+
             if event == syms.sym_fwd:
                 rovCommander.go((float(values['Target-X']),0,0))
             if event == syms.sym_back:
@@ -205,7 +216,7 @@ def main():
                 else:
                     rovCommander.vertical_object_unlock()
 
-            if event in ['Px','Py']:
+            if event in ['Px','Py','Hold']:
                 rovCommander.update_pxy((float(values['Px']),float(values['Py'])))
 
             if 'V_LOCK' in window.AllKeysDict:
@@ -221,7 +232,7 @@ def main():
                 #import json
                 #js=json.dumps({k:values[k] for k in values.keys()},indent=4)
                 #open(track_thread_file,'wb').write(js.encode())
-                save_sg_state(window)
+                sg_utils.save_sg_state(window)
 
             if event=='AUTO_NEXT':
                 track_thread.auto_next=values['AUTO_NEXT']
@@ -265,9 +276,10 @@ def main():
                 rovCommander.set_gripper(0.0)
 
             if event=='Gc':
-                window['X_LOCK'](False)
-                window['Y_LOCK'](False)
-                window['D_LOCK'](False)
+                if 'X_LOCK' in window.AllKeysDict:
+                    window['X_LOCK'](False)
+                    window['Y_LOCK'](False)
+                    window['D_LOCK'](False)
                 rovCommander.x_lock(False)
                 rovCommander.y_lock(False)
                 rovCommander.d_lock(False)

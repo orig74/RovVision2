@@ -270,7 +270,9 @@ def draw_thrusters(img, pos, thrst_cmnds):
 
 
 def draw_depth(img,x,y,depth,tdepth):
-    l=450
+    vs=1/512*img.shape[0]
+    l=int(450*vs)
+    #print('kkkkk',img.shape,x,y)
     s=15
     cv2.line(img,(x,y),(x,y+l),(0,0,255), 2)
     for i in range(0,l+1,s):
