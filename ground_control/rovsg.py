@@ -64,8 +64,12 @@ def main():
     window = get_layout(track_thread)
     sg_utils.load_sg_state(window)
     sg.cprint_set_output_destination(window, 'MESSEGES')
-    plotter = Plotter(window["-CANVAS-"].TKCanvas)
-    trace_plotter = TracePlotter(window["-TRACE-CANVAS-"].TKCanvas)
+    plotter=None
+    if '-CANVAS-' in window.AllKeysDict:
+        plotter = Plotter(window["-CANVAS-"].TKCanvas)
+    trace_plotter=None
+    if '-TRACE-CANVAS-' in window.AllKeysDict:
+        trace_plotter = TracePlotter(window["-TRACE-CANVAS-"].TKCanvas)
     #import ipdb;ipdb.set_trace()
 
     while True:
@@ -97,13 +101,19 @@ def main():
 
             _, rawImg = rovHandler.getSincedImages(0)
             if rawImg is not None and '-IMAGE-0-' in window.AllKeysDict:
+                itic=time.time()
                 image_shape=rawImg.shape
                 if last_im is not None:
                     window["-IMAGE-0-"].erase()
                 last_im=sg_utils.draw_image(window["-IMAGE-0-"],sg_utils.img_to_tk(rawImg))
+                #print('image 2 took',time.time()-itic)
             frameId, rawImg = rovHandler.getSincedImages(1)
+
             if rawImg is not None and '-IMAGE-1-' in window.AllKeysDict:
+                itic=time.time()
                 window["-IMAGE-1-"].update(data=sg_utils.img_to_tk(rawImg,1.65 if values['LAYOUT2'] else 1))
+                #print('image 1 took',time.time()-itic)
+
             main_image = rovHandler.getMainImage()
             if main_image is not None:
                 if not values['LAYOUT2']:
@@ -221,14 +231,15 @@ def main():
             if 1:
                 window['MSTATE'](track_thread.get_state(),text_color='white',background_color='black')
 
-            if event=='CENTER_TRACE':
-                trace_plotter.center()
+            if trace_plotter is not None:
+                if event=='CENTER_TRACE':
+                    trace_plotter.center()
 
-            if event=='CLEAR_TRACE':
-                trace_plotter.clear_trace()
+                if event=='CLEAR_TRACE':
+                    trace_plotter.clear_trace()
 
-            if event=='PLOTER_RAD':
-                trace_plotter.update_rad(float(values['PLOTER_RAD']))
+                if event=='PLOTER_RAD':
+                    trace_plotter.update_rad(float(values['PLOTER_RAD']))
 
             if event=='Reset-DVL':
                 rovCommander.reset_dvl()
@@ -260,7 +271,7 @@ def main():
             if event=='Tx':
                 rovCommander.main_track(None)
 
-            if values['-PLOT-TYPE-']=='DEPTH':
+            if plotter is not None and values['-PLOT-TYPE-']=='DEPTH':
                 plotter.update_pid(rovHandler.plot_buffers[zmq_topics.topic_depth_hold_pid],ylim=scaley)
 
             if event=='CHANNEL':
@@ -274,7 +285,7 @@ def main():
             
             for i,p_type in [(0,'X_HOLD'),(1,'Y_HOLD')]:
                 pb=rovHandler.plot_buffers[zmq_topics.topic_pos_hold_pid_fmt%i]
-                if values['-PLOT-TYPE-']==p_type:
+                if plotter is not None and values['-PLOT-TYPE-']==p_type:
                     plotter.update_pid(pb,ylim=scaley)
                 target_xy[i]=pb.get_last('T')
                 if target_xy[i] is None:
@@ -286,16 +297,17 @@ def main():
                         ('YAW',zmq_topics.topic_att_hold_yaw_pid),
                         ('PITCH',zmq_topics.topic_att_hold_pitch_pid),
                         ('ROLL',zmq_topics.topic_att_hold_roll_pid)]:
-                    if values['-PLOT-TYPE-']==p_type:
+                    if plotter is not None and values['-PLOT-TYPE-']==p_type:
                         plotter.update_pid(rovHandler.plot_buffers[pb],ylim=scaley)
 
             rovHandler.next()
 
             rov_telem=rovHandler.getTelemtry()
-            trace_plotter.update_pos_data(rovHandler.get_pos_xy2(),rovHandler.get_target_xy(),current_yaw_deg)
-            if time.time()-last_plot_dvl>0.3:
-                last_plot_dvl=time.time()
-                trace_plotter.redraw()
+            if trace_plotter is not None:
+                trace_plotter.update_pos_data(rovHandler.get_pos_xy2(),rovHandler.get_target_xy(),current_yaw_deg)
+                if time.time()-last_plot_dvl>0.3:
+                    last_plot_dvl=time.time()
+                    trace_plotter.redraw()
 
             if zmq_topics.topic_imu in rov_telem:
                 current_yaw_deg = rov_telem[zmq_topics.topic_imu]['yaw']
