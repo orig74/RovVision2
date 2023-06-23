@@ -339,14 +339,18 @@ class rovDataHandler(object):
                     self.data_file_fd=None
 
         if len(images)>0 and images[0] is not None:
-            fmt_cnt_l=image_enc_dec.decode(images[0])
+            self.fmt_cnt_l=image_enc_dec.decode(images[0])
             for i in range(len(images)):
                 if images[i] is not None:
                     self.syncedImages[i]=images[i]
-            if images[0] is not None:
-                draw_mono(images[0],self.telemtry,fmt_cnt_l)
-                if len(images)>1 and images[1] is not None:
-                    draw_seperate(images[0],images[1],self.telemtry)
+            #if images[0] is not None:
+            #    draw_mono(images[0],self.telemtry,self.fmt_cnt_l)
+                #if len(images)>1 and images[1] is not None:
+                #    draw_seperate(images[0],images[1],self.telemtry)
+    
+    def draw_main_annotations(self,img):
+        draw_mono(img,self.telemtry,self.fmt_cnt_l)
+
                    
     def get_pos_xy(self):
         ldata=self.telemtry['dvl_deadrecon'] 

@@ -19,6 +19,8 @@ def get_image_shrink(key,values):
         return 1.65 if values['LAYOUT2'] else 1
     return 1.0
 
+def get_main_annotation_image_key():
+    return "-IMAGE-0-"
 
 def get_layout(track_thread=None):
     im_size = (616,514)

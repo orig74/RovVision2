@@ -105,6 +105,8 @@ def main():
                 image_shape=rawImg.shape
                 if last_im is not None:
                     window["-IMAGE-0-"].erase()
+                if sg_layout.get_main_annotation_image_key()=="-IMAGE-0-":
+                    rovHandler.draw_main_annotations(rawImg)
                 last_im=sg_utils.draw_image(window["-IMAGE-0-"],sg_utils.img_to_tk(rawImg))
                 #print('image 2 took',time.time()-itic)
             frameId, rawImg = rovHandler.getSincedImages(1)
@@ -117,6 +119,8 @@ def main():
             main_image = rovHandler.getMainImage()
             if main_image is not None and '-IMAGE-2-' in window.AllKeysDict:
                 new_size = sg_layout.get_main_image_sz(values)
+                if sg_layout.get_main_annotation_image_key()=="-IMAGE-2-":
+                    rovHandler.draw_main_annotations(main_image)
                 if new_size !=main_image.size:
                     main_image=cv2.resize(main_image,new_size,cv2.INTER_NEAREST) 
                 window["-IMAGE-2-"].erase()

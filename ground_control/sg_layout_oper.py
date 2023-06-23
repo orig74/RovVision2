@@ -14,6 +14,8 @@ def get_main_image_sz(values):
     return (config.cam_main_sx,config.cam_main_sy) 
   
 
+def get_main_annotation_image_key():
+    return "-IMAGE-2-"
 
 def get_layout(track_thread=None):
     im_size2 = (config.cam_main_sx*2,config.cam_main_sy*2)
