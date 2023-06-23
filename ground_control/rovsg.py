@@ -35,9 +35,9 @@ from farm_track_thread import FarmTrack as TrackThread
 import farm_track_sg as TrackThreadSG
 #scale_screen=None
 if os.environ.get('SG_LAYOUT','ENG')=='ENG':
-    from sg_layout_eng import get_layout
+    import sg_layout_eng as sg_layout
 else:
-    from sg_layout_oper import get_layout
+    import sg_layout_oper as sg_layout
 
 
 import sg_symbols as syms
@@ -61,7 +61,7 @@ def main():
 
     last_plot_pids=time.time()
     last_plot_dvl =time.time()
-    window = get_layout(track_thread)
+    window = sg_layout.get_layout(track_thread)
     sg_utils.load_sg_state(window)
     sg.cprint_set_output_destination(window, 'MESSEGES')
     plotter=None
@@ -79,7 +79,7 @@ def main():
 
             sg_utils.update_default_sg_values(values) #diffrent layouts might not have the defaults values as inputs
 
-            main_image_size=(config.cam_main_sx,config.cam_main_sy) if values['LAYOUT2'] else (config.cam_main_gui_sx,config.cam_main_gui_sy)
+            main_image_size=sg_layout.get_main_image_sz(values)
             if event == "Exit" or event == sg.WIN_CLOSED:
                 break
             rovHandler.dump_gui_event([event,values])
@@ -111,13 +111,14 @@ def main():
 
             if rawImg is not None and '-IMAGE-1-' in window.AllKeysDict:
                 itic=time.time()
-                window["-IMAGE-1-"].update(data=sg_utils.img_to_tk(rawImg,1.65 if values['LAYOUT2'] else 1))
+                window["-IMAGE-1-"].update(data=sg_utils.img_to_tk(rawImg,sg_layout.get_image_shrink("-IMAGE-1-",values)))
                 #print('image 1 took',time.time()-itic)
 
             main_image = rovHandler.getMainImage()
-            if main_image is not None:
-                if not values['LAYOUT2']:
-                    main_image=cv2.resize(main_image,(config.cam_main_gui_sx,config.cam_main_gui_sy),cv2.INTER_NEAREST) 
+            if main_image is not None and '-IMAGE-2-' in window.AllKeysDict:
+                new_size = sg_layout.get_main_image_sz(values)
+                if new_size !=main_image.size:
+                    main_image=cv2.resize(main_image,new_size,cv2.INTER_NEAREST) 
                 window["-IMAGE-2-"].erase()
                 tr_main=rovHandler.get_main_track_pt()
                 grng,gleft,gup=config.grip_pos_rel_mm
@@ -138,7 +139,7 @@ def main():
                         cv2.putText(main_image, f'rng{rng-grng:04.1f} up{up-gup:04.1f} left{left-gleft:04.1f} mm', (50,23), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 1, cv2.LINE_AA)
                 sg_utils.draw_image(window["-IMAGE-2-"],sg_utils.img_to_tk(main_image,1))#im_size[1]))
             main_image_depth = rovHandler.getMainImageDepth()
-            if main_image_depth is not None:
+            if main_image_depth is not None and '-IMAGE-2D-' in window.AllKeysDict:
                 window["-IMAGE-2D-"].update(data=sg_utils.img_to_tk(main_image_depth,1))
             if event == "Arm-Disarm":
                 rovCommander.armdisarm()

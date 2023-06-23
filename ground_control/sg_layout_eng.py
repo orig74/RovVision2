@@ -10,6 +10,16 @@ import farm_track_sg as TrackThreadSG
 import sg_symbols as syms
 sg.theme('DarkGrey1')
 
+
+def get_main_image_sz(values):
+    return (config.cam_main_sx,config.cam_main_sy) if values['LAYOUT2'] else (config.cam_main_gui_sx,config.cam_main_gui_sy)
+
+def get_image_shrink(key,values):
+    if key=="-IMAGE-1-":
+        return 1.65 if values['LAYOUT2'] else 1
+    return 1.0
+
+
 def get_layout(track_thread=None):
     im_size = (616,514)
     im_size2 = (config.cam_main_sx,config.cam_main_sy)

@@ -10,6 +10,11 @@ import farm_track_sg as TrackThreadSG
 import sg_symbols as syms
 sg.theme('DarkGrey1')
 
+def get_main_image_sz(values):
+    return (config.cam_main_sx,config.cam_main_sy) 
+  
+
+
 def get_layout(track_thread=None):
     im_size2 = (config.cam_main_sx*2,config.cam_main_sy*2)
     right_column = [
