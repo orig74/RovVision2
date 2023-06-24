@@ -17,16 +17,33 @@ def get_main_image_sz(values):
 def get_main_annotation_image_key():
     return "-IMAGE-2-"
 
-def _default_button_r(txt,**kargs):
+def _default_button_r(txt,cls=sg.Button,**kargs):
     xxx=sg.theme_button_color()
-    return sg.Button(txt,size=(12,2),border_width=3,disabled_button_color=None, highlight_colors=None, mouseover_colors=xxx,**kargs)
-def _default_button_rh(txt,**kargs):
+    return cls(txt,size=(12,2),border_width=3,disabled_button_color=None, highlight_colors=None, mouseover_colors=xxx,**kargs)
+def _default_button_rh(txt,cls=sg.Button,**kargs):
     xxx=sg.theme_button_color()
-    return sg.Button(txt,size=(4,2),border_width=3,disabled_button_color=None, highlight_colors=None, mouseover_colors=xxx,**kargs)
+    return cls(txt,size=(4,2),border_width=3,disabled_button_color=None, highlight_colors=None, mouseover_colors=xxx,**kargs)
 
 
-def _default_button_b(txt,**kargs):
-    return sg.Button(txt,size=(3,2),border_width=3,**kargs)
+def _default_button_b(txt,cls=sg.Button,**kargs):
+    return cls(txt,size=(3,2),border_width=3,**kargs)
+
+
+class ButtonCont(sg.Button):
+    def __init__(_,t,**kargs):
+        super(ButtonCont,_).__init__(t,**kargs)
+        _.pressed = False
+
+    def finalize(_):
+        _.bind('<ButtonPress>', " Press", propagate=False)
+        _.bind('<ButtonRelease>', " Release", propagate=False)
+
+    def is_pressed(_,event):
+        if _.key+" Press"==event:
+            _.pressed=True
+        if _.key+" Release"==event:
+            _.pressed=False
+        return _.pressed
 
 class SGjoy(sg.Graph):
     def __init__(self,sx=155,sy=155,key='SGJOY'):
@@ -39,18 +56,17 @@ class SGjoy(sg.Graph):
         self.y1=self.sy/2
         self.start_pt=None
 
-    def update_event(self,event,values):
-        _=self
+    def update_event(_,event,values):
         ret=None
-        if self._key in event:
+        if _._key in event:
             x2,y2= values[_._key]
-            if self.start_pt is None:
+            if _.start_pt is None:
                 _.start_pt=(x2,y2)
             if 'UP' in event:
-                x2,y2=self.sx/2,self.sy/2
+                x2,y2=_.sx/2,_.sy/2
                 _.start_pt=None
                 ret=(0,0)
-            _.MoveFigure(self.circle, x2-_.x1, y2-_.y1)
+            _.MoveFigure(_.circle, x2-_.x1, y2-_.y1)
         else:
             x2,y2=_.x1,_.y1    
 
@@ -69,6 +85,9 @@ class SGjoy(sg.Graph):
 def get_layout(track_thread=None):
     im_size2 = (config.cam_main_sx*2,config.cam_main_sy*2)
     sgjoy=SGjoy();
+    _UP=_default_button_r('UP',key='UP_CONT',cls=ButtonCont)
+    _DOWN=_default_button_r('DOWN',key='DOWN_CONT',cls=ButtonCont)
+    to_fin=[sgjoy,_UP,_DOWN]
     right_column = [
             [_default_button_r('Arm-Disarm')],
             [_default_button_r('Hold')],
@@ -79,8 +98,8 @@ def get_layout(track_thread=None):
             [sg.Text('',size=(3,10))], #place holder
             [_default_button_rh(syms.sym_yaw_left),_default_button_rh(syms.sym_yaw_right)],
             [sgjoy],
-            [_default_button_r('UP')],
-            [_default_button_r('DOWN')],
+            [_UP],
+            [_DOWN],
             ]
 
     row1_layout = [[
@@ -109,7 +128,8 @@ def get_layout(track_thread=None):
             element_justification='left', 
             font='Helvetica 15',
             size=(1920,1080))
-    sgjoy.finalize()
+    for fn in to_fin:
+        fn.finalize()
     #if scale_screen:
     #    window.Maximize()
 

@@ -164,6 +164,13 @@ def main():
                 rovCommander.depth_command(float(values['Target-Depth']))
             if event == syms.sym_up:
                 rovCommander.depth_command(-float(values['Target-Depth']))
+
+            if 'UP_CONT' in window.AllKeysDict and window['UP_CONT'].is_pressed(event):
+                rovCommander.depth_command(-float(values['Target-Depth'])*0.01)
+            if 'DOWN_CONT' in window.AllKeysDict and window['DOWN_CONT'].is_pressed(event):
+                rovCommander.depth_command(float(values['Target-Depth'])*0.01)
+
+
             if event == 'Att-hold':
                 rovCommander.att_hold()
             if event == 'X-hold':
