@@ -3,7 +3,7 @@ import os
 import PySimpleGUI as sg
 
 from screeninfo import get_monitors
-scale_screen=get_monitors()[0].width==1600
+#scale_screen=get_monitors()[0].width==1600
 from PIL import Image,ImageTk
 import config
 
@@ -19,13 +19,17 @@ def get_main_annotation_image_key():
 
 def _default_button_r(txt,**kargs):
     xxx=sg.theme_button_color()
-    return sg.Button(txt,size=(16,2),border_width=3,disabled_button_color=None, highlight_colors=None, mouseover_colors=xxx,**kargs)
+    return sg.Button(txt,size=(12,2),border_width=3,disabled_button_color=None, highlight_colors=None, mouseover_colors=xxx,**kargs)
+def _default_button_rh(txt,**kargs):
+    xxx=sg.theme_button_color()
+    return sg.Button(txt,size=(4,2),border_width=3,disabled_button_color=None, highlight_colors=None, mouseover_colors=xxx,**kargs)
+
 
 def _default_button_b(txt,**kargs):
-    return sg.Button(txt,size=(2,2),border_width=3,**kargs)
+    return sg.Button(txt,size=(3,2),border_width=3,**kargs)
 
 class SGjoy(sg.Graph):
-    def __init__(self,sx=120,sy=100,key='SGJOY'):
+    def __init__(self,sx=155,sy=155,key='SGJOY'):
         super(SGjoy,self).__init__(canvas_size=(sx,sy), graph_bottom_left=(0, 0), graph_top_right=(sx,sy),
  background_color=sg.theme_button_color_background(), drag_submits=True,motion_events=False, enable_events=True,change_submits=True, key='SGJOY')
         self.circle=None
@@ -69,10 +73,14 @@ def get_layout(track_thread=None):
             [_default_button_r('Arm-Disarm')],
             [_default_button_r('Hold')],
             [_default_button_r('REC')],
-            [sg.Checkbox('Mission Start',key='AUTO_NEXT',enable_events=True,tooltip='start stop mission',default=False)],
-            [sg.Text('MState:'),sg.Text('WAIT',key='MSTATE')],
-            [sg.Text('',size=(3,1))], #place holder
+            [sg.Radio('Scan Left', "SCAN_DIR", default=True)], [sg.Radio('Scan Right', "SCAN_DIR")],
+            [sg.Checkbox('Mission\n Start',key='AUTO_NEXT',enable_events=True,tooltip='start stop mission',default=False)],
+            [sg.Text('Mission State:')],[sg.Text('WAIT',key='MSTATE')],
+            [sg.Text('',size=(3,10))], #place holder
+            [_default_button_rh(syms.sym_yaw_left),_default_button_rh(syms.sym_yaw_right)],
             [sgjoy],
+            [_default_button_r('UP')],
+            [_default_button_r('DOWN')],
             ]
 
     row1_layout = [[
@@ -99,10 +107,10 @@ def get_layout(track_thread=None):
             layout, finalize=True, 
             no_titlebar=False,#scale_screen,
             element_justification='left', 
-            font='Helvetica 9' if scale_screen else 'Helvetica 10',
-            size=(1600,900) if scale_screen else (1920,1080))
+            font='Helvetica 15',
+            size=(1920,1080))
     sgjoy.finalize()
-    if scale_screen:
-        window.Maximize()
+    #if scale_screen:
+    #    window.Maximize()
 
     return window
