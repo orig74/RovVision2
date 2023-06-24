@@ -94,9 +94,14 @@ def main():
                 print('---click--',x,y)
                 rovCommander.lock(x,y)
 
-            if event.startswith('SGJOY'):
-                window['SGJOY'].update_event(event,values)
-
+            if 'SGJOY' in window.AllKeysDict:
+                ret=window['SGJOY'].update_event(event,values)
+                if ret is not None:
+                    dx,dy=ret
+                    if dx==0 and dy==0: #reset movment
+                        rovCommander.reset_dvl()
+                    else:
+                        rovCommander.go((dy/50*float(values['Target-Y']),dx/50*float(values['Target-X']),0))
 
             if event.startswith('-IMAGE-2'):
                 x,y=values['-IMAGE-2-']

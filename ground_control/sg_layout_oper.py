@@ -33,14 +33,29 @@ class SGjoy(sg.Graph):
         self._key=key
         self.x1=self.sx/2
         self.y1=self.sy/2
+        self.start_pt=None
 
     def update_event(self,event,values):
         _=self
-        x2,y2= values[_._key]
-        if 'UP' in event:
-            x2,y2=self.sx/2,self.sy/2
-        self.MoveFigure(self.circle, x2-_.x1, y2-_.y1)
+        ret=None
+        if self._key in event:
+            x2,y2= values[_._key]
+            if self.start_pt is None:
+                _.start_pt=(x2,y2)
+            if 'UP' in event:
+                x2,y2=self.sx/2,self.sy/2
+                _.start_pt=None
+                ret=(0,0)
+            _.MoveFigure(self.circle, x2-_.x1, y2-_.y1)
+        else:
+            x2,y2=_.x1,_.y1    
+
         _.x1,_.y1=x2,y2
+        if _.start_pt is not None:
+            ret=(x2-_.start_pt[0])/(_.sx/2),(y2-_.start_pt[1])/(_.sy/2)
+        #if ret:
+        #    print('joy ret is',ret)
+        return ret
 
     def finalize(self):
         if self.circle is None:
