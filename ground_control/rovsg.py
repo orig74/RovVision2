@@ -1,11 +1,11 @@
 # image_viewer.py
 import os
 import PySimpleGUI as sg
+print('pysimplegui version',sg.__version__)
 import time
 
 import sys
 import traceback
-import pickle
 
 sys.path.append('../onboard')
 sys.path.append('../hw')
@@ -76,6 +76,8 @@ def main():
         try:
             cycle_tic=time.time()
             event, values = window.read(timeout=2) #10 mili timeout
+            if event != '__TIMEOUT__':
+                print('event is: ',event)
 
             sg_utils.update_default_sg_values(values) #diffrent layouts might not have the defaults values as inputs
 

@@ -1,6 +1,7 @@
 import io
 import os
 import PySimpleGUI as sg
+
 from screeninfo import get_monitors
 scale_screen=get_monitors()[0].width==1600
 from PIL import Image,ImageTk
@@ -17,20 +18,36 @@ def get_main_annotation_image_key():
     return "-IMAGE-2-"
 
 def _default_button_r(txt,**kargs):
-    return sg.Button(txt,size=(16,2),border_width=3,**kargs)
+    xxx=sg.theme_button_color()
+    return sg.Button(txt,size=(16,2),border_width=3,disabled_button_color=None, highlight_colors=None, mouseover_colors=xxx,**kargs)
 
 def _default_button_b(txt,**kargs):
     return sg.Button(txt,size=(2,2),border_width=3,**kargs)
 
+class SGjoy(sg.Graph):
+    def __init__(self,sx=120,sy=100,key='SGJOY'):
+        super(SGjoy,self).__init__(canvas_size=(sx,sy), graph_bottom_left=(0, 0), graph_top_right=(sx,sy),
+ background_color=sg.theme_button_color_background(), drag_submits=True,motion_events=True, enable_events=True,change_submits=True, key='SGJOY')
+        self.circle=None
+        self.sx,self.sy=sx,sy
+
+    def finalize(self):
+        if self.circle is None:
+            self.circle = self.draw_circle((self.sx/2,self.sy/2), 10, fill_color='black', line_color='white')
+
+
 def get_layout(track_thread=None):
     im_size2 = (config.cam_main_sx*2,config.cam_main_sy*2)
+    sgjoy=SGjoy();
     right_column = [
             [_default_button_r('Arm-Disarm')],
             [_default_button_r('Hold')],
             [_default_button_r('REC')],
             [sg.Checkbox('Mission Start',key='AUTO_NEXT',enable_events=True,tooltip='start stop mission',default=False)],
             [sg.Text('MState:'),sg.Text('WAIT',key='MSTATE')],
-        ]
+            [sg.Text('',size=(3,1))], #place holder
+            [sgjoy],
+            ]
 
     row1_layout = [[
         sg.Graph(im_size2, graph_bottom_left=(0, im_size2[1]), graph_top_right=(im_size2[0],0) ,key="-IMAGE-2-",
@@ -58,6 +75,7 @@ def get_layout(track_thread=None):
             element_justification='left', 
             font='Helvetica 9' if scale_screen else 'Helvetica 10',
             size=(1600,900) if scale_screen else (1920,1080))
+    sgjoy.finalize()
     if scale_screen:
         window.Maximize()
 
