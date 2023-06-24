@@ -27,9 +27,20 @@ def _default_button_b(txt,**kargs):
 class SGjoy(sg.Graph):
     def __init__(self,sx=120,sy=100,key='SGJOY'):
         super(SGjoy,self).__init__(canvas_size=(sx,sy), graph_bottom_left=(0, 0), graph_top_right=(sx,sy),
- background_color=sg.theme_button_color_background(), drag_submits=True,motion_events=True, enable_events=True,change_submits=True, key='SGJOY')
+ background_color=sg.theme_button_color_background(), drag_submits=True,motion_events=False, enable_events=True,change_submits=True, key='SGJOY')
         self.circle=None
         self.sx,self.sy=sx,sy
+        self._key=key
+        self.x1=self.sx/2
+        self.y1=self.sy/2
+
+    def update_event(self,event,values):
+        _=self
+        x2,y2= values[_._key]
+        if 'UP' in event:
+            x2,y2=self.sx/2,self.sy/2
+        self.MoveFigure(self.circle, x2-_.x1, y2-_.y1)
+        _.x1,_.y1=x2,y2
 
     def finalize(self):
         if self.circle is None:

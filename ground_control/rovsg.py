@@ -94,6 +94,10 @@ def main():
                 print('---click--',x,y)
                 rovCommander.lock(x,y)
 
+            if event.startswith('SGJOY'):
+                window['SGJOY'].update_event(event,values)
+
+
             if event.startswith('-IMAGE-2'):
                 x,y=values['-IMAGE-2-']
                 x=x/main_image_size[0]
