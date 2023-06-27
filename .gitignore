@@ -12,3 +12,5 @@ sim/pybullet_data
 .idea/
 hw/.idea/
 *.ubx
+hw/gps_listener_sfrbx_data.ubx
+
