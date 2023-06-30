@@ -113,8 +113,8 @@ def get_layout(track_thread=None):
 
     row2_layout = [
             [_default_button_b('Gc'),_default_button_b('Go'),
-            sg.Multiline(key='MESSEGES',s=(23,2) , autoscroll=False, reroute_stdout=False, write_only=True),
-            sg.Combo([f'{i/10}' for i in range(0,10)],key='D405EXP',enable_events=True)
+            sg.Multiline(key='MESSEGES',s=(23,2) , no_scrollbar=True, reroute_stdout=False, write_only=True),
+            sg.Combo([f'{i/10}' for i in range(0,10)],key='D405EXP',s=(3,6),enable_events=True)
             ]]
 
     layout = [
