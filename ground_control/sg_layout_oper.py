@@ -45,6 +45,9 @@ class ButtonCont(sg.Button):
             _.pressed=False
         return _.pressed
 
+    def is_released(_,event):
+        return _.key+" Release"==event
+
 class SGjoy(sg.Graph):
     def __init__(self,sx=155,sy=155,key='SGJOY'):
         super(SGjoy,self).__init__(canvas_size=(sx,sy), graph_bottom_left=(0, 0), graph_top_right=(sx,sy),
@@ -87,7 +90,9 @@ def get_layout(track_thread=None):
     sgjoy=SGjoy();
     _UP=_default_button_r('UP',key='UP_CONT',cls=ButtonCont)
     _DOWN=_default_button_r('DOWN',key='DOWN_CONT',cls=ButtonCont)
-    to_fin=[sgjoy,_UP,_DOWN]
+    Gvl=_default_button_b(syms.sym_yaw_left,key='Gvl',cls=ButtonCont)
+    Gvr=_default_button_b(syms.sym_yaw_right,key='Gvr',cls=ButtonCont)
+    to_fin=[sgjoy,_UP,_DOWN,Gvr,Gvl]
     right_column = [
             [_default_button_r('Arm-Disarm')],
             [_default_button_r('Hold')],
@@ -113,6 +118,7 @@ def get_layout(track_thread=None):
 
     row2_layout = [
             [_default_button_b('Gc'),_default_button_b('Go'),
+            Gvl,Gvr,
             sg.Multiline(key='MESSEGES',s=(23,2) , no_scrollbar=True, reroute_stdout=False, write_only=True),
             sg.Combo([f'{i/10}' for i in range(0,10)],key='D405EXP',s=(3,6),enable_events=True)
             ]]

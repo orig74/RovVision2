@@ -185,7 +185,7 @@ def main():
     start_depth=0.5
 
     last_fps_print=time.time()
-    gripper_cmd=0
+    gripper_cmd={'openning':0,'rot_vel':0}
 
     pb.configureDebugVisualizer(pb.COV_ENABLE_RENDERING, 1)
     sim_start=time.time()
@@ -208,7 +208,7 @@ def main():
                 if topic==zmq_topics.topic_dvl_cmd:
                     print('got dvl reset....')
                 if topic==zmq_topics.topic_gripper_cmd:
-                    gripper_cmd=data
+                    gripper_cmd.update(data)
                     print('gripper command',gripper_cmd)
                 if topic==zmq_topics.topic_record_state:
                     new_record_state_str=data
@@ -416,12 +416,17 @@ def main():
         pb.setJointMotorControl2(bodyUniqueId=boxId,
         jointIndex=joint_name_to_index['gripper_right'],
         controlMode=pb.POSITION_CONTROL,
-        targetPosition = gripper_cmd,
+        targetPosition = gripper_cmd['openning'],
         force = maxForce)
         pb.setJointMotorControl2(bodyUniqueId=boxId,
         jointIndex=joint_name_to_index['gripper_left'],
         controlMode=pb.POSITION_CONTROL,
-        targetPosition = gripper_cmd,
+        targetPosition = gripper_cmd['openning'],
+        force = maxForce)
+        
+        pb.setJointMotorControl2(bodyUniqueId=boxId,
+        jointIndex=joint_name_to_index['gripper_pole_rotate'],
+        controlMode=pb.VELOCITY_CONTROL,targetVelocity=gripper_cmd['rot_vel'],
         force = maxForce)
         
        

@@ -30,12 +30,14 @@ def printer(txt,c=None):
 async def set_gripper(data, system_state):
     if not system_state['arm']:
         return
-    system_state['gripper']=data['val']
-    printer("Gripper delay: " + str(data['val']))
-    if data['val'] == 1:
-       pub_sock.send_multipart([zmq_topics.topic_gripper_cmd,pickle.dumps(0)])
-       await asyncio.sleep(0.01)
+    if 'openning' in data['val']:
+        system_state['gripper']=data['val']['openning']
+        printer("Gripper delay: " + str(data['val']))
+        if data['val']['openning'] == 1:
+            pub_sock.send_multipart([zmq_topics.topic_gripper_cmd,pickle.dumps({'openning':0})])
+            await asyncio.sleep(0.01)
     pub_sock.send_multipart([zmq_topics.topic_gripper_cmd,pickle.dumps(data['val'])])
+    await asyncio.sleep(0.01)
     printer(f"controller:\n gripper {system_state['gripper']}")
 
 
@@ -173,7 +175,7 @@ async def recv_and_process():
                         pub_sock.send_multipart([zmq_topics.topic_dvl_cmd,b'wcr\n'])
 
                     if jm.gripper_open() or jm.gripper_close():
-                         asyncio.get_event_loop().create_task(set_gripper({'val': jm.gripper_close()}, system_state))
+                         asyncio.get_event_loop().create_task(set_gripper({'val': {'openning':jm.gripper_close()}}, system_state))
 
 
         tic=time.time()

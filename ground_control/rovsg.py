@@ -290,8 +290,17 @@ def main():
             if event=='REC':
                 rovHandler.toggle_recording()
 
+            for kkk in ['Gvr','Gvl']:
+                if kkk in window.AllKeysDict:
+                    if window[kkk].is_pressed(event):
+                        rovCommander.set_gripper({'rot_vel':-1 if kkk=='Gvl' else 1})
+                        printer(f'gripper rot r')
+                    if window[kkk].is_released(event):
+                        rovCommander.set_gripper({'rot_vel':0.0})
+                        printer(f'gripper stop rot')
+
             if event=='Go':
-                rovCommander.set_gripper(0.0)
+                rovCommander.set_gripper({'openning':0.0})
 
             if event=='Gc':
                 if 'X_LOCK' in window.AllKeysDict:
@@ -301,7 +310,7 @@ def main():
                 rovCommander.x_lock(False)
                 rovCommander.y_lock(False)
                 rovCommander.d_lock(False)
-                rovCommander.set_gripper(1.0)
+                rovCommander.set_gripper({'openning':1.0})
 
             if event=='Tx':
                 rovCommander.main_track(None)

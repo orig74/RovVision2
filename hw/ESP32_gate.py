@@ -149,7 +149,8 @@ async def recv_and_process():
             if topic == zmq_topics.topic_record_state:
                 rec_state=data
             if topic == zmq_topics.topic_gripper_cmd:
-                gripper_val=min(max(data, 0), 1)
+                if 'openning' in data:
+                    gripper_val=min(max(data['openning'], 0), 1)
             if topic == zmq_topics.topic_camera_servo:
                 camera_servo=data
         await asyncio.sleep(0.001)
