@@ -95,9 +95,9 @@ def get_layout(track_thread=None):
     to_fin=[sgjoy,_UP,_DOWN,Gvr,Gvl]
     right_column = [
             [_default_button_r('Arm-Disarm')],
-            [_default_button_r('Hold')],
+            [_default_button_r('Hold')],        
             [_default_button_r('REC')],
-            [sg.Radio('Scan Left', "SCAN_DIR", default=True)], [sg.Radio('Scan Right', "SCAN_DIR")],
+            [sg.Radio('Scan Left',1, key="SCAN_DIR_L", default=True)], [sg.Radio('Scan Right',1, key="SCAN_DIR_R")],
             [sg.Checkbox('Mission\n Start',key='AUTO_NEXT',enable_events=True,tooltip='start stop mission',default=False)],
             [sg.Text('Mission State:')],[sg.Text('WAIT',key='MSTATE')],
             [sg.Text('',size=(3,10))], #place holder

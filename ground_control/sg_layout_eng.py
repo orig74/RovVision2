@@ -66,7 +66,7 @@ def get_layout(track_thread=None):
                 sg.Input(key='Px',default_text='0.01',enable_events=True,size=(5,1)),
                 sg.Input(key='Py',default_text='0.01',enable_events=True,size=(5,1))
                 ],
-            [ 
+            [sg.Radio('Scan Left',1, key="SCAN_DIR_L", default=True), sg.Radio('Scan Right',1, key="SCAN_DIR_R"),
                 sg.Checkbox('Mission Start',key='AUTO_NEXT',enable_events=True,tooltip='start stop mission',default=False),
                 ],
             [sg.Text('MState:'),sg.Text('WAIT',key='MSTATE')],

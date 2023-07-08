@@ -254,7 +254,9 @@ def main():
 
             if event=='AUTO_NEXT':
                 track_thread.auto_next=values['AUTO_NEXT']
-                track_thread.set_params(TrackThreadSG.get_layout_values(values))
+                dir_scan=1 if values['SCAN_DIR_R'] else -1
+                printer(f'dir_scan is {dir_scan}')
+                track_thread.set_params(TrackThreadSG.get_layout_values(values,dir_scan)) #1.0 mean scan to the right -1 to the left
                 track_thread.start()
                 printer(f'set auto next to {track_thread.auto_next}')
 

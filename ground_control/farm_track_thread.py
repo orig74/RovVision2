@@ -36,6 +36,8 @@ class FarmTrack(object):
         for k,v in mission_vars:
             self.__dict__[k]=v
 
+        print('=======',mission_vars)
+
 
     def reset(self):
         self.state_ind=0

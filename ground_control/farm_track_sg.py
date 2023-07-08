@@ -14,9 +14,10 @@ def get_layout(farm_obj,cols=2):
 #    mv=ft.mission_vars_default
 #    return \
 #        [[sg.Text('Slide:'),sg.Input(mv['horizontal_slide'],
-def get_layout_values(values):
+def get_layout_values(values,dir_scan=1.0): #1.0 mean scan to the right -1 to the left
     ret={}
     for k,v in ft.mission_vars_default:
         ret[k]=float(values['k_'+k])
+    ret['horizontal_slide']=abs(ret['horizontal_slide'])*dir_scan
     return ret.items()
 
