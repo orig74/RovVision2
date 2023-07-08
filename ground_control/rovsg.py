@@ -75,7 +75,7 @@ def main():
     while True:
         try:
             cycle_tic=time.time()
-            event, values = window.read(timeout=2) #10 mili timeout
+            event, values = window.read(timeout=2) # mili timeout
             if event != '__TIMEOUT__':
                 print('event is: ',event)
 
@@ -243,6 +243,11 @@ def main():
             if time.time()-last_heartbit>2.0:
                 last_heartbit=time.time()
                 rovCommander.heartbit()
+                #send periodic events
+                rovCommander.x_lock(values['X_LOCK'])
+                rovCommander.y_lock(values['Y_LOCK'])
+                rovCommander.d_lock(values['D_LOCK'])
+
 
             if event=='MISSION_SAVE':
                 #track_thread.set_params(TrackThreadSG.get_layout_values(values))
