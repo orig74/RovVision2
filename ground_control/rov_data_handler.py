@@ -188,6 +188,7 @@ class rovDataHandler(object):
         self.subs_socks.append(utils.subscribe([zmq_topics.topic_att_hold_yaw_pid,
                                           zmq_topics.topic_att_hold_pitch_pid,
                                           zmq_topics.topic_att_hold_roll_pid], zmq_topics.topic_att_hold_port))
+        self.subs_socks.append(utils.subscribe([zmq_topics.topic_gnss], zmq_topics.topic_gnss_port))
             
         self.sub_vid=[]
         self.sub_vid.append(
