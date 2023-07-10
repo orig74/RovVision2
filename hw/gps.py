@@ -3,6 +3,7 @@ from serial import Serial
 from time import gmtime, strftime, time
 from datetime import datetime, timezone
 import pickle
+import sys
 sys.path.append('..')
 sys.path.append('../utils')
 import zmq_wrapper, zmq_topics
@@ -77,7 +78,7 @@ def populate_parcel_with_ubx_msg(parcel, ubx_msg):
 def gps_listener(ubr_obj):
     """With ubr_obj as the UBX reader object, loop and listen to the incoming messages,
     sending pickled dictionaries to the ROV server"""
-    pub_gps = zmq_wrapper.publisher(zmq_topics.topic_gnss)
+    pub_gps = zmq_wrapper.publisher(zmq_topics.topic_gnss_port)
     parcel_dict = {'gps-iTOW': '',
                    'gps-weeknum': '',
                    'utctime': '',
@@ -92,11 +93,12 @@ def gps_listener(ubr_obj):
             # Record single board computer time
             parcel_dict['ts'] = time()
             # Write all incoming raw bytes format of UBX messages to .ubx file
-            write_to_raw_file(raw_bytes)
+            # write_to_raw_file(raw_bytes)
             # Populate parcel with general information, pickle and send
             populate_parcel_with_ubx_msg(parcel_dict, msg)
             if is_parcel_full(parcel_dict):
                 # The parcel is fully populated and ready to send
+                print(f"Lat: {parcel_dict['lat']}, lon: {parcel_dict['lon']}")
                 pub_gps.send_multipart([zmq_topics.topic_gnss, pickle.dumps(parcel_dict)])
                 # Empty the parcel to get ready for next listening period
                 parcel_dict = emptied_parcel(parcel_dict)

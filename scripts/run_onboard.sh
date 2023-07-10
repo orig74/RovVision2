@@ -49,9 +49,8 @@ run 1 hw alvium_proxy.py
 run 2 hw D405Driver.py
 #run 2 hw periph_gate.py
 run 3 hw vnav.py
-run 4 hw sonar.py
+run 4 hw gps.py  # sonar.py
 run 5 hw dvl.py
-run 6 hw gps.py
 
 tmux att
 fi
