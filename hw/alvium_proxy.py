@@ -36,12 +36,12 @@ MASTER_CAM_ID = CAM_IDS[0]
 NUM_CAMS = len(CAM_IDS)
 
 # Min exposure time: 32us
-CAM_EXPOSURE_US = 2000 #10000
+CAM_EXPOSURE_US = 1500 #10000
 CAM_EXPOSURE_MAX = 2000 #2000    # us
 CAM_EXPOSURE_MIN = 200  #32
 
 CAM_STROBE_DELAY = 200
-CAM_STROBE_DURATION_MAX = 800*2
+CAM_STROBE_DURATION_MAX = 500*2
 
 IMG_SIZE_BYTES = 5065984
 
@@ -92,6 +92,7 @@ class AlviumMultiCam(threading.Thread):
     
     def setStrobeLevel(self, val):
         strobe_duration = int(val * CAM_STROBE_DURATION_MAX / 5)
+        print("Setting strobe duration to {}".format(round(strobe_duration, 2)))
         for prod in self.producers.values():
             prod.cam.get_feature_by_name('StrobeDuration').set(strobe_duration)
 

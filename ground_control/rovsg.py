@@ -173,7 +173,7 @@ def main():
         ]
 
     matplot_column2 = [
-        [sg.Button('cnt',key='CENTER_TRACE',tooltip='center trace'),sg.Button('clr',key='CLEAR_TRACE',tooltip='clear trace'),sg.Combo([f'{i}' for i in range(1,10)],key='PLOTER_RAD',enable_events=True,tooltip='map radius in meters')],
+        [sg.Button('cnt',key='CENTER_TRACE',tooltip='center trace'),sg.Button('clr',key='CLEAR_TRACE',tooltip='clear trace'),sg.Combo(['0.3','0.5']+[f'{i}' for i in range(1,10)],key='PLOTER_RAD',enable_events=True,tooltip='map radius in meters')],
         [sg.Canvas(key="-TRACE-CANVAS-", size=(300,300))]
         ]
 

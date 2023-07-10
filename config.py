@@ -35,7 +35,7 @@ if rov_type==4:
         [0,422*water_scale,480/2],
         [0,0,1]]
     #grip_pos_rel_mm=(0.01,0,0) #range left up in mm
-    grip_pos_rel_mm=(190,1,62)
+    grip_pos_rel_mm=(190,1-15,62)
     #grip_pos_rel_mm=(-127,30,-20.0)
     #grip_pos_rel_mm=(1220,20,20) #range left up in mm
     valid_range_mm=(50,2500)
