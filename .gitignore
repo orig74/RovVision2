@@ -11,3 +11,8 @@ sim/pybullet_data
 *.json
 sim/meshes
 *.pkl
+.idea/
+hw/.idea/
+*.ubx
+hw/gps_listener_sfrbx_data.ubx
+

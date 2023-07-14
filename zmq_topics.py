@@ -94,6 +94,9 @@ topic_dvl_port=13295
 
 topic_dvl_cmd=b'topic_dvl_cmd'
 
+topic_gnss=b'topic_gnss'
+topic_gnss_port=13296
+
 topic_remote_cmd=b'topic_remote_cmd'
 topic_remote_cmd_port=13297
 

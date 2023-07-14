@@ -38,7 +38,7 @@ if rov_type==4:
     if sim_type=='PB':
         grip_pos_rel_mm=(354,0,120)
     else:
-        grip_pos_rel_mm=(190,1,62)
+        grip_pos_rel_mm=(190,1-15,62)
     #grip_pos_rel_mm=(-127,30,-20.0)
     #grip_pos_rel_mm=(1220,20,20) #range left up in mm
     valid_range_mm=(50,2500)
