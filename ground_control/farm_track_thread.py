@@ -172,7 +172,7 @@ class FarmTrack(object):
         elif states[self.state_ind].startswith('go'):
             #self.printer(f'M: d_ach: {self.__target_depth_achived()} done_st: {self.done_step}')
             too_close_to_seabed = False
-            if dh.get_alt() is not None and dh.get_alt()<max_alt:
+            if dh.get_alt() is not None and dh.get_alt()<max_alt and states[self.state_ind]=='go_down':
                 too_close_to_seabed=True
                 self.rov_comander.depth_command(dh.get_depth(),relative=False)
                 self.printer(f'too close to seabed {dh.get_alt()}')
