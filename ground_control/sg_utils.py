@@ -20,8 +20,9 @@ def load_sg_state(window):
         di=pickle.load(open(param_file,'rb'))
         d=window.AllKeysDict
         for k in d:
-            if k in di and type(window[k]) in [sg.Input,sg.Checkbox]:
-                window[k](di[k])
+            if k in di and type(window[k]) in [sg.Input ,sg.Checkbox]:
+                if k not in ['AUTO_NEXT','V_LOCK']:
+                    window[k](di[k])
         params_file_data=di
 
 def update_default_sg_values(vals):
