@@ -70,6 +70,7 @@ def populate_parcel_with_ubx_msg(parcel, ubx_msg):
     elif message == 'NAV-HPPOSLLH':
         parcel['lat'] = ubx_msg.lat
         parcel['lon'] = ubx_msg.lon
+        parcel['hAcc'] = ubx_msg.hAcc
     elif message == 'NAV-TIMEGPS':
         parcel['gps-iTOW'] = ubx_msg.iTOW
         parcel['gps-weeknum'] = ubx_msg.week
@@ -85,6 +86,7 @@ def gps_listener(ubr_obj):
                    'utctime-status': '',
                    'lat': '',
                    'lon': '',
+                   'hAcc': '',
                    'ts': ''}
 
     while True:
@@ -98,7 +100,7 @@ def gps_listener(ubr_obj):
             populate_parcel_with_ubx_msg(parcel_dict, msg)
             if is_parcel_full(parcel_dict):
                 # The parcel is fully populated and ready to send
-                print(f"Lat: {parcel_dict['lat']}, lon: {parcel_dict['lon']}")
+                print(f"Lat: {parcel_dict['lat']}, lon: {parcel_dict['lon']}, hAcc: {round(parcel_dict['hAcc'] / 1000, 2)}m")
                 pub_gps.send_multipart([zmq_topics.topic_gnss, pickle.dumps(parcel_dict)])
                 # Empty the parcel to get ready for next listening period
                 parcel_dict = emptied_parcel(parcel_dict)

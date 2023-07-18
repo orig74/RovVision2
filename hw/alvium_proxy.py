@@ -460,6 +460,8 @@ if __name__ == '__main__':
     record_state=None
     multicam_handler_thread = AlviumMultiCam()
     multicam_handler_thread.start()
+    time.sleep(2)
+    multicam_handler_thread.setStrobeLevel(5)
     while multicam_handler_thread.is_alive():
         socks=zmq.select(subs_socks,[],[],0)[0]
         for sock in socks:
@@ -474,8 +476,8 @@ if __name__ == '__main__':
                 record_state=('/media/data/'+new_record_state_str+'/') if new_record_state_str else None
             if topic==zmq_topics.topic_system_state:
                 _,system_state=data
-            if topic==zmq_topics.topic_lights:
-                multicam_handler_thread.setStrobeLevel(data)
+            # if topic==zmq_topics.topic_lights:
+            #     multicam_handler_thread.setStrobeLevel(data)
             time.sleep(0.01)
     print('done running thread exited')
  
