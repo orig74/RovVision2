@@ -102,7 +102,7 @@ class FarmTrack(object):
             return
         self.last_run=tic
 
-        self.printer(f'mission state ind {self.state_ind}/{len(self.states}')
+        self.printer(f'mission state ind {self.state_ind}/{len(self.states)}')
         if self.states[self.state_ind] in ['wait_start','done']:
             return
 
