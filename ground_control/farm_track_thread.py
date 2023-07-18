@@ -35,61 +35,35 @@ class FarmTrack(object):
     def set_params(self,mission_vars):
         for k,v in mission_vars:
             self.__dict__[k]=v
-
         print('=======',mission_vars)
-
 
     def reset(self):
         self.state_ind=0
-        self.done_step=False
-        self.iter=0
-    #    self.current_y_command=0
-    #    self.current_x_command=0
-    #    self.current_depth_command=self.target_depth_up
         self.last_run=time.time()
         self.start_step_time=time.time()
         self.tmp_target_depth=None
         self.tmp_target_slide=None
         self.final_target_slide=None
         self.final_target_depth=None
-    #    self.rov_comander.vertical_object_unlock()
+        self.states=states+states[2:]*int((self.max_iters-1))+['done']
 
     def get_state(self):
-        return states[self.state_ind]
-
-    #def save_params(self,fname):
-    #    js=json.dumps({k:self.__dict__[k] for k,_ in mission_vars_default},indent=4)
-    #    open(fname,'wb').write(js.encode())
-
-    #def load_params(self,fname):
-    #    js=json.loads(open(fname,'rb').read().strip())
-    #    for key in js:
-    #        setattr(self,key,js[key])
+        return self.states[self.state_ind]
 
     def start(self):
-        self.state_ind=0
-        self.iter=0
+        self.printer('start mission ----')
+        self.reset()
         self.__inc_step()
-
-    #def do_next(self):
-    #    self.done_step=True
-        #self.override_do_next=True
 
     def step_time(self):
         return time.time()-self.start_step_time 
 
     def __inc_step(self):
-        if self.iter<self.max_iters:
-            self.state_ind+=1
-        self.state_ind=self.state_ind%len(states)
-        if self.state_ind==0:# and self.iter<self.max_iters:
-            self.state_ind+=1 #skip wait start
-            self.iter+=1
-
-        self.printer(f'{self.iter} state is: {states[self.state_ind]}')
-        self.done_step=self.auto_next
+        if self.get_state()=='done':
+            return 
+        self.state_ind+=1
+        self.printer(f'{self.state_ind}/{len(self.states)} state is: {self.states[self.state_ind]}')
         self.start_step_time=time.time()
-        #self.override_do_next=False
 
     def __target_depth_achived(self):
         dh=self.rov_data_handler
@@ -109,7 +83,7 @@ class FarmTrack(object):
         txy=self.final_target_slide
         dx = abs(xy[0]-txy[0])
         dy = abs(xy[1]-txy[1])
-        self.printer(f'dslide {dx:.2f} {dy:.2f}')
+        #self.printer(f'dslide {dx:.2f} {dy:.2f}')
         return dx<tresh and dy<tresh
 
     def __is_stable_xy(self,tresh=0.2):
@@ -118,7 +92,7 @@ class FarmTrack(object):
         txy=dh.get_target_xy()
         dx = abs(xy[0]-txy[0])
         dy = abs(xy[1]-txy[1])
-        self.printer(f'dxdy {dx:.2f} {dy:.2f} {dx<tresh and dy<tresh} {self.iter}')
+        #self.printer(f'dxdy {dx:.2f} {dy:.2f} {dx<tresh and dy<tresh}')
         return dx<tresh and dy<tresh
 
     def run(self,range_to_target,max_alt,Pxy):
@@ -128,24 +102,19 @@ class FarmTrack(object):
             return
         self.last_run=tic
 
-        #self.printer(f'>>>> depth {dh.get_depth():.2f}')
-        #self.printer(f'>>>> target depth {dh.get_target_depth():.2f}')
-        #self.printer(f'>>>> xy {dh.get_pos_xy()}')
-        #self.printer(f'>>>> target_xy {dh.get_target_xy()}')
-
-        if states[self.state_ind]=='wait_start':
+        self.printer(f'mission state ind {self.state_ind}/{len(self.states}')
+        if self.states[self.state_ind] in ['wait_start','done']:
             return
 
-        do_next = self.done_step or self.auto_next
-        do_next = do_next and self.__is_stable_xy()
+        do_next = self.__is_stable_xy()
         do_next = do_next and self.step_time()>self.minimal_step_time
         #do_next = do_next or self.override_do_next
 
-        if states[self.state_ind]=='stabilize':
+        if self.states[self.state_ind]=='stabilize':
             #self.printer(f'M: xy_ach: {self.__target_xy_achived()} done_st: {self.done_step}')
             if do_next:
                 self.__inc_step()
-                if states[self.state_ind]=='slide':
+                if self.states[self.state_ind]=='slide':
                     self.printer('going slide')
                     self.last_rope_xy=dh.get_pos_xy2()
                     self.rov_comander.vertical_object_unlock()
@@ -153,7 +122,7 @@ class FarmTrack(object):
                     self.tmp_target_slide=np.array(self.last_rope_xy)
                     #self.rov_comander.go(self.tmp_target_slide,relative=False)
 
-                if states[self.state_ind]=='go_down':
+                if self.states[self.state_ind]=='go_down':
                     self.printer('going down')
                     #self.rov_comander.lock_max()
                     self.rov_comander.vertical_object_lock(rng=range_to_target,Pxy=Pxy)
@@ -161,7 +130,7 @@ class FarmTrack(object):
                     self.tmp_target_depth=dh.get_depth()
                     #self.rov_comander.depth_command(self.target_depth_down,relative=False)
 
-                if states[self.state_ind]=='go_up':
+                if self.states[self.state_ind]=='go_up':
                     self.printer('going up')
                     #self.rov_comander.lock_max()
                     self.rov_comander.vertical_object_lock(rng=range_to_target,Pxy=Pxy)
@@ -169,10 +138,10 @@ class FarmTrack(object):
                     self.tmp_target_depth=dh.get_depth()
                     #self.rov_comander.depth_command(self.target_depth_up,relative=False)
 
-        elif states[self.state_ind].startswith('go'):
+        elif self.states[self.state_ind].startswith('go'):
             #self.printer(f'M: d_ach: {self.__target_depth_achived()} done_st: {self.done_step}')
             too_close_to_seabed = False
-            if dh.get_alt() is not None and dh.get_alt()<max_alt and states[self.state_ind]=='go_down':
+            if dh.get_alt() is not None and dh.get_alt()<max_alt and self.states[self.state_ind]=='go_down':
                 too_close_to_seabed=True
                 self.rov_comander.depth_command(dh.get_depth(),relative=False)
                 self.printer(f'too close to seabed {dh.get_alt()}')
@@ -188,7 +157,7 @@ class FarmTrack(object):
                     self.rov_comander.depth_command(self.tmp_target_depth,relative=False)
 
 
-        elif states[self.state_ind]=='slide':
+        elif self.states[self.state_ind]=='slide':
             if self.__target_xy_achived() and do_next:
                 self.final_target_slide=None
                 self.__inc_step()
@@ -202,20 +171,3 @@ class FarmTrack(object):
                 else:
                     self.tmp_target_slide+=self.slide_step*v/v_norm
                     self.rov_comander.go(self.tmp_target_slide,relative=False)
-
-        #else:
-        #    self.rov_comander.vertical_object_lock(rng=range_to_target,Pxy=Pxy)
-        #:w
-        #self.last_rope_xy=dh.get_pos_xy()
-            
-
-
-
-
-
-
-            
-        
-        
-
-

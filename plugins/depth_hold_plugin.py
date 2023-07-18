@@ -96,7 +96,7 @@ async def recv_and_process():
 
                 if data['cmd'] in ['d_lock']:
                     d_lock=data['val']
-                    printer(f"{data['cmd']} changed to {data['val']}")
+                    #printer(f"{data['cmd']} changed to {data['val']}")
                     dz=0
 
 

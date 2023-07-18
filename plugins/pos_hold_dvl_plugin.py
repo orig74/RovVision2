@@ -252,7 +252,7 @@ async def recv_and_process():
 
                 if data['cmd'] in ['x_lock','y_lock']:
                     tr_main_lock[data['cmd']]=data['val']
-                    printer(f"{data['cmd']} changed to {data['val']}")
+                    #printer(f"{data['cmd']} changed to {data['val']}")
 
                 if data['cmd']=='exec' and data['script']==os.path.basename(__file__):
                     try:
