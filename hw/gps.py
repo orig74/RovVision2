@@ -92,6 +92,7 @@ def gps_listener(ubr_obj):
     while True:
         try:
             (raw_bytes, msg) = ubr_obj.read()
+            print(msg)
             # Record single board computer time
             parcel_dict['ts'] = time()
             # Write all incoming raw bytes format of UBX messages to .ubx file
@@ -100,7 +101,7 @@ def gps_listener(ubr_obj):
             populate_parcel_with_ubx_msg(parcel_dict, msg)
             if is_parcel_full(parcel_dict):
                 # The parcel is fully populated and ready to send
-                print(f"Lat: {parcel_dict['lat']}, lon: {parcel_dict['lon']}, hAcc: {round(parcel_dict['hAcc'] / 1000, 2)}m")
+                print(f"\nLat: {parcel_dict['lat']}, lon: {parcel_dict['lon']}, hAcc: {round(parcel_dict['hAcc'] / 1000, 2)}m")
                 pub_gps.send_multipart([zmq_topics.topic_gnss, pickle.dumps(parcel_dict)])
                 # Empty the parcel to get ready for next listening period
                 parcel_dict = emptied_parcel(parcel_dict)
