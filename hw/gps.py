@@ -92,7 +92,7 @@ def gps_listener(ubr_obj):
     while True:
         try:
             (raw_bytes, msg) = ubr_obj.read()
-            #print(msg)
+            # print(msg)
             # Record single board computer time
             parcel_dict['ts'] = time()
             # Write all incoming raw bytes format of UBX messages to .ubx file
@@ -101,7 +101,9 @@ def gps_listener(ubr_obj):
             populate_parcel_with_ubx_msg(parcel_dict, msg)
             if is_parcel_full(parcel_dict):
                 # The parcel is fully populated and ready to send
-                print(f"\nLat: {parcel_dict['lat']}, lon: {parcel_dict['lon']}, hAcc: {round(parcel_dict['hAcc'] / 1000, 2)}m")
+                basic_info = f"\nLat: {parcel_dict['lat']}, lon: {parcel_dict['lon']},"
+                basic_info_1 = f" hAcc: {round(parcel_dict['hAcc'] / 1000, 2)} m"
+                print(basic_info + basic_info_1)
                 pub_gps.send_multipart([zmq_topics.topic_gnss, pickle.dumps(parcel_dict)])
                 # Empty the parcel to get ready for next listening period
                 parcel_dict = emptied_parcel(parcel_dict)
@@ -113,7 +115,12 @@ def gps_listener(ubr_obj):
 
 
 if __name__ == "__main__":
-    stream = Serial("/dev/serial/by-id/usb-u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver-if00", 9600, timeout=5)
+    # Serial connection using the USB to UART bridge
+    stream = Serial("/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0", 38400,
+                    timeout=5)
+    # Serial connection using direct USB connection
+    # stream = Serial("/dev/serial/by-id/usb-u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver-if00", 9600, timeout=5)
+
     ubr = UBXReader(stream)
     
     # Read latest UBX message and print the current iTOW
