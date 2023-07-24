@@ -92,7 +92,7 @@ def gps_listener(ubr_obj):
     while True:
         try:
             (raw_bytes, msg) = ubr_obj.read()
-            print(msg)
+            #print(msg)
             # Record single board computer time
             parcel_dict['ts'] = time()
             # Write all incoming raw bytes format of UBX messages to .ubx file
