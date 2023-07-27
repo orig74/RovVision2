@@ -101,7 +101,7 @@ def gps_listener(ubr_obj):
             populate_parcel_with_ubx_msg(parcel_dict, msg)
             if is_parcel_full(parcel_dict):
                 # The parcel is fully populated and ready to send
-                basic_info = f"\nLat: {parcel_dict['lat']}, lon: {parcel_dict['lon']},"
+                basic_info = f"Lat: {parcel_dict['lat']}, lon: {parcel_dict['lon']},"
                 basic_info_1 = f" hAcc: {round(parcel_dict['hAcc'] / 1000, 2)} m"
                 print(basic_info + basic_info_1)
                 pub_gps.send_multipart([zmq_topics.topic_gnss, pickle.dumps(parcel_dict)])
