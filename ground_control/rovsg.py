@@ -165,6 +165,9 @@ def main():
             if event == syms.sym_up:
                 rovCommander.depth_command(-float(values['Target-Depth']))
 
+            if event == 'LOG':
+                printer(f'log event {time.time()}') 
+
             if 'UP_CONT' in window.AllKeysDict and window['UP_CONT'].is_pressed(event):
                 rovCommander.depth_command(-float(values['Target-Depth'])*0.01)
             if 'DOWN_CONT' in window.AllKeysDict and window['DOWN_CONT'].is_pressed(event):
