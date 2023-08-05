@@ -412,6 +412,9 @@ class rovDataHandler(object):
     def get_target_yaw(self):
         return self.telemtry.get(zmq_topics.topic_att_hold_yaw_pid,{}).get('T',0)
 
+    def is_recording(self):
+        return self.record_state is not False
+
     def toggle_recording(self):
         if not self.record_state:
             self.record_state=datetime.now().strftime('%y%m%d-%H%M%S') 
