@@ -56,6 +56,8 @@ def main():
     image_shape=None 
     cnt=0
 
+    initialize_data_sent=False
+
     current_yaw_deg=0
     target_xy=[0,0]
 
@@ -70,6 +72,7 @@ def main():
     trace_plotter=None
     if '-TRACE-CANVAS-' in window.AllKeysDict:
         trace_plotter = TracePlotter(window["-TRACE-CANVAS-"].TKCanvas)
+
     #import ipdb;ipdb.set_trace()
 
     while True:
@@ -165,6 +168,9 @@ def main():
             if event == syms.sym_up:
                 rovCommander.depth_command(-float(values['Target-Depth']))
 
+            if event == 'LOG':
+                printer(f'log event {time.time()}') 
+
             if 'UP_CONT' in window.AllKeysDict and window['UP_CONT'].is_pressed(event):
                 rovCommander.depth_command(-float(values['Target-Depth'])*0.01)
             if 'DOWN_CONT' in window.AllKeysDict and window['DOWN_CONT'].is_pressed(event):
@@ -244,9 +250,14 @@ def main():
                 last_heartbit=time.time()
                 rovCommander.heartbit()
                 #send periodic events
+
+            #send initialization data if not initialized yet and got first image from the ROV
+            if not initialize_data_sent and last_im is not None:
                 rovCommander.x_lock(values['X_LOCK'])
                 rovCommander.y_lock(values['Y_LOCK'])
                 rovCommander.d_lock(values['D_LOCK'])
+                rovCommander.set_exposure_d405(int(values['D405EXP']))
+                initialize_data_sent=True
 
 
             if event=='MISSION_SAVE':
@@ -263,6 +274,9 @@ def main():
                 printer(f'dir_scan is {dir_scan}')
                 track_thread.set_params(TrackThreadSG.get_layout_values(values,dir_scan)) #1.0 mean scan to the right -1 to the left
                 track_thread.start()
+                if not rovHandler.is_recording():
+                    rovHandler.toggle_recording()
+                printer(f'set auto next to {track_thread.auto_next}')
 
             if values['AUTO_NEXT']:
                 track_thread.run(float(values['Lrange']),float(values['k_max_alt']),

@@ -4,11 +4,14 @@ import PySimpleGUI as sg
 import cv2
 
 param_file='param_file.pkl'
+
+ignore_save_load_list=['AUTO_NEXT']
+
 def save_sg_state(window):
     d=window.AllKeysDict
     to_save={}
     for k in d:
-        if type(window[k]) in [sg.Input,sg.Checkbox,sg.Combo]:
+        if type(window[k]) in [sg.Input,sg.Checkbox,sg.Combo] and k not in ignore_save_load_list:
             to_save[k]=window[k].get()
     with open(param_file,'wb') as fd:
         pickle.dump(to_save,fd,protocol=0)
@@ -20,8 +23,8 @@ def load_sg_state(window):
         di=pickle.load(open(param_file,'rb'))
         d=window.AllKeysDict
         for k in d:
-            if k in di and type(window[k]) in [sg.Input ,sg.Checkbox]:
-                if k not in ['AUTO_NEXT','V_LOCK']:
+            if k in di and k not in ignore_save_load_list \
+                    and type(window[k]) in [sg.Input,sg.Checkbox]:
                     window[k](di[k])
         params_file_data=di
 
