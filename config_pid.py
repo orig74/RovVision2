@@ -2,11 +2,11 @@
 ds=0.15
 depth_pid={
         'P':2.5*ds,
-        'I':0.05*ds,
+        'I':0.2*ds,
         'D':0*ds,
         'limit':0.2,
         'step_limit':0.05,
-        'i_limit':0.01,
+        'i_limit':0.05,
         'FF':0,
         'angle_deg_type':False,
         'initial_i':0,
