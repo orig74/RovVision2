@@ -388,6 +388,13 @@ class rovDataHandler(object):
             return trdata['rope_col'],trdata['valid']
         return None,False
 
+    def get_rope_down_end_detected(self):
+        if zmq_topics.topic_tracker in self.telemtry:
+            trdata = self.telemtry[zmq_topics.topic_tracker]
+            return trdata.get('rope_end_down',False)
+        return False
+ 
+
 
     def get_track_dy(self):
         if zmq_topics.topic_tracker in self.telemtry:

@@ -107,14 +107,21 @@ async def recv_and_process():
                 last_depth16=np.frombuffer(ret[2],'uint16').reshape(shape)
                 d,col,up_validation,down_validation,_=rope_detect_depth(last_depth16,scale_to_mm,config.water_scale)
                 xw,yw,s=(cam_main_inv @ np.array([[col*d,0*d,d]]).T).flatten()
-                range_valid=abs(d-up_validation)<config.range_validation_up_down_mm and \
-                        abs(d-down_validation) < config.range_validation_up_down_mm
-                if config.valid_range_mm[0]<d<config.valid_range_mm[1]:
-                    #import ipdb;ipdb.set_trace()
-                    #d,col,_=rope_detect_depth(scaled_d)
-                    res={'rope_col':col/last_depth16.shape[1],'range':s/1000,'dy':xw/1000,'valid':range_valid}
-                    #print('returning rope position: ',res)
-                    sock_pub.send_multipart([zmq_topics.topic_tracker,pickle.dumps(res)])
+                down_valid = abs(d-down_validation) < config.range_validation_up_down_mm
+                up_valid = abs(d-up_validation)<config.range_validation_up_down_mm
+                range_valid= down_valid and up_valid
+                rope_end = down_validation-d>config.down_validiation_diff_tresh_rope_detect_mm
+                if rope_end:
+                    printer(f'rope_end: {down_validation:.1f},{d:.1f}')
+                range_valid = config.valid_range_mm[0]<d<config.valid_range_mm[1]
+                track_valid = down_valid and up_valid and range_valid
+                #import ipdb;ipdb.set_trace()
+                #d,col,_=rope_detect_depth(scaled_d)
+                res={'rope_col':col/last_depth16.shape[1],'range':s/1000,'dy':xw/1000,
+                        'valid':track_valid, #'down_valid': down_valid,'up_valid': up_valid,
+                        'rope_end_down':rope_end}
+                #print('returning rope position: ',res)
+                sock_pub.send_multipart([zmq_topics.topic_tracker,pickle.dumps(res)])
 
                 
 

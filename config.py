@@ -43,6 +43,7 @@ if rov_type==4:
     #grip_pos_rel_mm=(1220,20,20) #range left up in mm
     valid_range_mm=(50,1200)
     range_validation_up_down_mm=70
+    down_validiation_diff_tresh_rope_detect_mm=500
     dvl_max_valid_speed=0.25 #m/s
     
 cam_fps=8

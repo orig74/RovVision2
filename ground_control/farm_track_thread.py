@@ -102,7 +102,6 @@ class FarmTrack(object):
             return
         self.last_run=tic
 
-        self.printer(f'mission state ind {self.state_ind}/{len(self.states)}')
         if self.states[self.state_ind] in ['wait_start','done']:
             return
 
@@ -141,11 +140,19 @@ class FarmTrack(object):
         elif self.states[self.state_ind].startswith('go'):
             #self.printer(f'M: d_ach: {self.__target_depth_achived()} done_st: {self.done_step}')
             too_close_to_seabed = False
-            if dh.get_alt() is not None and dh.get_alt()<max_alt and self.states[self.state_ind]=='go_down':
+            is_go_down= self.states[self.state_ind]=='go_down'
+            end_rope_detected = dh.get_rope_down_end_detected() and is_go_down
+            if dh.get_alt() is not None and dh.get_alt()<max_alt and is_go_down:
                 too_close_to_seabed=True
                 self.rov_comander.depth_command(dh.get_depth(),relative=False)
                 self.printer(f'too close to seabed {dh.get_alt()}')
-            if (self.__target_depth_achived() and do_next) or too_close_to_seabed:
+
+            if end_rope_detected:
+                self.printer(f'end rope detected {dh.get_alt()}')
+                self.rov_comander.depth_command(dh.get_depth(),relative=False)
+
+            if (self.__target_depth_achived() and do_next) or too_close_to_seabed or end_rope_detected:
+                self.printer(f'done up down stage {self.__target_depth_achived()}')
                 self.final_target_depth=None
                 self.__inc_step()
             else:
