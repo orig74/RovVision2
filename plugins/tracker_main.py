@@ -110,9 +110,9 @@ async def recv_and_process():
                 down_valid = abs(d-down_validation) < config.range_validation_up_down_mm
                 up_valid = abs(d-up_validation)<config.range_validation_up_down_mm
                 range_valid= down_valid and up_valid
-                rope_end = down_validation-d>config.down_validiation_diff_tresh_rope_detect_mm
+                rope_end = down_validation-up_validation>config.down_validiation_diff_tresh_rope_detect_mm
                 if rope_end:
-                    printer(f'rope_end: {down_validation:.1f},{d:.1f}')
+                    printer(f'rope_end: {down_validation:.1f},{up_validation:.1f}')
                 range_valid = config.valid_range_mm[0]<d<config.valid_range_mm[1]
                 track_valid = down_valid and up_valid and range_valid
                 #import ipdb;ipdb.set_trace()
