@@ -5,7 +5,7 @@ import cv2
 
 param_file='param_file.pkl'
 
-ignore_save_load_list=['AUTO_NEXT']
+ignore_save_load_list=['AUTO_NEXT','V_LOCK']
 
 def save_sg_state(window):
     d=window.AllKeysDict
@@ -25,7 +25,7 @@ def load_sg_state(window):
         for k in d:
             if k in di and k not in ignore_save_load_list \
                     and type(window[k]) in [sg.Input,sg.Checkbox]:
-                    window[k](di[k])
+                        window[k](di[k])
         params_file_data=di
 
 def update_default_sg_values(vals):
