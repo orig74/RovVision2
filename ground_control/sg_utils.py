@@ -3,9 +3,17 @@ from PIL import Image,ImageTk
 import PySimpleGUI as sg
 import cv2
 
-param_file='param_file.pkl'
+config_path =os.environ['HOME']+'/.config/rovision'
+param_file=config_path+'/param_file.pkl'
+dive_form_path=config_path+'/dive_form.json'
 
 ignore_save_load_list=['AUTO_NEXT','V_LOCK']
+
+def set_rovvision_config_path():
+    try:
+        os.mkdir(config_path)
+    except FileExistsError:
+        pass
 
 def save_sg_state(window):
     d=window.AllKeysDict
