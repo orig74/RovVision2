@@ -174,7 +174,10 @@ def main():
                 rovCommander.depth_command(-float(values['Target-Depth']))
 
             if event == 'LOG':
-                printer(f'log event {time.time()}') 
+                printer(f'log({time.time()}): {values["LOGtext"]}') 
+                if 'LOGtext' in window.AllKeysDict:
+                    window['LOGtext'].update('')
+
 
             if 'UP_CONT' in window.AllKeysDict and window['UP_CONT'].is_pressed(event):
                 rovCommander.depth_command(-float(values['Target-Depth'])*0.01)
