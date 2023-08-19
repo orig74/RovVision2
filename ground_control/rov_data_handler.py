@@ -39,23 +39,23 @@ class rovCommandHandler(object):
     def heartbit(self):
         self.pub({'cmd':'heartbit'})
 
-    def depth_hold(self):
-        self.pub({'cmd':'depth_hold'})
+    def depth_hold(self,val=None):
+        self.pub({'cmd':'depth_hold','val':val})
 
-    def att_hold(self):#,yaw,pitch,roll):
-        self.pub({'cmd':'att_hold'})
+    def att_hold(self,val=None):#,yaw,pitch,roll):
+        self.pub({'cmd':'att_hold','val':val})
 
     def att_cmd(self,ypr_deg,relative=True):
         self.pub({'cmd':'att','ypr':ypr_deg,'rel':relative})
 
-    def x_hold(self):
-        self.pub({'cmd':'x_hold'})
+    def x_hold(self,val=None):
+        self.pub({'cmd':'x_hold','val':val})
 
-    def y_hold(self):
-        self.pub({'cmd':'y_hold'})
+    def y_hold(self,val=None):
+        self.pub({'cmd':'y_hold','val':val})
 
-    def z_hold(self):
-        self.pub({'cmd':'z_hold'})
+    def z_hold(self,val=None):
+        self.pub({'cmd':'z_hold','val':val})
 
     def x_lock(self,v):
         self.pub({'cmd':'x_lock','val':v})

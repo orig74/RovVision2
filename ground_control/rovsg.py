@@ -202,10 +202,10 @@ def main():
                 rovCommander.d_lock(values['D_LOCK'])
 
             if event == 'Hold':
-                rovCommander.depth_hold()
-                rovCommander.att_hold()
-                rovCommander.x_hold()
-                rovCommander.y_hold()
+                rovCommander.depth_hold(True)
+                rovCommander.att_hold(True)
+                rovCommander.x_hold(True)
+                rovCommander.y_hold(True)
                 rovCommander.main_track(None)
                 rovCommander.x_lock(values['X_LOCK'])
                 rovCommander.y_lock(values['Y_LOCK'])
@@ -283,6 +283,12 @@ def main():
                 printer(f'dir_scan is {dir_scan}')
                 track_thread.set_params(TrackThreadSG.get_layout_values(values,dir_scan)) #1.0 mean scan to the right -1 to the left
                 track_thread.start()
+                
+                rovCommander.depth_hold(True)
+                rovCommander.att_hold(True)
+                rovCommander.x_hold(True)
+                rovCommander.y_hold(True)
+
                 if not rovHandler.is_recording():
                     rovHandler.toggle_recording()
 
