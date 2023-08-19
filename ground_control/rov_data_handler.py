@@ -238,6 +238,10 @@ class rovDataHandler(object):
         self.printer=printer
         self.main_image=None
         self.main_image_depth=None
+        self.data_tosave_from_gui=[]
+
+    def update_gui_data(self,key,data):
+        self.data_tosave_from_gui.append((key,data))
         
     def getSincedImages(self,ind):
         ret = [self.curFrameId, self.syncedImages[ind]]
@@ -318,15 +322,13 @@ class rovDataHandler(object):
                         os.mkdir(save_path)
                     for i in [0,1]:
                         stereo_cam_reader[i].set_save_fd(open(save_path+'/vid_{}.mp4'.format('lr'[i]),'wb'))
-                        #datestr=datetime.now().strftime('%y%m%d-%H%M%S')
                     main_cam_reader.set_save_fd(open(save_path+'/vid_main.mp4','wb'))   
                     main_cam_reader_depth.set_save_fd(open(save_path+'/vid_main_depth.mp4','wb'))   
-                        #fds.append(open(save_path+'/vid_{}.mp4'.format('lr'[i]),'wb'))
                         
-                    #set_files_fds(fds)
                     self.data_file_fd=open(save_path+'/viewer_data.pkl','wb')
                     pickle.dump([b'start_time',time.time()],self.data_file_fd,-1)
-                    #os.system("gst-launch-1.0 -v -e udpsrc port=17894  ! application/x-rtp, media=video, clock-rate=90000, encoding-name=H264, payload=96 ! rtph264depay ! h264parse ! qtmux ! filesink location=%s sync=false & "%(save_path+'/main_cam.mov'))
+                    if len(self.data_tosave_from_gui)>0:
+                        pickle.dump([b'gui_data',time.time(),self.data_tosave_from_gui],self.data_file_fd,-1)
             else:
                 #if get_files_fds()[0] is not None:
                 if stereo_cam_reader[0].get_save_fd() is not None:
@@ -439,7 +441,6 @@ class rovDataHandler(object):
 
     def process_telem(self):
         message_dict={}
-
         while True:
             socks = zmq.select(self.subs_socks,[],[],0.001)[0]
             if len(socks)==0: #flush msg buffer
@@ -507,6 +508,7 @@ class rovDataHandler(object):
          
                     if self.data_file_fd is not None:
                         pickle.dump([topic,data_receive_ts,data],self.data_file_fd,-1)
+
 
 
     def next(self):

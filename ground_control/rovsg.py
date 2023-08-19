@@ -34,6 +34,8 @@ import zmq_topics
 from farm_track_thread import FarmTrack as TrackThread
 import farm_track_sg as TrackThreadSG
 #scale_screen=None
+
+from sg_dive_form import DiveForm
 if os.environ.get('SG_LAYOUT','ENG')=='ENG':
     import sg_layout_eng as sg_layout
 else:
@@ -50,6 +52,10 @@ def main():
     rovHandler = rovDataHandler(None,printer=printer,args=args)
     rovCommander = rovCommandHandler()
     track_thread = TrackThread(rov_comander=rovCommander,rov_data_handler=rovHandler,printer=printer)
+    sg_utils.set_rovvision_config_path()
+    dive_form=DiveForm(sg_utils.dive_form_path)
+    dive_form.open()
+    rovHandler.update_gui_data('dive_form',dive_form.get())
 
     last_heartbit=time.time()
     last_im=None
@@ -81,13 +87,13 @@ def main():
             event, values = window.read(timeout=2) # mili timeout
             if event != '__TIMEOUT__':
                 print('event is: ',event)
+                rovHandler.dump_gui_event([event,values])
 
             sg_utils.update_default_sg_values(values) #diffrent layouts might not have the defaults values as inputs
 
             main_image_size=sg_layout.get_main_image_sz(values)
             if event == "Exit" or event == sg.WIN_CLOSED:
                 break
-            rovHandler.dump_gui_event([event,values])
 
             scaley=None if values['AUTOSCALEY'] else 1.0
             if image_shape is not None and event.startswith('-IMAGE-0'):
@@ -169,7 +175,10 @@ def main():
                 rovCommander.depth_command(-float(values['Target-Depth']))
 
             if event == 'LOG':
-                printer(f'log event {time.time()}') 
+                printer(f'log({time.time()}): {values["LOGtext"]}') 
+                if 'LOGtext' in window.AllKeysDict:
+                    window['LOGtext'].update('')
+
 
             if 'UP_CONT' in window.AllKeysDict and window['UP_CONT'].is_pressed(event):
                 rovCommander.depth_command(-float(values['Target-Depth'])*0.01)
@@ -276,6 +285,7 @@ def main():
                 track_thread.start()
                 if not rovHandler.is_recording():
                     rovHandler.toggle_recording()
+
                 printer(f'set auto next to {track_thread.auto_next}')
 
             if values['AUTO_NEXT']:
