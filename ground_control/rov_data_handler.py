@@ -327,6 +327,8 @@ class rovDataHandler(object):
                         
                     self.data_file_fd=open(save_path+'/viewer_data.pkl','wb')
                     pickle.dump([b'start_time',time.time()],self.data_file_fd,-1)
+                    if len(self.data_tosave_from_gui)>0:
+                        pickle.dump([b'gui_data',time.time(),self.data_tosave_from_gui],self.data_file_fd,-1)
             else:
                 #if get_files_fds()[0] is not None:
                 if stereo_cam_reader[0].get_save_fd() is not None:
@@ -506,9 +508,6 @@ class rovDataHandler(object):
          
                     if self.data_file_fd is not None:
                         pickle.dump([topic,data_receive_ts,data],self.data_file_fd,-1)
-                        if len(self.data_tosave_from_gui)>0:
-                            pickle.dump([b'gui_data',time.time(),self.data_tosave_from_gui],self.data_file_fd,-1)
-                        self.data_tosave_from_gui=[]
 
 
 

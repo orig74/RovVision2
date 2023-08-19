@@ -55,6 +55,7 @@ def main():
     sg_utils.set_rovvision_config_path()
     dive_form=DiveForm(sg_utils.dive_form_path)
     dive_form.open()
+    rovHandler.update_gui_data('dive_form',dive_form.get())
 
     last_heartbit=time.time()
     last_im=None
@@ -284,7 +285,6 @@ def main():
                 track_thread.start()
                 if not rovHandler.is_recording():
                     rovHandler.toggle_recording()
-                    rovHandler.update_gui_data('dive_form',dive_form.get())
 
                 printer(f'set auto next to {track_thread.auto_next}')
 
@@ -318,8 +318,6 @@ def main():
                 rovCommander.lights_dec()
 
             if event=='REC':
-                if not rovHandler.is_recording():
-                    rovHandler.update_gui_data('dive_form',dive_form.get())
                 rovHandler.toggle_recording()
 
             for kkk in ['Gvr','Gvl']:
