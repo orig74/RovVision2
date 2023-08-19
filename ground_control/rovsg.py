@@ -281,7 +281,7 @@ def main():
                 track_thread.start()
                 if not rovHandler.is_recording():
                     rovHandler.toggle_recording()
-                    rovHandler.data_tosave_from_gui('dive_form',dive_form.get())
+                    rovHandler.update_gui_data('dive_form',dive_form.get())
 
                 printer(f'set auto next to {track_thread.auto_next}')
 
@@ -315,8 +315,9 @@ def main():
                 rovCommander.lights_dec()
 
             if event=='REC':
+                if not rovHandler.is_recording():
+                    rovHandler.update_gui_data('dive_form',dive_form.get())
                 rovHandler.toggle_recording()
-                rovHandler.data_tosave_from_gui('dive_form',dive_form.get())
 
             for kkk in ['Gvr','Gvl']:
                 if kkk in window.AllKeysDict:

@@ -507,7 +507,7 @@ class rovDataHandler(object):
                     if self.data_file_fd is not None:
                         pickle.dump([topic,data_receive_ts,data],self.data_file_fd,-1)
                         if len(self.data_tosave_from_gui)>0:
-                            pickle.dump(['gui_data',self.data_tosave_from_gui],self.data_file_fd,-1)
+                            pickle.dump([b'gui_data',time.time(),self.data_tosave_from_gui],self.data_file_fd,-1)
                         self.data_tosave_from_gui=[]
 
 
