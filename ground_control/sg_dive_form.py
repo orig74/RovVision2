@@ -1,39 +1,55 @@
 import PySimpleGUI as sg
-import json
+import pickle
 
 class DiveForm:
     def __init__(self, file_name):
-        self.fields = {"full_name": "", "description": ""}
-        self.file_name = file_name
-        try:
-            with open(self.file_name, "r") as f:
-                self.fields = json.load(f)
-        except FileNotFoundError:
-            pass
 
-    def open(self):
-        layout = [
-            [sg.Text("Full name:"), sg.InputText(self.fields["full_name"], size=(80, 1))],
-            [sg.Text("Description:"), sg.Multiline(self.fields["description"], size=(80, 8))],
+        self.layout = [
+            [sg.Text("Operator name:"), sg.InputText('',key='operator_name', size=(80, 1))],
+            [sg.Text("Company name:"), sg.InputText('',key='company_name', size=(80, 1))],
+            [sg.Text("Farm ID:"), sg.InputText('',key='farm_id', size=(80, 1))],
+            [sg.Text("Description:"), sg.Multiline('',key='description', size=(80, 8))],
             [sg.Button("OK")]
         ]
 
-        window = sg.Window("Dive Form", layout)
+        self.file_name = file_name
+        self.values=None
+
+    def open(self):
+        window = sg.Window("Dive Form", self.layout)
+        event, values = window.read(timeout=0)
+        try:
+            with open(self.file_name, "rb") as f:
+                self.values=pickle.load(f)
+                for fld in self.values:
+                    if fld in window.AllKeysDict:
+                        window[fld].update(self.values[fld])
+                    else:
+                        print('Error: not compatible field',fld)
+        except FileNotFoundError:
+            pass
+
 
         while True:
             event, values = window.read()
             if event == "OK":
-                self.fields["full_name"] = values[0]
-                self.fields["description"] = values[1]
+                self.values=values
                 self.save()
-                return self.fields
+                break
             if event == sg.WIN_CLOSED:
                 break
         window.close()
 
     def get(self):
-        return self.fields
+        return self.values
 
     def save(self):
-        with open(self.file_name, "w") as f:
-            json.dump(self.fields, f)
+        with open(self.file_name, "wb") as f:
+            pickle.dump(self.values, f,protocol=4)
+
+
+if __name__=='__main__':
+    df=DiveForm('/tmp/test.pkl')
+    df.open()
+    print(df.get())
+
