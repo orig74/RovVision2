@@ -24,6 +24,9 @@ socket_pub_ts=utils.publisher(zmq_topics.topic_main_cam_ts_port)
 #time.sleep(6)
 FRAME_MOD = 1
 
+EXPOSURE_US = 1000
+GAIN = 20
+
 RES_X = 848
 RES_Y = 480
 
@@ -83,11 +86,13 @@ if __name__ == "__main__":
 
     sens=pipeline.get_active_profile().get_device().query_sensors()[0]
     sens.set_option(rs.option.enable_auto_exposure, False)
-    time.sleep(1.0)
-    sens.set_option(rs.option.exposure, 4000)  # int(1e6//FPS) Set exposure to inter-frame time
-    time.sleep(1.0)
-    sens.set_option(rs.option.gain, 10)
-    time.sleep(1.0)
+    time.sleep(0.5)
+    sens.set_option(rs.option.output_trigger_enabled, True)
+    time.sleep(0.5)
+    sens.set_option(rs.option.exposure, EXPOSURE_US)  # int(1e6//FPS) Set exposure to inter-frame time
+    time.sleep(0.5)
+    sens.set_option(rs.option.gain, GAIN)
+    time.sleep(0.5)
     
     depth_scale = depth_sensor.get_depth_scale()
 
