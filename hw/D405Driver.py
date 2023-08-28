@@ -121,7 +121,7 @@ if __name__ == "__main__":
                 if data['cmd']=='d405param':
                     if 'exposure' in data:
                         print('setting setting d405 exposure',data)
-                        exp=min(data['exposure']*1000,int(1e6//FPS)) 
+                        exp=max(500, min(data['exposure']*1000, 10e3)) 
                         sens.set_option(rs.option.exposure, exp)  # Set exposure to inter-frame time
  
         frames = pipeline.wait_for_frames()
