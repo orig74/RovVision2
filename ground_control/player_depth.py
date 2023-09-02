@@ -7,7 +7,7 @@
 #test data for rope end:
 #python player_depth.py -s 0 ../../data2/230719-103213 # false at frame ~11447
 #python player_depth.py -s 0 ../../data2/230719-104817 # end of the rope ~2673
-#230719-105708 #false 1533 #end 1777
+#230719-105708 #false 1533 #end 1777 #close to false 4512
 #230720-093250 #false 8444 maybe tether
 #230720-100957 #false 12719 ~300mm
 #230720-104714 #false 7536
@@ -243,7 +243,7 @@ while 1:
                 diff=down_validation-up_validation
                 line=f'range {d:.1f},U{up_validation:.1f},D{down_validation:.1f}'
                 cv2.putText(rgb_img,line,(10,40), font, 0.7,(255,0,0),2,cv2.LINE_AA)
-                cv2.putText(rgb_img,f'Df{diff:.1f}',(10,60),font, 0.7,(255,0,0) if diff<300 else (0,0,255),
+                cv2.putText(rgb_img,f'Df{diff:.1f}',(10,60),font, 0.7,(255,0,0) if diff<150 else (0,0,255),
                         2,cv2.LINE_AA)
                 mrg=50
                 vrow=50

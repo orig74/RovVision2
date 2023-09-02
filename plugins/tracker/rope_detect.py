@@ -83,7 +83,8 @@ def rope_detect_depth(depth_img,scale_to_mm,water_scale,start_row=150,nrows=100,
     r=600
     imtp=imt+np.abs(np.linspace(-r,r,len(imt)))
     #blur line
-    imtp=np.convolve(imtp,np.ones(20)/20,mode='same')
+    flt=100
+    imtp=np.convolve(imtp,np.ones(flt)/flt,mode='same')
     col=np.argmin(imtp[marg:-marg])+marg
 
     #up_validation=scaled_d[:validation_rows,col].sum()/validation_rows
