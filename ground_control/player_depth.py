@@ -245,6 +245,12 @@ while 1:
                 cv2.putText(rgb_img,line,(10,40), font, 0.7,(255,0,0),2,cv2.LINE_AA)
                 cv2.putText(rgb_img,f'Df{diff:.1f}',(10,60),font, 0.7,(255,0,0) if diff<300 else (0,0,255),
                         2,cv2.LINE_AA)
+                mrg=50
+                vrow=50
+                nrow=100
+                srow=150
+                for rrr in [srow-vrow,srow,srow+nrow,srow+nrow+vrow]:
+                    cv2.line(rgb_img,(posx-mrg,rrr),(posx+mrg,rrr),(255,255,255),thickness=1)
                 #print('maxmin',depth_img.max(),depth_img.min(),ret[0],ret[1])
             else:
                 #rgb_img=np.zeros(shape,'uint8')

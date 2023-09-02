@@ -90,10 +90,22 @@ def rope_detect_depth(depth_img,scale_to_mm,water_scale,start_row=150,nrows=100,
     #down_validation=scaled_d[-validation_rows:,col].sum()/validation_rows
     
     #width_check
-    wc=20
-    up_validation=scaled_d[:validation_rows,col-wc:col+wc].mean(axis=1)
-    down_validation=scaled_d[-validation_rows:,col-wc:col+wc].mean(axis=1)
+    wc=50
+    if 0:
+        from matplotlib import pyplot as plt
+        plt.figure('up')
+        plt.imshow(scaled_d[:validation_rows,col-wc:col+wc])
+        plt.figure('up mean')
+        plt.plot(scaled_d[:validation_rows,col-wc:col+wc].mean(axis=0))
+        plt.figure('down')
+        plt.imshow(scaled_d[-validation_rows:,col-wc:col+wc])
+        plt.figure('down mean')
+        plt.plot(scaled_d[-validation_rows:,col-wc:col+wc].mean(axis=0))
+        plt.show()
+        ddd
 
+    up_validation=scaled_d[:validation_rows,col-wc:col+wc].mean(axis=0)
+    down_validation=scaled_d[-validation_rows:,col-wc:col+wc].mean(axis=0)
     return imt[col],col,up_validation.min(),down_validation.min(),imtp
 
 
