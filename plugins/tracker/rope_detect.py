@@ -91,8 +91,8 @@ def rope_detect_depth(depth_img,scale_to_mm,water_scale,start_row=150,nrows=100,
     
     #width_check
     wc=20
-    up_validation=scaled_d[:validation_rows,col-wc:col+wc].sum(axis=0)/validation_rows
-    down_validation=scaled_d[-validation_rows:,col-wc:col+wc].sum(axis=0)/validation_rows
+    up_validation=scaled_d[:validation_rows,col-wc:col+wc].mean(axis=1)
+    down_validation=scaled_d[-validation_rows:,col-wc:col+wc].mean(axis=1)
 
     return imt[col],col,up_validation.min(),down_validation.min(),imtp
 
