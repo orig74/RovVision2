@@ -84,9 +84,9 @@ if __name__ == "__main__":
     sens=pipeline.get_active_profile().get_device().query_sensors()[0]
     sens.set_option(rs.option.enable_auto_exposure, False)
     time.sleep(1.0)
-    sens.set_option(rs.option.exposure, 4000)  # int(1e6//FPS) Set exposure to inter-frame time
+    sens.set_option(rs.option.exposure, 2000)  # int(1e6//FPS) Set exposure to inter-frame time
     time.sleep(1.0)
-    sens.set_option(rs.option.gain, 10)
+    sens.set_option(rs.option.gain, 15)
     time.sleep(1.0)
     
     depth_scale = depth_sensor.get_depth_scale()
