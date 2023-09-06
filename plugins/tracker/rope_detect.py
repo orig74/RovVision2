@@ -92,8 +92,16 @@ def rope_detect_depth(depth_img,scale_to_mm,water_scale,start_row=150,nrows=100,
     
     #width_check
     wc=50
+    #up_validation=scaled_d[:validation_rows,col-wc:col+wc].mean(axis=0)
+    #down_validation=scaled_d[-validation_rows:,col-wc:col+wc].mean(axis=0)
+    up_validation=np.median(scaled_d[:validation_rows,col-wc:col+wc],axis=0)
+    down_validation=np.median(scaled_d[-validation_rows:,col-wc:col+wc],axis=0)
+
+
     if 0:
+        print('---',imt[col],col,up_validation.min(),down_validation.min())
         from matplotlib import pyplot as plt
+        import sys
         plt.figure('up')
         plt.imshow(scaled_d[:validation_rows,col-wc:col+wc])
         plt.figure('up mean')
@@ -103,10 +111,8 @@ def rope_detect_depth(depth_img,scale_to_mm,water_scale,start_row=150,nrows=100,
         plt.figure('down mean')
         plt.plot(scaled_d[-validation_rows:,col-wc:col+wc].mean(axis=0))
         plt.show()
-        ddd
+        sys.exit(0)
 
-    up_validation=scaled_d[:validation_rows,col-wc:col+wc].mean(axis=0)
-    down_validation=scaled_d[-validation_rows:,col-wc:col+wc].mean(axis=0)
     return imt[col],col,up_validation.min(),down_validation.min(),imtp
 
 
