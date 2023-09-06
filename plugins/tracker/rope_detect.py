@@ -83,7 +83,7 @@ def rope_detect_depth(depth_img,scale_to_mm,water_scale,start_row=150,nrows=100,
     r=600
     imtp=imt+np.abs(np.linspace(-r,r,len(imt)))
     #blur line
-    flt=100
+    flt=50
     imtp=np.convolve(imtp,np.ones(flt)/flt,mode='same')
     col=np.argmin(imtp[marg:-marg])+marg
 
@@ -110,6 +110,10 @@ def rope_detect_depth(depth_img,scale_to_mm,water_scale,start_row=150,nrows=100,
         plt.imshow(scaled_d[-validation_rows:,col-wc:col+wc])
         plt.figure('down mean')
         plt.plot(scaled_d[-validation_rows:,col-wc:col+wc].mean(axis=0))
+        plt.figure('med range')
+        plt.plot(imtp)
+        plt.plot(imt)
+        plt.legend(['filtered','raw'])
         plt.show()
         sys.exit(0)
 
