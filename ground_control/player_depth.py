@@ -66,7 +66,10 @@ def read_pkl(pkl_file):
             d=pickle.load(fd)
             if d[0]==zmq_topics.topic_depth:
                 telem['depth']=d[2]['depth']
-            if d[0] in [zmq_topics.topic_main_cam_ts , zmq_topics.topic_stereo_camera_ts]:
+            if d[0] in [
+                    zmq_topics.topic_main_cam_ts , 
+                    zmq_topics.topic_stereo_camera_ts,
+                    b'printer_sink']:
                 ret.append(d)
                 telem_data.append(telem.copy())
         except EOFError:
@@ -184,6 +187,8 @@ is_depth_image=False
 while 1:
     if pkl_data is not None:
         i=np.clip(i,0,len(pkl_data)-2) 
+        if pkl_data[i][0].startswith(b'printer'):
+            print('printer:',pkl_data[i][2]['txt'])
         if pkl_data[i][0]==zmq_topics.topic_main_cam_ts:
             fnum=pkl_data[i][2][0]
             is_depth_image=True
@@ -298,7 +303,7 @@ while 1:
                     img[:,:,1]=img[:,:,1]*wins[wname]['mask']
                 cv2.imshow(wname,img)
                 wins[wname]['redraw']=False
-            print('current index',i)
+            #print('current index',i)
 
     k=cv2.waitKey(100)%0xff
     #k=cv2.pollKey()%0xff
