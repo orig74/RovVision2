@@ -128,7 +128,7 @@ of=OF()
 def click(event, x, y, flags, param):
     global delta_click,last_click_data,tcv
     if event == cv2.EVENT_LBUTTONDOWN:
-        d=depth_img[y,x]*config.water_scale
+        d=depth_img[y,x]*config.water_scale*scale_to_mm
         print('---click',x,y,depth_img[y,x])
         click_data=(np.linalg.inv(np.array(config.cam_main_int)) @ np.array([[x*d,y*d,d]]).T).flatten()
         xw,yw,s=click_data
@@ -247,8 +247,8 @@ while 1:
             posx=0
             if rgb_img is not None:
                 shape=rgb_img.shape[:2]
-                depth_img=np.frombuffer(open(args.path+f'/d{fnum:06d}.bin','rb').read(),'uint16').astype('float').reshape(shape)*scale_to_mm*config.water_scale
-                depth_img[depth_img<1]=10000 #10 meters
+                depth_img=np.frombuffer(open(args.path+f'/d{fnum:06d}.bin','rb').read(),'uint16').astype('float').reshape(shape)#*scale_to_mm*config.water_scale
+                #depth_img[depth_img<1]=10000 #10 meters
 
                 ret=rope_detect_depth(depth_img,scale_to_mm,config.water_scale)
                 d,posx,up_validation,down_validation,_=ret
