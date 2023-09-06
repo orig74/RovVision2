@@ -80,6 +80,7 @@ except FileNotFoundError:
     telem_data = None
     print('no pickle data file')
 
+print('done reading pickle')
 #import ipdb;ipdb.set_trace()
 try:
     df=pd.read_csv(args.path+'/d405_frame_data.txt',delimiter=',',header=None)
@@ -91,8 +92,21 @@ scale_to_mm=depth_scale*1000
 #fnums=[int(i) for i in df[0] if not np.isnan(i)]
 fnums=[int(l) for l in os.popen(f'cd {args.path} && ls -1 *.jpg |cut -d"." -f1').readlines() if l.strip()]
 fnums.sort()
-i=args.start_frame
+if pkl_data is None:
+    i=args.start_frame
+else:
+    fnum=-1
+    i=0
+    while fnum<args.start_frame:
+        if pkl_data[i][0]==zmq_topics.topic_main_cam_ts:
+            fnum=pkl_data[i][2][0]
+        if i>=len(pkl_data):
+            print('error cant find frame (or close to) frame',args.start_frame)
+            sys.exit(0)
+        i+=1
 
+
+print('done reading fnames')
 #def rope_detect_depth(depth_img,start_row=150,nrows=100):
 #    #np.save('/tmp/imgd.npy',depth_img)
 #    marg=100
@@ -229,7 +243,7 @@ while 1:
                 except Exception as E:
                     print('Error reading image',E)
                     rgb_img=None
-                #print('===',args.path+f'/{fnum:06d}.jpg')
+            #print('===',args.path+f'/{fnum:06d}.jpg')
             posx=0
             if rgb_img is not None:
                 shape=rgb_img.shape[:2]
@@ -245,6 +259,7 @@ while 1:
                 cv2.putText(rgb_img,line,(10,40), font, 0.7,(255,0,0),2,cv2.LINE_AA)
                 cv2.putText(rgb_img,f'Df{diff:.1f}',(10,60),font, 0.7,(255,0,0) if diff<150 else (0,0,255),
                         2,cv2.LINE_AA)
+                cv2.putText(rgb_img,f'{fnum:06d}',(10,90), font, 0.7,(255,0,0),2,cv2.LINE_AA)
                 mrg=50
                 vrow=50
                 nrow=100
