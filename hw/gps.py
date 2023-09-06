@@ -1,12 +1,12 @@
 from pyubx2 import UBXReader, ubxhelpers, UBXStreamError
 from serial import Serial
-from time import gmtime, strftime, time
+import time
 from datetime import datetime, timezone
 import pickle
 import sys
 sys.path.append('..')
 sys.path.append('../utils')
-import zmq_wrapper, zmq_topics
+import zmq_wrapper, zmq_topics, detect_usb
 
 def is_parcel_full(parcel):
     """Return true if all the values for the keys are not empty"""
@@ -76,7 +76,14 @@ def populate_parcel_with_ubx_msg(parcel, ubx_msg):
         parcel['gps-weeknum'] = ubx_msg.week
 
 
-def gps_listener(ubr_obj):
+def reset_serial(ser):
+    print("Resetting Serial device...")
+    ser.setDTR(False)
+    time.sleep(0.5)
+    ser.setDTR(True)
+    time.sleep(0.5)
+
+def gps_listener(ubr_obj, ser):
     """With ubr_obj as the UBX reader object, loop and listen to the incoming messages,
     sending pickled dictionaries to the ROV server"""
     pub_gps = zmq_wrapper.publisher(zmq_topics.topic_gnss_port)
@@ -88,13 +95,18 @@ def gps_listener(ubr_obj):
                    'lon': '',
                    'hAcc': '',
                    'ts': ''}
-
+    #print("entering loop")
     while True:
         try:
+            #print("about to read")
             (raw_bytes, msg) = ubr_obj.read()
+            if msg is None:
+                print("None msg")
+                print(dir(ubr_obj))
+                continue
             # print(msg)
             # Record single board computer time
-            parcel_dict['ts'] = time()
+            parcel_dict['ts'] = time.time()
             # Write all incoming raw bytes format of UBX messages to .ubx file
             # write_to_raw_file(raw_bytes)
             # Populate parcel with general information, pickle and send
@@ -111,13 +123,16 @@ def gps_listener(ubr_obj):
         # Ignore unrecognised messages
         except (AttributeError, UBXStreamError) as error:
             print(error)
+            #reset_serial(ser)
             pass
 
 
 if __name__ == "__main__":
     # Serial connection using the USB to UART bridge
-    stream = Serial("/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0", 38400,
+    stream = Serial(detect_usb.devmap['GPS_USB'], 38400,
                     timeout=5)
+    # stream = Serial("/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0", 38400,
+    #                 timeout=5)
     # Serial connection using direct USB connection
     # stream = Serial("/dev/serial/by-id/usb-u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver-if00", 9600, timeout=5)
 
@@ -130,4 +145,4 @@ if __name__ == "__main__":
     # print_x_messages_id(ubr, 5)
 
     # Run GPS listener
-    gps_listener(ubr)
+    gps_listener(ubr, stream)
