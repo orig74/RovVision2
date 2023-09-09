@@ -79,6 +79,7 @@ def rope_detect_depth(depth_img,scale_to_mm,water_scale,start_row=150,nrows=100,
     scaled_d = sliceimg*scale_to_mm*water_scale
     scaled_d[scaled_d<1]=10000 #10 meters
     imt=scaled_d[validation_rows:-validation_rows].sum(axis=0).flatten()/nrows
+    #imt=np.median(scaled_d[validation_rows:-validation_rows],axis=0)#.flatten()/nrows
     #prioritizing center
     r=600
     imtp=imt+np.abs(np.linspace(-r,r,len(imt)))
