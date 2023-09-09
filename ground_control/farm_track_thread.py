@@ -13,7 +13,7 @@ mission_vars_default=[
     ('vertical_step',0.1),
     ('slide_step',0.1),
     ('max_iters',3),
-    ('max_alt',3),
+    ('max_alt',1),
     ]
 
 tool_tips={
