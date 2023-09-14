@@ -350,6 +350,7 @@ class FrameProducer(threading.Thread):
         self.cam_id = cam.get_id()
         self.frame_queue = frame_queue
         self.killswitch = threading.Event()
+        self.init_timestamp_flag = True
 
     def try_put_frame(self, frame: Optional[Frame], time_stamp):
         try:
@@ -358,10 +359,18 @@ class FrameProducer(threading.Thread):
         except queue.Full:
             pass
 
+    def init_timestamp(self, cam_timestamp):
+        self.timestamp_reference = time.time()
+        self.timestamp_mapping = self.timestamp_reference - cam_timestamp - FRAME_TRANSFER_TIME
+        self.init_timestamp_flag = False
+
     def __call__(self, cam: Camera, frame: Frame):
         try:
             if frame.get_status() == FrameStatus.Complete:
-                ts = time.time()
+                cam_tickstamp = frame.get_timestamp() / 1.008e9
+                if self.init_timestamp_flag:
+                    self.init_timestamp(cam_tickstamp)
+                ts = self.timestamp_mapping + cam_tickstamp  # time.time()
                 frame_cpy = copy.deepcopy(frame)
                 cv_frame_bay = frame_cpy.as_numpy_ndarray()
                 #cv_frame = cv2.cvtColor(cv_frame, cv2.COLOR_BAYER_RG2RGB)
