@@ -36,14 +36,14 @@ MASTER_CAM_ID = CAM_IDS[0]
 NUM_CAMS = len(CAM_IDS)
 
 # Min exposure time: 32us
-CAM_EXPOSURE_US = 1500 #10000
+CAM_EXPOSURE_US = 300 #10000
 CAM_EXPOSURE_MAX = 2000 #2000    # us
 CAM_EXPOSURE_MIN = 200  #32
 
-CAM_GAIN = 15 #15
+CAM_GAIN = 15  # 15
 
-CAM_STROBE_DELAY = 200
-CAM_STROBE_DURATION_MAX = 500*2
+CAM_STROBE_DELAY = 50
+CAM_STROBE_DURATION = 200
 
 IMG_SIZE_BYTES = 5065984
 
@@ -93,10 +93,11 @@ class AlviumMultiCam(threading.Thread):
                 self.producers[cam.get_id()].start()
     
     def setStrobeLevel(self, val):
-        strobe_duration = int(val * CAM_STROBE_DURATION_MAX / 5)
+        strobe_duration = int(val * CAM_STROBE_DURATION / 5)
         print("Setting strobe duration to {}".format(round(strobe_duration, 2)))
         for prod in self.producers.values():
-            prod.cam.get_feature_by_name('StrobeDuration').set(strobe_duration)
+            pass
+            # prod.cam.get_feature_by_name('StrobeDuration').set(strobe_duration)
 
     def run(self):
         system_state = 'INIT'
@@ -413,7 +414,7 @@ class FrameProducer(threading.Thread):
         self.cam.get_feature_by_name('StrobeSource').set('FrameTrigger')
         self.cam.get_feature_by_name('StrobeDurationMode').set('Controlled')
         self.cam.get_feature_by_name('StrobeDelay').set(CAM_STROBE_DELAY)
-        self.cam.get_feature_by_name('StrobeDuration').set(0) # Set to 0 to turn strobes off
+        self.cam.get_feature_by_name('StrobeDuration').set(CAM_STROBE_DURATION)  # Set to 0 to turn strobes off
 
         print("Alvium Producer Cam ID: " + self.cam_id)
 

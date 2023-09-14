@@ -84,9 +84,9 @@ if __name__ == "__main__":
     sens=pipeline.get_active_profile().get_device().query_sensors()[0]
     sens.set_option(rs.option.enable_auto_exposure, False)
     time.sleep(1.0)
-    sens.set_option(rs.option.exposure, 2000)  # int(1e6//FPS) Set exposure to inter-frame time
+    sens.set_option(rs.option.exposure, 300)  # int(1e6//FPS) Set exposure to inter-frame time
     time.sleep(1.0)
-    sens.set_option(rs.option.gain, 15)
+    sens.set_option(rs.option.gain, 8)
     time.sleep(1.0)
     
     depth_scale = depth_sensor.get_depth_scale()
@@ -122,7 +122,7 @@ if __name__ == "__main__":
                     if 'exposure' in data:
                         print('setting setting d405 exposure',data)
                         exp=max(500, min(data['exposure']*1000, 10e3)) 
-                        sens.set_option(rs.option.exposure, exp)  # Set exposure to inter-frame time
+                        # sens.set_option(rs.option.exposure, exp)  # Set exposure to inter-frame time
  
         frames = pipeline.wait_for_frames()
         color_frame = frames.get_color_frame()
