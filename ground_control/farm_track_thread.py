@@ -14,6 +14,7 @@ mission_vars_default=[
     ('slide_step',0.1),
     ('max_iters',3),
     ('max_alt',1),
+    ('minimal_depth_end_detect',5.0),
     ]
 
 tool_tips={
@@ -141,7 +142,9 @@ class FarmTrack(object):
             #self.printer(f'M: d_ach: {self.__target_depth_achived()} done_st: {self.done_step}')
             too_close_to_seabed = False
             is_go_down= self.states[self.state_ind]=='go_down'
-            end_rope_detected = dh.get_rope_down_end_detected() and is_go_down
+            end_rope_detected = dh.get_rope_down_end_detected() and is_go_down \
+                and dh.get_depth() > self.minimal_depth_end_detect
+
             if dh.get_alt() is not None and dh.get_alt()<max_alt and is_go_down:
                 too_close_to_seabed=True
                 self.rov_comander.depth_command(dh.get_depth(),relative=False)
