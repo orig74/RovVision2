@@ -46,7 +46,7 @@ if rov_type==4:
     down_validiation_diff_tresh_rope_detect_mm=800
     dvl_max_valid_speed=0.25 #m/s
     
-cam_fps=8
+cam_fps=6
 send_modulo=1
 
 #gstreamer

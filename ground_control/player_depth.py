@@ -4,6 +4,17 @@
 # sim:
 # cd into data dir and then
 # > scp -P 2222 oga13@localhost:projects/bluerov/data/$(basename $( pwd ))/data.pkl .
+#test data for rope end:
+#python player_depth.py -s 0 ../../data2/230719-103213 # false at frame ~11447
+#python player_depth.py -s 0 ../../data2/230719-104817 # end of the rope ~2673
+#230719-105708 #false 1533 #end 1777 #close to false 4512
+#230720-093250 #false 8444 maybe tether
+#230720-100957 #false 12719 ~300mm
+#230720-104714 #false 7536
+#230720-110859 #rope end 8191 before climb
+#230720-114948 #false end ~ 8986
+#230720-121540 # false 13841 24211
+#230720-134041 # end rope event 678 #false 11889 12491 #15230 end not detected!
 
 import sys,os,time,traceback
 from datetime import datetime
@@ -38,12 +49,12 @@ def torgb(im):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-s","--start_frame",help="start frame",default=0,type=int)
+parser.add_argument("-v","--vision_cameras",help="show vision cameras",default=False,action='store_true')
 parser.add_argument("path",help="dir path")
 args = parser.parse_args()
 
 cv2.namedWindow('depth',cv2.WINDOW_NORMAL)
 cv2.namedWindow('rgb',cv2.WINDOW_NORMAL)
-df=pd.read_csv(args.path+'/d405_frame_data.txt',delimiter=',',header=None)
 
 def read_pkl(pkl_file):
     fd = open(pkl_file,'rb')
@@ -55,7 +66,10 @@ def read_pkl(pkl_file):
             d=pickle.load(fd)
             if d[0]==zmq_topics.topic_depth:
                 telem['depth']=d[2]['depth']
-            if d[0] in [zmq_topics.topic_main_cam_ts , zmq_topics.topic_stereo_camera_ts]:
+            if d[0] in [
+                    zmq_topics.topic_main_cam_ts , 
+                    zmq_topics.topic_stereo_camera_ts,
+                    b'printer_sink']:
                 ret.append(d)
                 telem_data.append(telem.copy())
         except EOFError:
@@ -69,14 +83,33 @@ except FileNotFoundError:
     telem_data = None
     print('no pickle data file')
 
+print('done reading pickle')
 #import ipdb;ipdb.set_trace()
-depth_scale=df[2][0]
+try:
+    df=pd.read_csv(args.path+'/d405_frame_data.txt',delimiter=',',header=None)
+    depth_scale=df[2][0]
+except:
+    print('failed loading /d405_frame_data.txt')
+    depth_scale=1e-4
 scale_to_mm=depth_scale*1000
 #fnums=[int(i) for i in df[0] if not np.isnan(i)]
 fnums=[int(l) for l in os.popen(f'cd {args.path} && ls -1 *.jpg |cut -d"." -f1').readlines() if l.strip()]
 fnums.sort()
-i=args.start_frame
+if pkl_data is None:
+    i=args.start_frame
+else:
+    fnum=-1
+    i=0
+    while fnum<args.start_frame:
+        if pkl_data[i][0]==zmq_topics.topic_main_cam_ts:
+            fnum=pkl_data[i][2][0]
+        if i>=len(pkl_data):
+            print('error cant find frame (or close to) frame',args.start_frame)
+            sys.exit(0)
+        i+=1
 
+
+print('done reading fnames')
 #def rope_detect_depth(depth_img,start_row=150,nrows=100):
 #    #np.save('/tmp/imgd.npy',depth_img)
 #    marg=100
@@ -98,7 +131,7 @@ of=OF()
 def click(event, x, y, flags, param):
     global delta_click,last_click_data,tcv
     if event == cv2.EVENT_LBUTTONDOWN:
-        d=depth_img[y,x]*config.water_scale
+        d=depth_img[y,x]*config.water_scale*scale_to_mm
         print('---click',x,y,depth_img[y,x])
         click_data=(np.linalg.inv(np.array(config.cam_main_int)) @ np.array([[x*d,y*d,d]]).T).flatten()
         xw,yw,s=click_data
@@ -150,13 +183,16 @@ def get_mask_stats(mask):
     n_componnets=len([s for s in stats if 30<s[-1]<100000])
     return (numLabels,stats, centroids,n_componnets)
     
+is_depth_image=False
 while 1:
     if pkl_data is not None:
-        i=np.clip(i,0,len(pkl_data)-1) 
+        i=np.clip(i,0,len(pkl_data)-2) 
+        if pkl_data[i][0].startswith(b'printer'):
+            print('printer:',pkl_data[i][2]['txt'])
         if pkl_data[i][0]==zmq_topics.topic_main_cam_ts:
             fnum=pkl_data[i][2][0]
             is_depth_image=True
-        else:
+        elif args.vision_cameras:
             main_ind=pkl_data[i][2][0]
             fmt=args.path+f'/{main_ind:06d}'+'*.pgm'
             #print('====',fmt)
@@ -200,27 +236,41 @@ while 1:
         if not ('rgb' in wins and wins['rgb'].get('file_path')==fname) or wins['rgb'].get('redraw'):
             rgb_img=None
             if os.path.isfile(fname):
-                rgb_img=cv2.imread(args.path+f'/{fnum:06d}.jpg')
-                gray_img=cv2.cvtColor(rgb_img, cv2.COLOR_BGR2GRAY)
-                _ret=of.track(gray_img)
-                #if tcv is not None:
-                #    print('hhh',tcv.update(gray_img))
-                if _ret is not None:
-                    x,y=map(int,_ret)
-                    cv2.circle(rgb_img, (x,y), 3, (0, 0, 255), -1)
+                try:
+                    rgb_img=cv2.imread(args.path+f'/{fnum:06d}.jpg')
+                    gray_img=cv2.cvtColor(rgb_img, cv2.COLOR_BGR2GRAY)
+                    _ret=of.track(gray_img)
+                    #if tcv is not None:
+                    #    print('hhh',tcv.update(gray_img))
+                    if _ret is not None:
+                        x,y=map(int,_ret)
+                        cv2.circle(rgb_img, (x,y), 3, (0, 0, 255), -1)
+                except Exception as E:
+                    print('Error reading image',E)
+                    rgb_img=None
             #print('===',args.path+f'/{fnum:06d}.jpg')
             posx=0
             if rgb_img is not None:
                 shape=rgb_img.shape[:2]
-                depth_img=np.frombuffer(open(args.path+f'/d{fnum:06d}.bin','rb').read(),'uint16').astype('float').reshape(shape)*scale_to_mm*config.water_scale
-                depth_img[depth_img<1]=10000 #10 meters
+                depth_img=np.frombuffer(open(args.path+f'/d{fnum:06d}.bin','rb').read(),'uint16').astype('float').reshape(shape)#*scale_to_mm*config.water_scale
+                #depth_img[depth_img<1]=10000 #10 meters
 
                 ret=rope_detect_depth(depth_img,scale_to_mm,config.water_scale)
                 d,posx,up_validation,down_validation,_=ret
                 #cv2.imshow('depth',torgb(depth_img))
                 wins['depth']={'img':torgb(depth_img),'redraw':True}
-                line=f'range {d:.1f},{up_validation:.1f},{down_validation:.1f}' 
+                diff=down_validation-up_validation
+                line=f'range {d:.1f},U{up_validation:.1f},D{down_validation:.1f}'
                 cv2.putText(rgb_img,line,(10,40), font, 0.7,(255,0,0),2,cv2.LINE_AA)
+                cv2.putText(rgb_img,f'Df{diff:.1f}',(10,60),font, 0.7,(255,0,0) if diff<150 else (0,0,255),
+                        2,cv2.LINE_AA)
+                cv2.putText(rgb_img,f'{fnum:06d}',(10,90), font, 0.7,(255,0,0),2,cv2.LINE_AA)
+                mrg=50
+                vrow=50
+                nrow=100
+                srow=150
+                for rrr in [srow-vrow,srow,srow+nrow,srow+nrow+vrow]:
+                    cv2.line(rgb_img,(posx-mrg,rrr),(posx+mrg,rrr),(255,255,255),thickness=1)
                 #print('maxmin',depth_img.max(),depth_img.min(),ret[0],ret[1])
             else:
                 #rgb_img=np.zeros(shape,'uint8')
@@ -253,9 +303,9 @@ while 1:
                     img[:,:,1]=img[:,:,1]*wins[wname]['mask']
                 cv2.imshow(wname,img)
                 wins[wname]['redraw']=False
-            print('current index',i)
+            #print('current index',i)
 
-    k=cv2.waitKey(10)%0xff
+    k=cv2.waitKey(100)%0xff
     #k=cv2.pollKey()%0xff
     if k in [ord(','),81,52]:
         i=i-3

@@ -33,17 +33,17 @@ args = parser.parse_args()
 #CAM_IDS = ['DEV_000F315DB084', 'DEV_000F315DAB68', 'DEV_000F315DAB37'] # 
 CAM_IDS = ['DEV_000F315DAB68', 'DEV_000F315DB084']#, 'DEV_000F315DAB37'] # 
 MASTER_CAM_ID = CAM_IDS[0]
-NUM_CAMS = len(CAM_IDS)
+NUM_CAMS = len(CAM_IDS) + 1
 
 # Min exposure time: 32us
-CAM_EXPOSURE_US = 1500 #10000
+CAM_EXPOSURE_US = 400 #10000
 CAM_EXPOSURE_MAX = 2000 #2000    # us
 CAM_EXPOSURE_MIN = 200  #32
 
-CAM_GAIN = 15 #15
+CAM_GAIN = 15  # 15
 
-CAM_STROBE_DELAY = 200
-CAM_STROBE_DURATION_MAX = 500*2
+CAM_STROBE_DELAY = 50
+CAM_STROBE_DURATION = 300
 
 IMG_SIZE_BYTES = 5065984
 
@@ -93,10 +93,11 @@ class AlviumMultiCam(threading.Thread):
                 self.producers[cam.get_id()].start()
     
     def setStrobeLevel(self, val):
-        strobe_duration = int(val * CAM_STROBE_DURATION_MAX / 5)
+        strobe_duration = int(val * CAM_STROBE_DURATION / 5)
         print("Setting strobe duration to {}".format(round(strobe_duration, 2)))
         for prod in self.producers.values():
-            prod.cam.get_feature_by_name('StrobeDuration').set(strobe_duration)
+            pass
+            # prod.cam.get_feature_by_name('StrobeDuration').set(strobe_duration)
 
     def run(self):
         system_state = 'INIT'
@@ -349,6 +350,7 @@ class FrameProducer(threading.Thread):
         self.cam_id = cam.get_id()
         self.frame_queue = frame_queue
         self.killswitch = threading.Event()
+        self.init_timestamp_flag = True
 
     def try_put_frame(self, frame: Optional[Frame], time_stamp):
         try:
@@ -357,9 +359,18 @@ class FrameProducer(threading.Thread):
         except queue.Full:
             pass
 
+    def init_timestamp(self, cam_timestamp):
+        self.timestamp_reference = time.time()
+        self.timestamp_mapping = self.timestamp_reference - cam_timestamp - FRAME_TRANSFER_TIME
+        self.init_timestamp_flag = False
+
     def __call__(self, cam: Camera, frame: Frame):
         try:
             if frame.get_status() == FrameStatus.Complete:
+                # cam_tickstamp = frame.get_timestamp() / 1.008e9
+                # if self.init_timestamp_flag:
+                #     self.init_timestamp(cam_tickstamp)
+                # ts = self.timestamp_mapping + cam_tickstamp
                 ts = time.time()
                 frame_cpy = copy.deepcopy(frame)
                 cv_frame_bay = frame_cpy.as_numpy_ndarray()
@@ -413,7 +424,7 @@ class FrameProducer(threading.Thread):
         self.cam.get_feature_by_name('StrobeSource').set('FrameTrigger')
         self.cam.get_feature_by_name('StrobeDurationMode').set('Controlled')
         self.cam.get_feature_by_name('StrobeDelay').set(CAM_STROBE_DELAY)
-        self.cam.get_feature_by_name('StrobeDuration').set(0) # Set to 0 to turn strobes off
+        self.cam.get_feature_by_name('StrobeDuration').set(CAM_STROBE_DURATION)  # Set to 0 to turn strobes off
 
         print("Alvium Producer Cam ID: " + self.cam_id)
 

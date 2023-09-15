@@ -79,20 +79,44 @@ def rope_detect_depth(depth_img,scale_to_mm,water_scale,start_row=150,nrows=100,
     scaled_d = sliceimg*scale_to_mm*water_scale
     scaled_d[scaled_d<1]=10000 #10 meters
     imt=scaled_d[validation_rows:-validation_rows].sum(axis=0).flatten()/nrows
+    #imt=np.median(scaled_d[validation_rows:-validation_rows],axis=0)#.flatten()/nrows
     #prioritizing center
     r=600
     imtp=imt+np.abs(np.linspace(-r,r,len(imt)))
     #blur line
-    imtp=np.convolve(imtp,np.ones(20)/20,mode='same')
+    flt=50
+    imtp=np.convolve(imtp,np.ones(flt)/flt,mode='same')
     col=np.argmin(imtp[marg:-marg])+marg
 
     #up_validation=scaled_d[:validation_rows,col].sum()/validation_rows
     #down_validation=scaled_d[-validation_rows:,col].sum()/validation_rows
     
     #width_check
-    wc=20
-    up_validation=scaled_d[:validation_rows,col-wc:col+wc].sum(axis=0)/validation_rows
-    down_validation=scaled_d[-validation_rows:,col-wc:col+wc].sum(axis=0)/validation_rows
+    wc=50
+    #up_validation=scaled_d[:validation_rows,col-wc:col+wc].mean(axis=0)
+    #down_validation=scaled_d[-validation_rows:,col-wc:col+wc].mean(axis=0)
+    up_validation=np.median(scaled_d[:validation_rows,col-wc:col+wc],axis=0)
+    down_validation=np.median(scaled_d[-validation_rows:,col-wc:col+wc],axis=0)
+
+
+    if 0:
+        print('---',imt[col],col,up_validation.min(),down_validation.min())
+        from matplotlib import pyplot as plt
+        import sys
+        plt.figure('up')
+        plt.imshow(scaled_d[:validation_rows,col-wc:col+wc])
+        plt.figure('up mean')
+        plt.plot(scaled_d[:validation_rows,col-wc:col+wc].mean(axis=0))
+        plt.figure('down')
+        plt.imshow(scaled_d[-validation_rows:,col-wc:col+wc])
+        plt.figure('down mean')
+        plt.plot(scaled_d[-validation_rows:,col-wc:col+wc].mean(axis=0))
+        plt.figure('med range')
+        plt.plot(imtp)
+        plt.plot(imt)
+        plt.legend(['filtered','raw'])
+        plt.show()
+        sys.exit(0)
 
     return imt[col],col,up_validation.min(),down_validation.min(),imtp
 
