@@ -36,14 +36,14 @@ MASTER_CAM_ID = CAM_IDS[0]
 NUM_CAMS = len(CAM_IDS) + 1
 
 # Min exposure time: 32us
-CAM_EXPOSURE_US = 300 #10000
+CAM_EXPOSURE_US = 400 #10000
 CAM_EXPOSURE_MAX = 2000 #2000    # us
 CAM_EXPOSURE_MIN = 200  #32
 
 CAM_GAIN = 15  # 15
 
 CAM_STROBE_DELAY = 50
-CAM_STROBE_DURATION = 200
+CAM_STROBE_DURATION = 300
 
 IMG_SIZE_BYTES = 5065984
 
@@ -367,10 +367,11 @@ class FrameProducer(threading.Thread):
     def __call__(self, cam: Camera, frame: Frame):
         try:
             if frame.get_status() == FrameStatus.Complete:
-                cam_tickstamp = frame.get_timestamp() / 1.008e9
-                if self.init_timestamp_flag:
-                    self.init_timestamp(cam_tickstamp)
-                ts = self.timestamp_mapping + cam_tickstamp  # time.time()
+                # cam_tickstamp = frame.get_timestamp() / 1.008e9
+                # if self.init_timestamp_flag:
+                #     self.init_timestamp(cam_tickstamp)
+                # ts = self.timestamp_mapping + cam_tickstamp
+                ts = time.time()
                 frame_cpy = copy.deepcopy(frame)
                 cv_frame_bay = frame_cpy.as_numpy_ndarray()
                 #cv_frame = cv2.cvtColor(cv_frame, cv2.COLOR_BAYER_RG2RGB)
