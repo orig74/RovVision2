@@ -89,7 +89,7 @@ void setup() {
   gripper.attach(GRIPPER_PIN, 1100, 1900);
   gripper.writeMicroseconds(1900);
   gripper_rot.attach(GRIPPER_ROT_PIN);
-  gripper_rot.writeMicroseconds(1500);
+  gripper_rot.writeMicroseconds(1502);
   for (int t_ind = 0; t_ind < 8; t_ind++) {
     thrusters[t_ind].attach(thruster_pins[t_ind]);
     thrusters[t_ind].writeMicroseconds(PWM_MIDPOINT);
@@ -155,7 +155,7 @@ void loop() {
       else
           gripper.writeMicroseconds(1900);
       byte servo_8b = msg_buff[17];
-      int servo_us = 1000 + (int) ((float) servo_8b * (1000 / 255));
+      unsigned int servo_us = 1004 + (unsigned int) (1000 * (float) servo_8b / 255);
       gripper_rot.writeMicroseconds(servo_us);
 
       // Clear input buffer
