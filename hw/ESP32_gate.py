@@ -66,7 +66,7 @@ def CalcChksm(bytes):
     return chksm
 
 async def send_serial_command_50hz():
-    global serial_rx_bytes, gripper_servo, last_serial_rx_ts
+    global serial_rx_bytes, gripper_servo, last_serial_rx_ts, gripper_val
     while keep_running:
         await asyncio.sleep(1/100.0)
         
@@ -80,6 +80,9 @@ async def send_serial_command_50hz():
         #m = 8*[0.0]
 
         tx_ints = [scale_val(thr, -1.0, 1.0, 16) for thr in m]
+
+        gripper_servo = np.clip(gripper_servo, -0.3, 0.3)
+        
         tx_ints.append(scale_val(gripper_val, 0, 1, 8))
         tx_ints.append(scale_val(gripper_servo, -1.0, 1.0, 8))
         tx_data = struct.pack('>HHHHHHHHBB', *tx_ints)
@@ -150,6 +153,8 @@ async def recv_and_process():
             if topic == zmq_topics.topic_gripper_cmd:
                 if 'openning' in data:
                     gripper_val=min(max(data['openning'], 0), 1)
+                if 'rot_vel' in data:
+                    gripper_servo=min(max(data['rot_vel'], -0.3), 0.3)
             #if topic == zmq_topics.topic_gripper_servo:
             #    gripper_servo=data
         await asyncio.sleep(0.001)
