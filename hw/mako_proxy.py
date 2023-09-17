@@ -31,16 +31,14 @@ parser.add_argument("--debug", help="Show frames with opencv", action='store_tru
 args = parser.parse_args()
 
 #CAM_IDS = ['DEV_000F315DB084', 'DEV_000F315DAB68', 'DEV_000F315DAB37'] # 
-CAM_IDS = ['DEV_000F315DAB68', 'DEV_000F315DB084']#, 'DEV_000F315DAB37'] # 
+CAM_IDS = ['DEV_000F315DAB68', 'DEV_000F315DB084']
 MASTER_CAM_ID = CAM_IDS[0]
 NUM_CAMS = len(CAM_IDS) + 1
 
-# Min exposure time: 32us
-CAM_EXPOSURE_US = 400 #10000
-CAM_EXPOSURE_MAX = 2000 #2000    # us
-CAM_EXPOSURE_MIN = 200  #32
-
-CAM_GAIN = 15  # 15
+# Min exposure time: 32-30,000us
+CAM_EXPOSURE_US = 400
+# Camera gain: 0-40
+CAM_GAIN = 15
 
 CAM_STROBE_DELAY = 50
 CAM_STROBE_DURATION = 300
@@ -395,23 +393,21 @@ class FrameProducer(threading.Thread):
         self.cam.get_feature_by_name('BinningHorizontal').set(BIN_HORIZONTAL)
         self.cam.get_feature_by_name('DecimationHorizontal').set(DEC_HORIZONTAL)
         self.cam.get_feature_by_name('DecimationVertical').set(DEC_VERTICAL)
-        
-        if CAM_EXPOSURE_US:
-            self.cam.get_feature_by_name('ExposureAuto').set('Off')
-            self.cam.get_feature_by_name('ExposureTimeAbs').set(CAM_EXPOSURE_US)
-        
-        else:
-            self.cam.get_feature_by_name('ExposureAuto').set('Continuous')
-            self.cam.get_feature_by_name('ExposureAutoMax').set(CAM_EXPOSURE_MAX)
-            self.cam.get_feature_by_name('ExposureAutoMin').set(CAM_EXPOSURE_MIN)
 
-        self.cam.get_feature_by_name('GainAuto').set('Off') # Continuous
+        self.cam.get_feature_by_name('ExposureAuto').set('Off')
+        self.cam.get_feature_by_name('ExposureTimeAbs').set(CAM_EXPOSURE_US)
+
+        # self.cam.get_feature_by_name('ExposureAuto').set('Continuous')
+        # self.cam.get_feature_by_name('ExposureAutoMax').set(CAM_EXPOSURE_MAX)
+        # self.cam.get_feature_by_name('ExposureAutoMin').set(CAM_EXPOSURE_MIN)
+
+        self.cam.get_feature_by_name('GainAuto').set('Off')  # Continuous
         self.cam.get_feature_by_name('Gain').set(CAM_GAIN)
+
         self.cam.get_feature_by_name('BalanceWhiteAuto').set('Continuous')
 
         self.cam.set_pixel_format(PixelFormat.BayerRG8)  # PixelFormat.Bgr8
         self.cam.get_feature_by_name('AcquisitionMode').set('Continuous')
-
         self.cam.get_feature_by_name('TriggerSelector').set('FrameStart')
         self.cam.get_feature_by_name('TriggerSource').set('Action0')
         self.cam.get_feature_by_name('TriggerMode').set('On')
