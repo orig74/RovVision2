@@ -51,7 +51,7 @@ def printer(text,color=None):
 def main():
     rovHandler = rovDataHandler(None,printer=printer,args=args)
     rovCommander = rovCommandHandler()
-    track_thread = TrackThread(rov_comander=rovCommander,rov_data_handler=rovHandler,printer=printer)
+    track_thread = TrackThread(rov_comander=rovCommander,rov_data_handler=rovHandler,printer=rovHandler.printer)
     sg_utils.set_rovvision_config_path()
     dive_form=DiveForm(sg_utils.dive_form_path)
     dive_form.open()

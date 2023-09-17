@@ -235,7 +235,7 @@ class rovDataHandler(object):
             }
         for i in [0,1,2]:
             self.plot_buffers[zmq_topics.topic_pos_hold_pid_fmt%i]=CycArr()
-        self.printer=printer
+        self._printer=printer
         self.main_image=None
         self.main_image_depth=None
         self.data_tosave_from_gui=[]
@@ -439,6 +439,12 @@ class rovDataHandler(object):
             pickle.dump([b'gui_event',time.time(),data],self.data_file_fd,-1)
 
 
+    def printer(self,text,color=None):
+        self._printer(text,color)
+        if self.data_file_fd is not None:
+            pickle.dump([b'printer_gui',time.time(),(text,color)],self.data_file_fd,-1)
+
+
     def process_telem(self):
         message_dict={}
         while True:
@@ -449,7 +455,7 @@ class rovDataHandler(object):
                 if sock==self.printer_sink:
                     data=sock.recv_pyobj()
                     print('got...',data)
-                    self.printer(data['txt'],data['c'])
+                    self._printer(data['txt'],data['c'])
                     if self.data_file_fd is not None:
                         pickle.dump([b'printer_sink',time.time(),data],self.data_file_fd,-1)
 
