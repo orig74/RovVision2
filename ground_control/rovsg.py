@@ -329,8 +329,9 @@ def main():
             for kkk in ['Gvr','Gvl']:
                 if kkk in window.AllKeysDict:
                     if window[kkk].is_pressed(event):
+                        print('llll')
                         rovCommander.set_gripper({'rot_vel':-1 if kkk=='Gvl' else 1})
-                        printer(f'gripper rot r')
+                        printer(f'gripper rot')
                     if window[kkk].is_released(event):
                         rovCommander.set_gripper({'rot_vel':0.0})
                         printer(f'gripper stop rot')
