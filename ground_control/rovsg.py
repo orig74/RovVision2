@@ -230,15 +230,17 @@ def main():
 
             if event in ['P+','P-','I+','I-','D-','D+']:
                 plot_type=values['-PLOT-TYPE-']
-                mul=float(values['PID_Mul'].strip())/100+1.0
-                if event[1]=='-':
-                    mul=1/mul
-                sg.cprint('sending pid',c='black on white')
-                rovCommander.update_pid(plot_type,event[0],mul)
+                if plot_type!='NONE':
+                    mul=float(values['PID_Mul'].strip())/100+1.0
+                    if event[1]=='-':
+                        mul=1/mul
+                    sg.cprint('sending pid',c='black on white')
+                    rovCommander.update_pid(plot_type,event[0],mul)
             if event=='SAVE_PID':
                 plot_type=values['-PLOT-TYPE-']
-                sg.cprint('sending saving pid',c='black on white')
-                rovCommander.save_pid(plot_type)
+                if plot_type!='NONE':
+                    sg.cprint('sending saving pid',c='black on white')
+                    rovCommander.save_pid(plot_type)
 
             if event=='V_LOCK':
                 printer(f"got v_lock {values['V_LOCK']}")

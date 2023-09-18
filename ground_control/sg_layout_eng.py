@@ -109,7 +109,7 @@ def get_layout(track_thread=None):
             #[sg.Button('CF+'),sg.Button('CF-'),sg.Button('Lights+'),sg.Button('Lights-')],
             [sg.Multiline(key='MESSEGES',s=(23,5) if scale_screen else (55,8), autoscroll=True, reroute_stdout=False, write_only=True)],
            ]
-    plot_options=['DEPTH','X_HOLD','Y_HOLD','YAW','PITCH','ROLL']
+    plot_options=['NONE','DEPTH','X_HOLD','Y_HOLD','YAW','PITCH','ROLL']
     matplot_column1 = [
         [sg.Text('PType:'),sg.Combo(plot_options,key='-PLOT-TYPE-',default_value=plot_options[0]),
             sg.Button('P+'),sg.Button('P-'),
