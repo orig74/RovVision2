@@ -106,6 +106,7 @@ if __name__ == "__main__":
         #grey_r_frame = frames.get_infrared_frame(2)
 
         frame_cnt += 1
+        keep_frame_cnt = frame_cnt
 
         depth_frame_raw=np.array(depth_frame.get_data())
         depth_float_raw = depth_frame_raw.astype(np.float32)
