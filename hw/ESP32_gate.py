@@ -81,6 +81,7 @@ async def send_serial_command_50hz():
 
         tx_ints = [scale_val(thr, -1.0, 1.0, 16) for thr in m]
 
+        # 0.22 = 180 degrees
         gripper_servo = np.clip(gripper_servo, -0.3, 0.3)
         
         tx_ints.append(scale_val(gripper_val, 0, 1, 8))
