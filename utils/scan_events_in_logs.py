@@ -8,6 +8,7 @@ import argparse
 import pprint
 parser = argparse.ArgumentParser()
 parser.add_argument("-p","--date_pattern",default="*",help="date patttern to look default '*'")
+parser.add_argument("--gps",action="store_true",help="extract gps data option")
 parser.add_argument("path",help="dir path")
 args = parser.parse_args()
 dirs=os.popen(f'cd {args.path} && find . -type d -name "{args.date_pattern}"').readlines()
@@ -19,6 +20,7 @@ for ddd in dirs:
     if os.path.isfile(pkl_file):
         print(f'===== {ddd} =====')
         data=[]
+        gps_data=[]
         with open(pkl_file,'rb') as fd:
             while 1:
                 try:
@@ -30,11 +32,16 @@ for ddd in dirs:
                             print(f'{last_frame}:{d[2][0]} {d[2][1]["LOGtext"]}')
                     elif d[0]==b'topic_main_cam_ts':
                         last_frame=d[2][0]
-
+                    elif args.gps and d[0]==b'topic_gnss':
+                        if d[2]['hAcc'] < 3000.0:
+                            gps_data.append(d)
                     data.append(d)
                 except EOFError:
                     break
         print(f'recording time {int(data[-1][1]-data[0][1])//60} min')
+        if args.gps:
+            for gps_d in gps_data[:1]:
+                print("GPS: {}, {}".format(gps_d[2]['lon'], gps_d[2]['lat']))\
         #import ipdb;ipdb.set_trace()
         #ggg
         
