@@ -38,7 +38,7 @@ NUM_CAMS = len(CAM_IDS) + 1
 # Min exposure time: 32-30,000us
 CAM_EXPOSURE_US = 400
 # Camera gain: 0-40
-CAM_GAIN = 15
+CAM_GAIN = 17
 
 CAM_STROBE_DELAY = 50
 CAM_STROBE_DURATION = 300

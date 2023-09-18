@@ -155,7 +155,7 @@ async def recv_and_process():
                 if 'openning' in data:
                     gripper_val=min(max(data['openning'], 0), 1)
                 if 'rot_vel' in data:
-                    gripper_servo=min(max(data['rot_vel'], -0.3), 0.3)
+                    gripper_servo=min(max(-data['rot_vel'], -0.3), 0.3)
             #if topic == zmq_topics.topic_gripper_servo:
             #    gripper_servo=data
         await asyncio.sleep(0.001)
