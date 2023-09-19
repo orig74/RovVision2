@@ -21,6 +21,7 @@ for ddd in dirs:
     if os.path.isfile(pkl_file):
         print(f'===== {ddd} =====')
         data=[]
+        gps_data=[]
         with open(pkl_file,'rb') as fd:
             while 1:
                 try:
@@ -35,14 +36,17 @@ for ddd in dirs:
                         if d[2][0]=='LOG':
                             print(f'{last_frame}:{d[2][0]} {d[2][1]["LOGtext"]}')
                     elif d[0]==b'topic_main_cam_ts':
-                        print('=====',d)
-                        if d[2][0]>0: #incase we get -1
-                            last_frame=d[2][0]
-
+                        last_frame=d[2][0]
+                    elif args.gps and d[0]==b'topic_gnss':
+                        if d[2]['hAcc'] < 3000.0:
+                            gps_data.append(d)
                     data.append(d)
                 except EOFError:
                     break
         print(f'recording time {int(data[-1][1]-data[0][1])//60} min')
+        if args.gps:
+            for gps_d in gps_data[:1]:
+                print("GPS: {}, {}".format(gps_d[2]['lon'], gps_d[2]['lat']))\
         #import ipdb;ipdb.set_trace()
         #ggg
         
