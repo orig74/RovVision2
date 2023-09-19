@@ -8,6 +8,8 @@ import argparse
 import pprint
 parser = argparse.ArgumentParser()
 parser.add_argument("-p","--date_pattern",default="*",help="date patttern to look default '*'")
+parser.add_argument("--all_printer_gui",default=False,action='store_true')
+parser.add_argument("--all_printer_sink",default=False,action='store_true')
 parser.add_argument("path",help="dir path")
 args = parser.parse_args()
 dirs=os.popen(f'cd {args.path} && find . -type d -name "{args.date_pattern}"').readlines()
@@ -25,11 +27,17 @@ for ddd in dirs:
                     d=pickle.load(fd)
                     if d[0]==b'gui_data':
                         pprint.pprint(d[2])
+                    if args.all_printer_sink and d[0]==b'printer_sink':
+                        print(f'printer_sink:{last_frame} {d[2]["txt"]}')
+                    if args.all_printer_gui and d[0]==b'printer_gui':
+                        print(f'printer_gui:{last_frame} {d}')
                     elif d[0]==b'gui_event':
                         if d[2][0]=='LOG':
                             print(f'{last_frame}:{d[2][0]} {d[2][1]["LOGtext"]}')
                     elif d[0]==b'topic_main_cam_ts':
-                        last_frame=d[2][0]
+                        print('=====',d)
+                        if d[2][0]>0: #incase we get -1
+                            last_frame=d[2][0]
 
                     data.append(d)
                 except EOFError:
