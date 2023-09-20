@@ -160,7 +160,8 @@ def main():
                         rng=tr_main['range']
                         left=tr_main['left']
                         up=tr_main['up']
-                        cv2.putText(main_image, f'rng{rng-grng:04.1f} up{up-gup:04.1f} left{left-gleft:04.1f} mm', (50,23), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 1, cv2.LINE_AA)
+                        cv2.putText(main_image, f'rng{rng-grng:04.1f} up{up-gup:04.1f} left{left-gleft:04.1f} mm', (50,23), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3, cv2.LINE_AA)
+                        cv2.putText(main_image, f'rng{rng-grng:04.1f} up{up-gup:04.1f} left{left-gleft:04.1f} mm', (50,23), cv2.FONT_HERSHEY_SIMPLEX, 1, (5,5,5), 1, cv2.LINE_AA)
                 sg_utils.draw_image(window["-IMAGE-2-"],sg_utils.img_to_tk(main_image,1))#im_size[1]))
             main_image_depth = rovHandler.getMainImageDepth()
             if main_image_depth is not None and '-IMAGE-2D-' in window.AllKeysDict:
