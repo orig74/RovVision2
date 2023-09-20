@@ -102,7 +102,7 @@ def init_serial(dev=None):
     write(ser,vn_hsi_off)
     write(ser, vn_heading_mode)
     write(ser,vn_acc_disturbance_0)
-    write(ser,vn_mag_disturbance_1)
+    write(ser,vn_mag_disturbance_0)
     #set frequency
     write(ser,vn_resume)
     return ser

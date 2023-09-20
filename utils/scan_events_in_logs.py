@@ -8,6 +8,7 @@ import argparse
 import pprint
 parser = argparse.ArgumentParser()
 parser.add_argument("-p","--date_pattern",default="*",help="date patttern to look default '*'")
+parser.add_argument("--gps",action="store_true",help="extract gps data option")
 parser.add_argument("--all_printer_gui",default=False,action='store_true')
 parser.add_argument("--all_printer_sink",default=False,action='store_true')
 parser.add_argument("path",help="dir path")

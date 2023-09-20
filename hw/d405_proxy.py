@@ -24,8 +24,8 @@ RES_X = 848
 RES_Y = 480
 FPS = 15
 
-EXPOSURE = 300
-GAIN = 16
+EXPOSURE = 600
+GAIN = 20
 
 SAVE_RATIO = 3 * FPS // 15
 SEND_RATIO = 1 * FPS // 15
@@ -95,7 +95,9 @@ if __name__ == "__main__":
                 if data['cmd']=='d405param':
                     if 'exposure' in data:
                         print('setting setting d405 exposure',data)
-                        exp=max(500, min(data['exposure']*1000, 10e3)) 
+                        #exp=max(500, min(data['exposure']*1000, 10e3)) 
+                        #todo change it to gain
+                        sens.set_option(rs.option.gain, max(0,min(data['exposure'], 1000))) 
                         # sens.set_option(rs.option.exposure, exp)  # Set exposure to inter-frame time
  
         frames = pipeline.wait_for_frames()
