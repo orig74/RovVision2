@@ -35,6 +35,7 @@ import gst2
 import zmq_wrapper
 import zmq_topics
 import glob
+from tracker.mussel_detector import detect
 
 from tracker.of import OF
 tcv = None 
@@ -55,6 +56,7 @@ args = parser.parse_args()
 
 cv2.namedWindow('depth',cv2.WINDOW_NORMAL)
 cv2.namedWindow('rgb',cv2.WINDOW_NORMAL)
+cv2.namedWindow('detect',cv2.WINDOW_NORMAL)
 
 def read_pkl(pkl_file):
     fd = open(pkl_file,'rb')
@@ -239,6 +241,7 @@ while 1:
                 try:
                     rgb_img=cv2.imread(args.path+f'/{fnum:06d}.jpg')
                     gray_img=cv2.cvtColor(rgb_img, cv2.COLOR_BGR2GRAY)
+                    detected_img=detect(rgb_img,annotate=True)['img']
                     _ret=of.track(gray_img)
                     #if tcv is not None:
                     #    print('hhh',tcv.update(gray_img))
@@ -292,11 +295,13 @@ while 1:
                 cv2.putText(rgb_img,f'Depth{depth:.1f}',(10,20), font, 0.7,(255,0,0),2,cv2.LINE_AA)
             
             wins['rgb']={'img':rgb_img,'redraw':True,'file_path':fname}
+            wins['detect']={'img':detected_img, 'redraw':True}
             #cv2.imshow('rgb',rgb_img)
 
     for wname in wins:
         if wins[wname] and wins[wname].get('redraw'):
             img=wins[wname]['img']
+            #print('===',type(detected_img))
             if img is not None:
                 if 'mask' in wins[wname]:
                     img=img.copy()
