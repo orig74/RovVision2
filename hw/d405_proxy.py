@@ -20,41 +20,19 @@ socket_pub = utils.publisher(zmq_topics.topic_main_cam_port)
 socket_pub_ts=utils.publisher(zmq_topics.topic_main_cam_ts_port)
 
 
-#WRITE_DIR = '/local/D405/' #'/home/uav/data/D405/'
-#time.sleep(6)
-FRAME_MOD = 1
-
-EXPOSURE_US = 1000
-GAIN = 20
-
 RES_X = 848
 RES_Y = 480
+FPS = 15
 
-KEEP_STROBE_FRAMES = 0 #1 keep strob 2 dont keep strob 0 keepall
+EXPOSURE = 600
+GAIN = 20
 
-FPS = 15 if KEEP_STROBE_FRAMES==1 else 15#90
-MIN_GAP_BETWEEN_KEEPS = 1 *FPS//15 #dectates maxmial keep frequency
-MAX_GAP_BETWEEN_KEEPS = 10 * FPS//15 #dectates minimal keep frequency
-SAVE_RATIO = 3 *FPS//15
-SEND_RATIO = 1 *FPS//15
+SAVE_RATIO = 3 * FPS // 15
+SEND_RATIO = 1 * FPS // 15
 SAVE = False
 IMSHOW = False
-DEPTH_THRESH = 1.0
 fd_frame_data=None
 
-class BrightDetector(object):
-    def __init__(self,ws=FPS):
-        self.buf=[0] * ws
-
-    def add(self,val):
-        self.buf.pop(0)
-        self.buf.append(val)
-
-    def is_bright(self,val):
-        min_g=abs(val-np.min(self.buf))
-        max_g=abs(val-np.max(self.buf))
-        #return abs(val-np.min(self.buf))>abs(val-np.max(self.buf))
-        return min_g>max_g
 
 if __name__ == "__main__":
     record_state=None
@@ -77,19 +55,16 @@ if __name__ == "__main__":
     #config.enable_stream(rs.stream.infrared, 2, RES_X, RES_Y, rs.format.y8, FPS)
     #config.enable_all_streams()
 
-
     profile = pipeline.start(config)
-    intrinsics_depth=profile.get_stream(rs.stream.depth).as_video_stream_profile().get_intrinsics()
-    intrinsics_color=profile.get_stream(rs.stream.color).as_video_stream_profile().get_intrinsics()
+    intrinsics_depth = profile.get_stream(rs.stream.depth).as_video_stream_profile().get_intrinsics()
+    intrinsics_color = profile.get_stream(rs.stream.color).as_video_stream_profile().get_intrinsics()
 
     depth_sensor = profile.get_device().first_depth_sensor()
 
     sens=pipeline.get_active_profile().get_device().query_sensors()[0]
     sens.set_option(rs.option.enable_auto_exposure, False)
     time.sleep(0.5)
-    sens.set_option(rs.option.output_trigger_enabled, True)
-    time.sleep(0.5)
-    sens.set_option(rs.option.exposure, EXPOSURE_US)  # int(1e6//FPS) Set exposure to inter-frame time
+    sens.set_option(rs.option.exposure, EXPOSURE)
     time.sleep(0.5)
     sens.set_option(rs.option.gain, GAIN)
     time.sleep(0.5)
@@ -98,10 +73,7 @@ if __name__ == "__main__":
 
     frame_cnt = -1
     keep_frame_cnt = -1
-    avg_val = 0
-    #last_kept_ts = time.time()
     last_kept_num = -1
-    bd=BrightDetector()
 
     while keep_run:
         socks=zmq.select(subs_socks,[],[],0)[0]
@@ -114,33 +86,29 @@ if __name__ == "__main__":
                     #switch to recording
                     #os.mkdir('/media/data/'+new_record_state_str)
                     #calibrator.ParamsUpdateFlag = True
-                record_state=('/media/data/'+new_record_state_str+'/') if new_record_state_str else None
+                record_state = ('/media/data/'+new_record_state_str+'/') if new_record_state_str else None
                 if record_state and os.path.isdir(record_state):
-                    fd_frame_data=open(record_state+'d405_frame_data.txt','w')
+                    fd_frame_data = open(record_state+'d405_frame_data.txt', 'w')
                     open(record_state+'camera_main.txt','w').write(str(intrinsics_color))
                     open(record_state+'camera_depth.txt','w').write(str(intrinsics_depth))
             if topic==zmq_topics.topic_remote_cmd:
-                if data['cmd']=='strob_mode':
-                    print('setting strob mode',data)
-                    KEEP_STROBE_FRAMES=data['keep_mode'] 
                 if data['cmd']=='d405param':
                     if 'exposure' in data:
                         print('setting setting d405 exposure',data)
-                        exp=min(data['exposure']*1000,int(1e6//FPS)) 
-                        sens.set_option(rs.option.exposure, exp)  # Set exposure to inter-frame time
+                        #exp=max(500, min(data['exposure']*1000, 10e3)) 
+                        #todo change it to gain
+                        sens.set_option(rs.option.gain, max(0,min(data['exposure'], 1000))) 
+                        # sens.set_option(rs.option.exposure, exp)  # Set exposure to inter-frame time
  
         frames = pipeline.wait_for_frames()
         color_frame = frames.get_color_frame()
-
-        #print(1000*time.time() - color_frame.get_timestamp())
 
         depth_frame = frames.get_depth_frame()
         #grey_l_frame = frames.get_infrared_frame(1)
         #grey_r_frame = frames.get_infrared_frame(2)
 
         frame_cnt += 1
-        if frame_cnt % FRAME_MOD != 0:
-            continue
+        keep_frame_cnt = frame_cnt
 
         depth_frame_raw=np.array(depth_frame.get_data())
         depth_float_raw = depth_frame_raw.astype(np.float32)
@@ -152,32 +120,7 @@ if __name__ == "__main__":
 
         if frame_cnt%(2*FPS)==0 and frame_cnt>100:
             print(f'frame_cnt={frame_cnt},keep_frame_cnt={keep_frame_cnt},realfps={FPS*keep_frame_cnt/frame_cnt}')
-            print('::',list(map(int,bd.buf)),np.min(bd.buf),np.max(bd.buf))
-            print('::',[1 if bd.is_bright(i) else 0 for i in bd.buf])
-            #print(color_frame.get_frame_metadata(rs.frame_metadata_value.actual_exposure))
 
-        val = float(col_img.mean())
-        bd.add(val)
-        keep_gap = frame_cnt-last_kept_num
-        if KEEP_STROBE_FRAMES==1:
-            if keep_gap<MIN_GAP_BETWEEN_KEEPS:
-                continue
-            if not bd.is_bright(val) and keep_gap<MAX_GAP_BETWEEN_KEEPS:
-                continue
-        if KEEP_STROBE_FRAMES==2: #keep dark
-            if bd.is_bright(val) and keep_gap<MAX_GAP_BETWEEN_KEEPS:
-                continue
-        last_kept_num = frame_cnt
-        keep_frame_cnt += 1
-        #print('===',bd.is_bright(val))
-
-        #avg_val = avg_val * 0.8 + val * 0.2
-        #elapsed_time = time.time() - last_kept_ts
-        #if elapsed_time < 0.1:
-        #    continue
-        ##if KEEP_STROBE_FRAMES and val < 1.0 * avg_val and elapsed_time < 0.14:
-        #    continue
-        #last_kept_ts = time.time()
         if record_state and keep_frame_cnt%SAVE_RATIO==0:
             if os.path.isdir(record_state) and fd_frame_data is not None:
                 fd_frame_data.write(f'{keep_frame_cnt},{time_stamp},{depth_scale}\n')
@@ -204,10 +147,10 @@ if __name__ == "__main__":
         #print('===',col_img.shape,depth_img_m.shape)
 
         if IMSHOW:
-            depth_img_m[depth_img_m > DEPTH_THRESH] = 0
+            depth_img_m[depth_img_m > 2.0] = 0
             cv2.imshow("Depth cam image", depth_img_m)
             cv2.imshow("Colour", col_img)
-            cv2.imshow("Grey l", grey_l)
+            # cv2.imshow("Grey l", grey_l)
             #cv2.imshow("Grey r", grey_r)
             if cv2.waitKey(1) == ord('q'):
                 break

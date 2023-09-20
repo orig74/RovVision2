@@ -10,7 +10,7 @@
 
 #define STATUS_LED_PIN 2
 #define GRIPPER_PIN 16
-#define CAM_SERVO_PIN 17
+#define GRIPPER_ROT_PIN 17
 int thruster_pins[8] = {12, 13, 14, 27, 25, 26, 33, 32};
 int thruster_dirs[8] = {-1, -1, 1, 1, -1, 1, 1, -1};
 #define CURRENT_ADC_PIN 15
@@ -34,7 +34,7 @@ Servo thrusters[8];
 #define PWM_MIDPOINT 1488
 #define PWM_RANGE_H 500
 Servo gripper;
-Servo cam_servo;
+Servo gripper_rot;
 int servo_offset = 0;
 
 unsigned long prev_sensor_event_us;
@@ -88,12 +88,12 @@ void setup() {
 
   gripper.attach(GRIPPER_PIN, 1100, 1900);
   gripper.writeMicroseconds(1900);
-  cam_servo.attach(CAM_SERVO_PIN);
+  gripper_rot.attach(GRIPPER_ROT_PIN);
+  gripper_rot.writeMicroseconds(1418);
   for (int t_ind = 0; t_ind < 8; t_ind++) {
     thrusters[t_ind].attach(thruster_pins[t_ind]);
     thrusters[t_ind].writeMicroseconds(PWM_MIDPOINT);
   }
-  cam_servo.write(90);
   
   Serial.begin(SERIAL_BAUDRATE);
   Wire.begin();
@@ -154,10 +154,9 @@ void loop() {
           gripper.writeMicroseconds(1100);
       else
           gripper.writeMicroseconds(1900);
-      
-      // Camera Servo
       byte servo_8b = msg_buff[17];
-      cam_servo.write(90 + (int) (0.3 * ((float) servo_8b - 127)));
+      unsigned int servo_us = 1020 + (unsigned int) (800 * (float) servo_8b / 255);
+      gripper_rot.writeMicroseconds(servo_us);
 
       // Clear input buffer
       for (int i=0; i < N_SERIAL_RX_BYTES; i++) msg_buff[i] = '\0';

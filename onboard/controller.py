@@ -53,12 +53,19 @@ async def recv_and_process():
     jm=Joy_map()
     THRSTR_LIMIT=config.thruster_limit_controler
 
-    def togle_mode(m):
+    def togle_mode(m,val=None):
         s=system_state
-        if m in s['mode']:
-            s['mode'].remove(m)
+        if val is None:
+            if m in s['mode']:
+                s['mode'].remove(m)
+            else:
+                s['mode'].append(m)
         else:
-            s['mode'].append(m)
+            if val is True and m not in s['mode']:
+                s['mode'].append(m)
+            if val is False and m in s['mode']:
+                s['mode'].remove(m)
+
 
     def test_togle(b):
         return new_joy_buttons[b]==1 and joy_buttons[b]==0
@@ -110,22 +117,22 @@ async def recv_and_process():
                             system_state['mode']=[] 
             
                     if data['cmd']=='depth_hold':
-                        togle_mode('DEPTH_HOLD')
+                        togle_mode('DEPTH_HOLD',data.get('val'))
 
                     if data['cmd']=='att_hold':
-                        togle_mode('ATT_HOLD')
+                        togle_mode('ATT_HOLD',data.get('val'))
 
                     if data['cmd']=='heartbit':
                         last_axes_joy_message_time=time.time()
 
                     if data['cmd']=='x_hold':
-                        togle_mode('RX_HOLD')
+                        togle_mode('RX_HOLD',data.get('val'))
 
                     if data['cmd']=='y_hold':
-                        togle_mode('RY_HOLD')
+                        togle_mode('RY_HOLD',data.get('val'))
 
                     if data['cmd']=='z_hold':
-                        togle_mode('RZ_HOLD')
+                        togle_mode('RZ_HOLD',data.get('val'))
 
                     if data['cmd']=='dvl_reset':
                         pub_sock.send_multipart([zmq_topics.topic_dvl_cmd,b'wcr\n'])

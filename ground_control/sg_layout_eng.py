@@ -10,6 +10,24 @@ import farm_track_sg as TrackThreadSG
 import sg_symbols as syms
 sg.theme('DarkGrey1')
 
+class ButtonCont(sg.Button):
+    def __init__(_,t,**kargs):
+        super(ButtonCont,_).__init__(t,**kargs)
+        _.pressed = False
+
+    def finalize(_):
+        _.bind('<ButtonPress>', " Press", propagate=False)
+        _.bind('<ButtonRelease>', " Release", propagate=False)
+
+    def is_pressed(_,event):
+        if _.key+" Press"==event:
+            _.pressed=True
+        if _.key+" Release"==event:
+            _.pressed=False
+        return _.pressed
+
+    def is_released(_,event):
+        return _.key+" Release"==event
 
 def get_main_image_sz(values):
     return (config.cam_main_sx,config.cam_main_sy) if values['LAYOUT2'] else (config.cam_main_gui_sx,config.cam_main_gui_sy)
@@ -36,6 +54,9 @@ def get_layout(track_thread=None):
             enable_events=True,
             ),
         ]]
+    
+    Gvl,Gvr=ButtonCont(syms.sym_yaw_left,key='Gvl',tooltip="gripper rotate left"),ButtonCont(syms.sym_yaw_right,key='Gvr',tooltip="gripper rotate right")
+    to_fin=[Gvr,Gvl]
 
     cmd_column = [
             [sg.Button('Arm-Disarm'),
@@ -81,12 +102,14 @@ def get_layout(track_thread=None):
             ]
     config_column = [
             [sg.Image(key="-IMAGE-2D-")],
-            [sg.Button('Gc',tooltip="gripper close"),sg.Button('Go',tooltip="gripper open"),sg.Button('Tx',tooltip='stop main tracker'),sg.Button('LOG',tooltip="mark log for reference")],
+            [sg.Button('Gc',tooltip="gripper close"),sg.Button('Go',tooltip="gripper open"),Gvl,Gvr],
+            [sg.Button('Tx',tooltip='stop main tracker'),sg.Button('LOG',tooltip="mark log for reference")],
+            [sg.Input(key='LOGtext',default_text='log text',size=(55,1))],
             [sg.Button('REC'),sg.Button('Reset-DVL'),sg.Button('Calib-DVL'),sg.Checkbox('L2',key='LAYOUT2',tooltip='layout2')],
             #[sg.Button('CF+'),sg.Button('CF-'),sg.Button('Lights+'),sg.Button('Lights-')],
             [sg.Multiline(key='MESSEGES',s=(23,5) if scale_screen else (55,8), autoscroll=True, reroute_stdout=False, write_only=True)],
            ]
-    plot_options=['DEPTH','X_HOLD','Y_HOLD','YAW','PITCH','ROLL']
+    plot_options=['NONE','DEPTH','X_HOLD','Y_HOLD','YAW','PITCH','ROLL']
     matplot_column1 = [
         [sg.Text('PType:'),sg.Combo(plot_options,key='-PLOT-TYPE-',default_value=plot_options[0]),
             sg.Button('P+'),sg.Button('P-'),
@@ -129,7 +152,11 @@ def get_layout(track_thread=None):
     if scale_screen:
         window.Maximize()
 
+    for fn in to_fin:
+        fn.finalize()
+
     return window
+
 
 
 def update_image(key,window,img):

@@ -392,7 +392,8 @@ def main():
         a2=a/2
         b2=b/2
         h2=h/2
-        cc=current_command
+        command_scale=3.0
+        cc=np.array(current_command)*command_scale
         pb.applyExternalForce(boxId,-1,[0,0,-cc[0]],[b2,a2,h2],pb.LINK_FRAME)
         pb.applyExternalForce(boxId,-1,[0,0,-cc[1]],[b2,-a2,h2],pb.LINK_FRAME)
         pb.applyExternalForce(boxId,-1,[0,0,-cc[2]],[-b2,-a2,h2],pb.LINK_FRAME)
