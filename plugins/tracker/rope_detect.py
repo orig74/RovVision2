@@ -81,12 +81,22 @@ def rope_detect_depth(depth_img,scale_to_mm,water_scale,start_row=150,nrows=100,
     imt=scaled_d[validation_rows:-validation_rows].sum(axis=0).flatten()/nrows
     #imt=np.median(scaled_d[validation_rows:-validation_rows],axis=0)#.flatten()/nrows
     #prioritizing center
-    r=600
-    imtp=imt+np.abs(np.linspace(-r,r,len(imt)))
-    #blur line
-    flt=50
-    imtp=np.convolve(imtp,np.ones(flt)/flt,mode='same')
-    col=np.argmin(imtp[marg:-marg])+marg
+    if 0:
+        r=600
+        imtp=imt+np.abs(np.linspace(-r,r,len(imt)))
+        #blur line
+        flt=50
+        imtp=np.convolve(imtp,np.ones(flt)/flt,mode='same')
+        col=np.argmin(imtp[marg:-marg])+marg
+        final_rng=imt[col]
+    else:
+        flt=30
+        imtc=np.convolve(imt,np.ones(flt)/flt,mode='same')
+        r=600
+        imtp=imtc+np.abs(np.linspace(-r,r,len(imt)))
+        col=np.argmin(imtp[marg:-marg])+marg
+        final_rng=imtc[col]
+        
 
     #up_validation=scaled_d[:validation_rows,col].sum()/validation_rows
     #down_validation=scaled_d[-validation_rows:,col].sum()/validation_rows
@@ -100,7 +110,7 @@ def rope_detect_depth(depth_img,scale_to_mm,water_scale,start_row=150,nrows=100,
 
 
     if 0:
-        print('---',imt[col],col,up_validation.min(),down_validation.min())
+        print('---',final_rng,col,up_validation.min(),down_validation.min())
         from matplotlib import pyplot as plt
         import sys
         plt.figure('up')
@@ -112,13 +122,15 @@ def rope_detect_depth(depth_img,scale_to_mm,water_scale,start_row=150,nrows=100,
         plt.figure('down mean')
         plt.plot(scaled_d[-validation_rows:,col-wc:col+wc].mean(axis=0))
         plt.figure('med range')
+        plt.plot(imtc)
         plt.plot(imtp)
         plt.plot(imt)
-        plt.legend(['filtered','raw'])
+        plt.plot(col,imtc[col],'+k')
+        plt.legend(['filtered','filtered corrected','raw'])
         plt.show()
         sys.exit(0)
 
-    return imt[col],col,up_validation.min(),down_validation.min(),imtp
+    return final_rng,col,up_validation.min(),down_validation.min(),imtp
 
 
 
