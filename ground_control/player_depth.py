@@ -44,7 +44,20 @@ from tracker.rope_detect import rope_detect_depth
 font = cv2.FONT_HERSHEY_SIMPLEX
 
 def torgb(im):
-    imret = cv2.applyColorMap(cv2.convertScaleAbs(im, alpha=0.46), cv2.COLORMAP_JET)[:,:,::-1]
+    #import ipdb;ipdb.set_trace()
+    im_=im.copy()
+    clip=5000
+    im_[im_>clip]=clip
+    med=im_.flatten()
+    med=med.take(np.nonzero(np.bitwise_and(med>0 , med<clip))[0])#.mean()
+    if 0:
+        from matplotlib import pyplot as plt
+        plt.hist(med,bins=500)
+        plt.show()
+        sys.exit()
+    im_[im==0]=med.mean()
+    imret = cv2.applyColorMap(cv2.convertScaleAbs(im_/10, alpha=0.46), cv2.COLORMAP_JET)[:,:,::-1]
+    #imret = cv2.applyColorMap(cv2.convertScaleAbs(np.log(im_)*100, alpha=0.46), cv2.COLORMAP_JET)[:,:,::-1]
     imret[im==0]=(0,0,0)
     return imret
 
