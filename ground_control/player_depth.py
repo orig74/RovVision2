@@ -35,6 +35,7 @@ import gst2
 import zmq_wrapper
 import zmq_topics
 import glob
+from tracker.mussel_detector import detect
 
 from tracker.of import OF
 tcv = None 
@@ -43,7 +44,20 @@ from tracker.rope_detect import rope_detect_depth
 font = cv2.FONT_HERSHEY_SIMPLEX
 
 def torgb(im):
-    imret = cv2.applyColorMap(cv2.convertScaleAbs(im, alpha=0.46), cv2.COLORMAP_JET)[:,:,::-1]
+    #import ipdb;ipdb.set_trace()
+    im_=im.copy()
+    clip=5000
+    im_[im_>clip]=clip
+    med=im_.flatten()
+    med=med.take(np.nonzero(np.bitwise_and(med>0 , med<clip))[0])#.mean()
+    if 0:
+        from matplotlib import pyplot as plt
+        plt.hist(med,bins=500)
+        plt.show()
+        sys.exit()
+    im_[im==0]=med.mean()
+    imret = cv2.applyColorMap(cv2.convertScaleAbs(im_/10, alpha=0.46), cv2.COLORMAP_JET)[:,:,::-1]
+    #imret = cv2.applyColorMap(cv2.convertScaleAbs(np.log(im_)*100, alpha=0.46), cv2.COLORMAP_JET)[:,:,::-1]
     imret[im==0]=(0,0,0)
     return imret
 
@@ -55,6 +69,7 @@ args = parser.parse_args()
 
 cv2.namedWindow('depth',cv2.WINDOW_NORMAL)
 cv2.namedWindow('rgb',cv2.WINDOW_NORMAL)
+cv2.namedWindow('detect',cv2.WINDOW_NORMAL)
 
 def read_pkl(pkl_file):
     fd = open(pkl_file,'rb')
@@ -239,6 +254,7 @@ while 1:
                 try:
                     rgb_img=cv2.imread(args.path+f'/{fnum:06d}.jpg')
                     gray_img=cv2.cvtColor(rgb_img, cv2.COLOR_BGR2GRAY)
+                    detected_img=detect(rgb_img,annotate=True)['img']
                     _ret=of.track(gray_img)
                     #if tcv is not None:
                     #    print('hhh',tcv.update(gray_img))
@@ -292,11 +308,13 @@ while 1:
                 cv2.putText(rgb_img,f'Depth{depth:.1f}',(10,20), font, 0.7,(255,0,0),2,cv2.LINE_AA)
             
             wins['rgb']={'img':rgb_img,'redraw':True,'file_path':fname}
+            wins['detect']={'img':detected_img, 'redraw':True}
             #cv2.imshow('rgb',rgb_img)
 
     for wname in wins:
         if wins[wname] and wins[wname].get('redraw'):
             img=wins[wname]['img']
+            #print('===',type(detected_img))
             if img is not None:
                 if 'mask' in wins[wname]:
                     img=img.copy()
