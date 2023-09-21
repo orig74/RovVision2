@@ -219,7 +219,7 @@ async def recv_and_process():
                         dy=np.clip(dy,-Pxy[1],Pxy[1])
 
                         if tr_main_lock['x_lock'] and dvl_last_pos is not None:
-                            tracker_lock_scale_x=10
+                            tracker_lock_scale_x=5
                             target_pos[0]=dvl_last_pos['x']+dx*tracker_lock_scale_x
                         if tr_main_lock['y_lock'] and dvl_last_pos is not None:
                             tracker_lock_scale_y=10
