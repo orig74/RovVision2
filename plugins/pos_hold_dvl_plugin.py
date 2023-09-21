@@ -211,17 +211,19 @@ async def recv_and_process():
                         dy=np.clip(dy,-max_speed,max_speed)
 
                         if tr_main_lock['x_lock']:
-                            target_pos[0]+=Pxy[0]*dx
+                            target_pos[0]+=Pxy[0]*dx*tracker_lock_scale_x
                         if tr_main_lock['y_lock']:
-                            target_pos[1]+=Pxy[1]*dy
+                            target_pos[1]+=Pxy[1]*dy*tracker_lock_scale_y
                     else:
                         dx=np.clip(dx,-Pxy[0],Pxy[0])
                         dy=np.clip(dy,-Pxy[1],Pxy[1])
 
                         if tr_main_lock['x_lock'] and dvl_last_pos is not None:
-                            target_pos[0]=dvl_last_pos['x']+dx
+                            tracker_lock_scale_x=10
+                            target_pos[0]=dvl_last_pos['x']+dx*tracker_lock_scale_x
                         if tr_main_lock['y_lock'] and dvl_last_pos is not None:
-                            target_pos[1]=dvl_last_pos['y']+dy
+                            tracker_lock_scale_y=10
+                            target_pos[1]=dvl_last_pos['y']+dy*tracker_lock_scale_y
                         #last_t_main_tracker=time.time()
 
             #### joy hat control 
