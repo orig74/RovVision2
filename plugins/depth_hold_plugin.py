@@ -79,7 +79,7 @@ async def recv_and_process():
                     rng,left,up=config.grip_pos_rel_mm
                     if d_lock:
                         dz=-(up-data['up'])/1000 #convert to mm
-                        scale_lock_z=0.1
+                        scale_lock_z=0.01
                         target_depth+=dz*scale_lock_z
             
 
