@@ -34,11 +34,11 @@ if rov_type==4:
         [424*water_scale,0,848/2],
         [0,422*water_scale,480/2],
         [0,0,1]]
-    #grip_pos_rel_mm=(0.01,0,0) #range left up in mm
     if sim_type=='PB':
         grip_pos_rel_mm=(354,0,120)
     else:
-        grip_pos_rel_mm=(190,1-15,62)
+        grip_pos_rel_mm=(380,10,105)
+    #grip_pos_rel_mm=(0.01,0,0) #range left up in mm
     #grip_pos_rel_mm=(-127,30,-20.0)
     #grip_pos_rel_mm=(1220,20,20) #range left up in mm
     valid_range_mm=(50,1500)
@@ -46,7 +46,7 @@ if rov_type==4:
     down_validiation_diff_tresh_rope_detect_mm=800
     dvl_max_valid_speed=0.25 #m/s
     
-cam_fps=6
+cam_fps=3
 send_modulo=1
 
 #gstreamer

@@ -33,7 +33,7 @@ async def recv_and_process():
     system_state={'mode':[]}
     jm=Joy_map()
     d_lock=False
-    dz=0
+    #dz=0
 
     while keep_running:
         socks=zmq.select(subs_socks,[],[],0.005)[0]
@@ -55,7 +55,8 @@ async def recv_and_process():
                         if os.path.isfile('depth_pid.json'):
                             pid.load('depth_pid.json')
                     else:
-                        ud_command = pid(depth,target_depth+dz,rate,0)
+                        #ud_command = pid(depth,target_depth+dz,rate,0)
+                        ud_command = pid(depth,target_depth,rate,0)
                         debug_pid = {'P':pid.p,'I':pid.i,'D':pid.d,'C':ud_command,'T':target_depth,'N':depth,'TS':new_depth_ts}
                         pub_sock.send_multipart([zmq_topics.topic_depth_hold_pid, pickle.dumps(debug_pid,-1)])
                         thruster_cmd = mixer.mix(ud_command,0,0,0,0,0,pitch,roll)
@@ -73,11 +74,13 @@ async def recv_and_process():
                     target_depth=depth
 
             if topic==zmq_topics.topic_main_tracker:
-                dz=0
+                #dz=0
                 if data['range']:
                     rng,left,up=config.grip_pos_rel_mm
                     if d_lock:
-                        dz=-(up-data['up'])
+                        dz=-(up-data['up'])/1000 #convert to mm
+                        scale_lock_z=0.01
+                        target_depth+=dz*scale_lock_z
             
 
             if topic==zmq_topics.topic_remote_cmd:
@@ -97,7 +100,7 @@ async def recv_and_process():
                 if data['cmd'] in ['d_lock']:
                     d_lock=data['val']
                     #printer(f"{data['cmd']} changed to {data['val']}")
-                    dz=0
+                    #dz=0
 
 
 

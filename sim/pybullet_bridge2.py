@@ -161,6 +161,7 @@ imu_fps=100
 dvl_pos_fps=5
 dvl_vel_fps=10
 print_fps=0.5
+renderer = pb.ER_BULLET_HARDWARE_OPENGL
 def main():
     record_state=None
     pb.configureDebugVisualizer(pb.COV_ENABLE_RENDERING, 0)
@@ -247,7 +248,8 @@ def main():
                 height=h,
                 viewMatrix=VML.flatten('C').tolist(),
                 lightColor=(0,0,1),
-                projectionMatrix=PM,renderer=pb.ER_BULLET_HARDWARE_OPENGL,
+                #projectionMatrix=PM,renderer=pb.ER_BULLET_HARDWARE_OPENGL,
+                projectionMatrix=PM,renderer=renderer,
                 flags=pb.ER_NO_SEGMENTATION_MASK)
             rgbImg = hsv_range_scale(rgbImg,depthImg)
             imgl=resize(rgbImg,1/resize_fact)#inly interested in rgb
@@ -259,7 +261,7 @@ def main():
                     height=h,
                     viewMatrix=VML.flatten('C').tolist(),
                     lightColor=(0,0,1),
-                    projectionMatrix=PM,renderer=pb.ER_BULLET_HARDWARE_OPENGL,
+                    projectionMatrix=PM,renderer=renderer,
                     flags=pb.ER_NO_SEGMENTATION_MASK)
                 rgbImg = hsv_range_scale(rgbImg,depthImg)
                 imgr=resize(rgbImg,1/resize_fact) #todo...
@@ -315,7 +317,7 @@ def main():
                 width=w, 
                 height=h,
                 viewMatrix=VML.flatten('C').tolist(),
-                projectionMatrix=PM,renderer=pb.ER_BULLET_HARDWARE_OPENGL,
+                projectionMatrix=PM,renderer=renderer,
                 flags=pb.ER_NO_SEGMENTATION_MASK)
             rgbImg = hsv_range_scale(rgbImg,depthImg)
             imgm=resize(rgbImg,1)#inly interested in rgb

@@ -77,26 +77,16 @@ def rope_detect_depth(depth_img,scale_to_mm,water_scale,start_row=150,nrows=100,
     marg=100
     sliceimg=depth_img[start_row-validation_rows:start_row+nrows+validation_rows,:]
     scaled_d = sliceimg*scale_to_mm*water_scale
-    scaled_d[scaled_d<1]=2000 #10 meters
+    scaled_d[scaled_d<1]=3000 #10 meters
     imt=scaled_d[validation_rows:-validation_rows].sum(axis=0).flatten()/nrows
     #imt=np.median(scaled_d[validation_rows:-validation_rows],axis=0)#.flatten()/nrows
     #prioritizing center
-    if 1:
-        r=600
-        imtp=imt+np.abs(np.linspace(-r,r,len(imt)))
-        #blur line
-        flt=50
-        imtp=np.convolve(imtp,np.ones(flt)/flt,mode='same')
-        col=np.argmin(imtp[marg:-marg])+marg
-        final_rng=imt[col]
-    else:
-        flt=30
-        imtc=np.convolve(imt,np.ones(flt)/flt,mode='same')
-        r=600
-        imtp=imtc+np.abs(np.linspace(-r,r,len(imt)))
-        col=np.argmin(imtp[marg:-marg])+marg
-        final_rng=imtc[col]
-        
+    r=600
+    imtp=imt+np.abs(np.linspace(-r,r,len(imt)))
+    #blur line
+    flt=50
+    imtp=np.convolve(imtp,np.ones(flt)/flt,mode='same')
+    col=np.argmin(imtp[marg:-marg])+marg
 
     #up_validation=scaled_d[:validation_rows,col].sum()/validation_rows
     #down_validation=scaled_d[-validation_rows:,col].sum()/validation_rows
@@ -110,7 +100,7 @@ def rope_detect_depth(depth_img,scale_to_mm,water_scale,start_row=150,nrows=100,
 
 
     if 0:
-        print('---',final_rng,col,up_validation.min(),down_validation.min())
+        print('---',imt[col],col,up_validation.min(),down_validation.min())
         from matplotlib import pyplot as plt
         import sys
         plt.figure('up')
@@ -122,15 +112,13 @@ def rope_detect_depth(depth_img,scale_to_mm,water_scale,start_row=150,nrows=100,
         plt.figure('down mean')
         plt.plot(scaled_d[-validation_rows:,col-wc:col+wc].mean(axis=0))
         plt.figure('med range')
-        plt.plot(imtc)
         plt.plot(imtp)
         plt.plot(imt)
-        plt.plot(col,imtc[col],'+k')
-        plt.legend(['filtered','filtered corrected','raw'])
+        plt.legend(['filtered','raw'])
         plt.show()
         sys.exit(0)
 
-    return final_rng,col,up_validation.min(),down_validation.min(),imtp
+    return imt[col],col,up_validation.min(),down_validation.min(),imtp
 
 
 
