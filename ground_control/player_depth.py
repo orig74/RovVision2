@@ -348,7 +348,16 @@ while 1:
                 if 'mask' in wins[wname]:
                     #print('===',wname)
                     img=img.copy()
-                    img[:,:,1]=img[:,:,1]*wins[wname]['mask']
+                    #chs=[1] if wname=='rgb' else [1]
+                    ch=1
+                    if wname=='rgb':
+                        img[:,:,ch]=img[:,:,ch]*wins[wname]['mask']
+                    else:
+                        #img[:,:,1]=img[:,:,1]*wins[wname]['mask']
+                        img[wins[wname]['mask']==0,2]=255
+                        #img[:,:,2]=img[:,:,0]*(1-wins[wname]['mask'])
+
+
                 cv2.imshow(wname,img)
                     #cv2.imshow(wname,wins[wname]['mask']*255)
                 wins[wname]['redraw']=False
@@ -360,11 +369,12 @@ while 1:
     if k in [ord(','),81,52]:
         i=i-6
     elif k in [ord('<')]:
-        i=i-10
+        print('===',i)
+        i=i-20
     elif k in [ord('.'),54,83]:
         i=i+1
     elif k in [ord('>')]:
-        i=i+10
+        i=i+20
     elif k in [ord('q')]:
         break
     elif k in [ord('m')]:
