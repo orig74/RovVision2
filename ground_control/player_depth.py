@@ -171,6 +171,8 @@ def click(event, x, y, flags, param):
         #print('===',k)
 mark_mode = True
 mark_sz=0
+show_text=True
+
 class ClickWin(object):
     def __init__(self,wname):
         self.wname=wname
@@ -295,10 +297,12 @@ while 1:
                 wins['depth']={'img':torgb(depth_img),'redraw':True}
                 diff=down_validation-up_validation
                 line=f'range {d:.1f},U{up_validation:.1f},D{down_validation:.1f}'
-                cv2.putText(rgb_img,line,(10,40), font, 0.7,(255,0,0),2,cv2.LINE_AA)
-                cv2.putText(rgb_img,f'Df{diff:.1f}',(10,60),font, 0.7,(255,0,0) if diff<150 else (0,0,255),
-                        2,cv2.LINE_AA)
-                cv2.putText(rgb_img,f'{fnum:06d}',(10,90), font, 0.7,(255,0,0),2,cv2.LINE_AA)
+                if show_text:
+                    cv2.putText(rgb_img,line,(10,40), font, 0.7,(255,0,0),2,cv2.LINE_AA)
+                    cv2.putText(rgb_img,f'Df{diff:.1f}',(10,60),font, 0.7,(255,0,0) if diff<150 else (0,0,255),
+                            2,cv2.LINE_AA)
+                    cv2.putText(rgb_img,f'{fnum:06d}',(10,90), font, 0.7,(255,0,0),2,cv2.LINE_AA)
+
                 mrg=50
                 vrow=50
                 nrow=100
@@ -315,7 +319,7 @@ while 1:
                 #rgb_img=np.zeros(shape,'uint8')
                 i+=1
                 continue
-            cv2.line(rgb_img,(posx,30),(posx,40),(255,255,255),thickness=4)
+            cv2.line(rgb_img,(posx,30),(posx,40),(255,255,255),thickness=2)
             line=''
             if last_click_data is not None:
                 x,y,z=last_click_data
@@ -328,7 +332,8 @@ while 1:
             if telem_data is not None:
                 td=telem_data[i]
                 depth=td.get('depth',-1)
-                cv2.putText(rgb_img,f'Depth{depth:.1f}',(10,20), font, 0.7,(255,0,0),2,cv2.LINE_AA)
+                if show_text:
+                    cv2.putText(rgb_img,f'Depth{depth:.1f}',(10,20), font, 0.7,(255,0,0),2,cv2.LINE_AA)
             
             wins['rgb']={'img':rgb_img,'redraw':True,'file_path':fname, 'mask':mask}
 
@@ -353,7 +358,7 @@ while 1:
     #k=cv2.pollKey()%0xff
     prev_i=i
     if k in [ord(','),81,52]:
-        i=i-3
+        i=i-6
     elif k in [ord('<')]:
         i=i-10
     elif k in [ord('.'),54,83]:
@@ -376,6 +381,8 @@ while 1:
                 #print('number of objects is :',centroids)
                 print('number of objects=',get_mask_stats(w['mask'])[3])
                     
+    elif k in [ord('n')]:
+        show_text = not show_text
                 #cv2.imshow('kkkk',labels)
     if k!=254 and not args.tracker_mode:
         for wname in wins:
