@@ -35,7 +35,6 @@ import gst2
 import zmq_wrapper
 import zmq_topics
 import glob
-from tracker.mussel_detector import detect
 
 from tracker.of import OF
 tcv = None 
@@ -64,12 +63,16 @@ def torgb(im):
 parser = argparse.ArgumentParser()
 parser.add_argument("-s","--start_frame",help="start frame",default=0,type=int)
 parser.add_argument("-v","--vision_cameras",help="show vision cameras",default=False,action='store_true')
+parser.add_argument("-d","--detector_view",help="show detector",default=False,action='store_true')
 parser.add_argument("path",help="dir path")
 args = parser.parse_args()
 
 cv2.namedWindow('depth',cv2.WINDOW_NORMAL)
 cv2.namedWindow('rgb',cv2.WINDOW_NORMAL)
-cv2.namedWindow('detect',cv2.WINDOW_NORMAL)
+
+if args.detector_view:
+    cv2.namedWindow('detect',cv2.WINDOW_NORMAL)
+    from tracker.mussel_detector import detect
 
 def read_pkl(pkl_file):
     fd = open(pkl_file,'rb')
@@ -254,7 +257,8 @@ while 1:
                 try:
                     rgb_img=cv2.imread(args.path+f'/{fnum:06d}.jpg')
                     gray_img=cv2.cvtColor(rgb_img, cv2.COLOR_BGR2GRAY)
-                    detected_img=detect(rgb_img,annotate=True)['img']
+                    if args.detector_view:
+                        detected_img=detect(rgb_img,annotate=True)['img']
                     _ret=of.track(gray_img)
                     #if tcv is not None:
                     #    print('hhh',tcv.update(gray_img))
@@ -308,7 +312,9 @@ while 1:
                 cv2.putText(rgb_img,f'Depth{depth:.1f}',(10,20), font, 0.7,(255,0,0),2,cv2.LINE_AA)
             
             wins['rgb']={'img':rgb_img,'redraw':True,'file_path':fname}
-            wins['detect']={'img':detected_img, 'redraw':True}
+
+            if args.detector_view:
+                wins['detect']={'img':detected_img, 'redraw':True}
             #cv2.imshow('rgb',rgb_img)
 
     for wname in wins:
