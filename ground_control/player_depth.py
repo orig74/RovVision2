@@ -170,6 +170,7 @@ def click(event, x, y, flags, param):
         #k=cv2.pollKey()
         #print('===',k)
 mark_mode = True
+mark_sz=0
 class ClickWin(object):
     def __init__(self,wname):
         self.wname=wname
@@ -180,9 +181,11 @@ class ClickWin(object):
         if self.draw_state:
             if 'mask' in wins[self.wname]:
                 mim=wins[self.wname]['mask']
-                mg=1 if self.wname=='rgb' else 3
+                #mg=1 if self.wname=='rgb' else 3
+                mg=mark_sz
                 #mim[y-mg:y+mg,x-mg:x+mg]=0 if mark_mode else 1
                 cv2.circle(mim,(x,y),mg,0 if mark_mode else 1 ,mg)
+
                 wins[self.wname]['redraw']=True
                 #print('====',self.wname,x,y,event,self.draw_state)
 
@@ -341,7 +344,7 @@ while 1:
                     #print('===',wname)
                     img=img.copy()
                     img[:,:,1]=img[:,:,1]*wins[wname]['mask']
-                    cv2.imshow(wname,img)
+                cv2.imshow(wname,img)
                     #cv2.imshow(wname,wins[wname]['mask']*255)
                 wins[wname]['redraw']=False
             #print('current index',i)
@@ -361,6 +364,9 @@ while 1:
         break
     elif k in [ord('m')]:
         mark_mode=not mark_mode
+    elif k in [ord(x) for x in '1234']:
+        mark_sz=k-ord('1')
+        print('setting mark size to ',mark_sz)
     elif k in [ord('c')]:
         for wname in wins:
             w=wins[wname]
