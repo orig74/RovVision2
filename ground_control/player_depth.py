@@ -262,7 +262,7 @@ while 1:
         fnum=fnums[i]
         is_depth_image=True
 
-    if is_depth_image and prev_i!=i:
+    if is_depth_image and (prev_i!=i or args.tracker_mode):
         fname = args.path+f'/{fnum:06d}.jpg'
         if not ('rgb' in wins and wins['rgb'].get('file_path')==fname) or wins['rgb'].get('redraw'):
             rgb_img=None
@@ -377,7 +377,7 @@ while 1:
                 print('number of objects=',get_mask_stats(w['mask'])[3])
                     
                 #cv2.imshow('kkkk',labels)
-    if k!=254:
+    if k!=254 and not args.tracker_mode:
         for wname in wins:
             w=wins[wname]
             if 'mask' in w:
