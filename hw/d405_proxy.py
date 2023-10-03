@@ -58,6 +58,12 @@ if __name__ == "__main__":
     profile = pipeline.start(config)
     intrinsics_depth = profile.get_stream(rs.stream.depth).as_video_stream_profile().get_intrinsics()
     intrinsics_color = profile.get_stream(rs.stream.color).as_video_stream_profile().get_intrinsics()
+    
+    intel_cammtx = np.array([[intrinsics_depth.fx, 0, intrinsics_depth.ppx],
+                                     [0, intrinsics_depth.fy, intrinsics_depth.ppy],
+                                     [0, 0, 1]])
+    print(intel_cammtx)
+
 
     depth_sensor = profile.get_device().first_depth_sensor()
 
