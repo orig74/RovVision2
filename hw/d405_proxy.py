@@ -29,12 +29,14 @@ GAIN = 20
 
 SAVE_RATIO = 3 * FPS // 15
 SEND_RATIO = 1 * FPS // 15
-SAVE = False
-IMSHOW = False
 fd_frame_data=None
 
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--show", help="debug display", action='store_true')
+    args = parser.parse_args()
     record_state=None
     pipeline = rs.pipeline()
     keep_run=True
@@ -155,7 +157,7 @@ if __name__ == "__main__":
 
         #print('===',col_img.shape,depth_img_m.shape)
 
-        if IMSHOW:
+        if args.show:
             depth_img_m[depth_img_m > 2.0] = 0
             cv2.imshow("Depth cam image", depth_img_m)
             cv2.imshow("Colour", col_img)
