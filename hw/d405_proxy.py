@@ -74,6 +74,9 @@ if __name__ == "__main__":
     time.sleep(0.5)
     sens.set_option(rs.option.gain, GAIN)
     time.sleep(0.5)
+    # 0: High Density, 1: Medium Density, 2: High Accuracy, 3: Hand, 4: Left Imager Color w/o IR Pattern, 5: Default
+    sens.set_option(rs.option.visual_preset, 2)
+    time.sleep(0.5)
     
     depth_scale = depth_sensor.get_depth_scale()
 
