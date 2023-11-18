@@ -4,7 +4,7 @@ import config
 import zmq,pickle
 import numpy as np
 import image_enc_dec
-import os
+import os,math
 from annotations import draw_mono,draw_seperate
 from joy_mix import Joy_map
 from cyc_array import CycArr
@@ -511,6 +511,8 @@ class rovDataHandler(object):
                         if dvl_data is not None and dvl_data['type']=='vel':
                             if dvl_data['valid']==b'y':
                                 self.telemtry['dvl_alt']=dvl_data['alt']
+                                dvl_vel=math.sqrt(dvl_data['vx']**2+dvl_data['vy']**2)
+                                self.telemtry['dvl_vel']=dvl_vel
          
                     if self.data_file_fd is not None:
                         pickle.dump([topic,data_receive_ts,data],self.data_file_fd,-1)

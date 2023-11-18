@@ -13,8 +13,9 @@ import mixer
 import zmq_wrapper
 import zmq_topics
 from joy_mix import Joy_map
-from config_pid import sonar_pid
+from config_pid import depth_pid
 from pid import PID
+import os
 from filters import ab_filt
 
 async def recv_and_process():
@@ -44,7 +45,9 @@ async def recv_and_process():
 
                 if 'SONAR_HOLD' in system_state['mode']:
                     if pid is None:
-                        pid=PID(**sonar_pid)
+                        pid=PID(**depth_pid)
+                        if os.path.isfile('depth_pid.json'):
+                            pid.load('depth_pid.json')
                     else:
                         ud_command = pid(-s_range,-target_range,-rate,0)
                         debug_pid = {'P':pid.p,'I':pid.i,'D':pid.d,'C':ud_command,'T':target_range,'N':s_range,'TS':new_sonar_ts}

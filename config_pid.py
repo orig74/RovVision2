@@ -11,7 +11,6 @@ depth_pid={
         'angle_deg_type':False,
         'initial_i':0,
         'func_in_err':None}
-sonar_pid=depth_pid
 
 ys=0.02
 yaw_pid={

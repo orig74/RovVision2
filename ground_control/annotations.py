@@ -75,7 +75,8 @@ def draw_mono(img,message_dict,fmt_cnt_l):
     if zmq_topics.topic_imu in message_dict:
         m=message_dict[zmq_topics.topic_imu]
         yaw,pitch,roll=m['yaw'],m['pitch'],m['roll']
-        draw_compass(img,img.shape[1]//2,img.shape[0]//2,yaw,pitch,roll,rr=150.0,yaw2=dvl_yaw_deg, target_yaw=target_yaw)
+        draw_compass(img,200,200,yaw,pitch,roll,rr=150.0,yaw2=dvl_yaw_deg, target_yaw=target_yaw)
+        #draw_compass(img,img.shape[1]//2,img.shape[0]//2,yaw,pitch,roll,rr=150.0,yaw2=dvl_yaw_deg, target_yaw=target_yaw)
     if zmq_topics.topic_depth in message_dict:
         target_depth = message_dict.get(zmq_topics.topic_depth_hold_pid,{}).get('T',0)
         draw_depth(img,0,0,message_dict[zmq_topics.topic_depth]['depth'],target_depth)
@@ -87,7 +88,10 @@ def draw_mono(img,message_dict,fmt_cnt_l):
 
     if 'dvl_alt' in message_dict:
         line='alt{:04.1f}'.format(message_dict['dvl_alt'])
-        cv2.putText(img,line,(sy(500),sx(460)), font, 0.6,(255,0,155),2,cv2.LINE_AA)
+        cv2.putText(img,line,(sy(500),sx(360)), font, 0.6,(255,0,155),2,cv2.LINE_AA)
+    if 'dvl_vel' in message_dict:
+        line='vel{:4.2f}'.format(message_dict['dvl_vel'])
+        cv2.putText(img,line,(sy(500),sx(380)), font, 0.6,(255,0,100),2,cv2.LINE_AA)
 
     
     if zmq_topics.topic_record_state in message_dict:
@@ -116,7 +120,7 @@ def draw_mono(img,message_dict,fmt_cnt_l):
     #    cv2.putText(img,line,(sy(50),sx(580+voff)), font, 0.7,(255,255,255),2,cv2.LINE_AA)
     if zmq_topics.topic_thrusters_comand in message_dict:
         thrst_cmnd = message_dict[zmq_topics.topic_thrusters_comand][1]
-        draw_thrusters(img, (40, 32), thrst_cmnd)
+        draw_thrusters(img, (80, 80), thrst_cmnd)
  
     if zmq_topics.topic_telem in message_dict:
         v=message_dict[zmq_topics.topic_telem]['V']
@@ -124,6 +128,7 @@ def draw_mono(img,message_dict,fmt_cnt_l):
         leak=message_dict[zmq_topics.topic_telem]['leak']
         if leak:
             pos=(90, 90)
+            cv2.circle(img, pos, 60, (255, 0, 0), -1)
             cv2.circle(img, pos, 52, (0, 0, 255), -1)
             cv2.putText(img,"LEAK!",(pos[0]-42, pos[1]+10), font, 1.0,(255,255,255),3,cv2.LINE_AA)
         line='{:>.2f}V {:>.2f}I'.format(v,i)
@@ -138,10 +143,10 @@ def draw_mono(img,message_dict,fmt_cnt_l):
 from math import cos,sin,pi
 def draw_compass(img,x,y,heading,pitch,roll,rr=50.0,yaw2=None, target_yaw=None):
     font = cv2.FONT_HERSHEY_SIMPLEX
-    cv2.putText(img,str(int(heading%360)),(x-12,y+26), font, 0.5,(0,000,255),2,cv2.LINE_AA)
+    cv2.putText(img,str(int(heading%360)),(x-20,y+36),font,0.8,(255,0,0),2,cv2.LINE_AA)
 
-    cv2.circle(img, (x,y), int(rr), (0,0,255), 2)
-    cv2.putText(img,'N',(x-5,y-54), font, 0.5,(0,000,255),2,cv2.LINE_AA)
+    cv2.circle(img, (x,y), int(rr), (255,0,0), 2)
+    cv2.putText(img,'N',(x-12,y-115), font, 1.0,(255,0,0),2,cv2.LINE_AA)
     for i in range(36):
         t=i*10/180.0*pi
         if i%9==0:
@@ -154,7 +159,7 @@ def draw_compass(img,x,y,heading,pitch,roll,rr=50.0,yaw2=None, target_yaw=None):
         si=sin(t)
         cv2.line(img,
                 (int(x+cs*(rr-mt)),int(y+si*(rr-mt))),
-                (int(x+cs*rr),int(y+si*rr)),(0,0,255),2)
+                (int(x+cs*rr),int(y+si*rr)),(255,0,0),2)
 
     yaws = [(heading,(255,255,255))]
 
@@ -184,10 +189,10 @@ def draw_compass(img,x,y,heading,pitch,roll,rr=50.0,yaw2=None, target_yaw=None):
     si=sin(rl)
     cv2.line(img,
         (int(xx+cs*(r-mt)),int(yy+si*(r-mt))),
-        (int(xx+cs*r),int(yy+si*r)),(0,255,255),6)
+        (int(xx+cs*r),int(yy+si*r)),(255,255,0),6)
     cv2.line(img,
         (int(xx-cs*(r-mt)),int(yy-si*(r-mt))),
-        (int(xx-cs*r),int(yy-si*r)),(0,255,255),5)
+        (int(xx-cs*r),int(yy-si*r)),(255,255,0),5)
     cv2.putText(img,'Y:'+str(int(heading)),(x+int(rr)+5,y-15), font, 0.6,(0,0,0),6,cv2.LINE_AA)
     cv2.putText(img,'P:'+str(int(pitch)),(x+int(rr)+5,y+5), font, 0.6,(0,0,0),6,cv2.LINE_AA)
     cv2.putText(img,'R:'+str(int(roll)),(x+int(rr)+5,y+25), font, 0.6,(0,0,0),6,cv2.LINE_AA)
@@ -274,25 +279,25 @@ def draw_depth(img,x,y,depth,tdepth):
     l=int(450*vs)
     #print('kkkkk',img.shape,x,y)
     s=15
-    cv2.line(img,(x,y),(x,y+l),(0,0,255), 2)
+    cv2.line(img,(x,y),(x,y+l),(255,0,0), 2)
     for i in range(0,l+1,s):
         if (i//s)%5==0:
             mt=15
         else:
             mt=5
-        cv2.line(img,(x,y+i),(x+mt,y+i),(0,0,255), 2)
+        cv2.line(img,(x,y+i),(x+mt,y+i),(255,0,0), 2)
 
     d=int(depth*s)
     dt=int(tdepth*s)
-    cv2.line(img,(x,y+dt),(x+15,y+dt),(0,100,100),thickness=5)
-    cv2.line(img,(x,y+d),(x+15,y+d),(0,255,255),thickness=4)
+    cv2.line(img,(x,y+dt),(x+15,y+dt),(100,100,0),thickness=5)
+    cv2.line(img,(x,y+d),(x+15,y+d),(255,255,0),thickness=4)
     cv2.line(img,(x,y+d+1),(x+15,y+d+1),(255,0,255))
 
     font = cv2.FONT_HERSHEY_SIMPLEX
     cv2.putText(img,'%.2f'%depth \
             ,(x,l+y+20), font, 0.7,(255,0,255),2,cv2.LINE_AA)
     cv2.putText(img,'t%.2f'%tdepth \
-            ,(x,l+y+40), font, 0.6,(255,0,200),2,cv2.LINE_AA)
+            ,(x,l+y+40), font, 0.6,(200,0,255),2,cv2.LINE_AA)
 
 
 
@@ -306,6 +311,6 @@ def draw_main(img,rov_data):
     xpos,rope_valid=rov_data.get_rope_xpos()
     if xpos is not None:
         cv2.line(img,(int(xpos*cols),30),(int(xpos*cols),40),
-                (255,255,255) if rope_valid else (255,0,0),thickness=4)
+                (255,255,255) if rope_valid else (0,0,255),thickness=4)
 
 

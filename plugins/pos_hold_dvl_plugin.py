@@ -21,10 +21,13 @@ from config_pid_dvl import pos_pids
 from pid import PID
 
 
-AUTOSCAN_PATH = 10 * [np.array([10.0, 0.0, 0.0]),
-                 np.array([0.0, 0.5, 0.0]),
-                 np.array([-10.0, 0.0, 0.0]),
-                 np.array([0.0, 0.5, 0.0])]
+AUTOSCAN_SIZE=6.0
+AUTOSCAN_XSHIFT=0.5
+N_SIDESHIFTS=int(AUTOSCAN_SIZE/(2*AUTOSCAN_XSHIFT))
+AUTOSCAN_PATH = N_SIDESHIFTS * [np.array([AUTOSCAN_SIZE, 0.0, 0.0]),
+                 np.array([0.0, AUTOSCAN_XSHIFT, 0.0]),
+                 np.array([-AUTOSCAN_SIZE, 0.0, 0.0]),
+                 np.array([0.0, AUTOSCAN_XSHIFT, 0.0])]
 AUTO_VELOCITY = 0.2
 AUTO_TARGET_THRESH = 0.1
 
