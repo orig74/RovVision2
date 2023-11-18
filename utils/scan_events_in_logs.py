@@ -13,7 +13,7 @@ parser.add_argument("--all_printer_gui",default=False,action='store_true')
 parser.add_argument("--all_printer_sink",default=False,action='store_true')
 parser.add_argument("path",help="dir path")
 args = parser.parse_args()
-dirs=os.popen(f'cd {args.path} && find . -type d -name "{args.date_pattern}"').readlines()
+dirs=os.popen(f'cd {args.path} && find . -maxdepth 1 -type d -name "{args.date_pattern}"').readlines()
 dirs=[d[2:].strip() for d in dirs if len(d)>2]
 dirs.sort()
 for ddd in dirs:
@@ -40,14 +40,14 @@ for ddd in dirs:
                         last_frame=d[2][0]
                     elif args.gps and d[0]==b'topic_gnss':
                         if d[2]['hAcc'] < 3000.0:
-                            gps_data.append(d)
+                            gps_data.append((d[2]['lat'], d[2]['lon']))
                     data.append(d)
                 except EOFError:
                     break
         print(f'recording time {int(data[-1][1]-data[0][1])//60} min')
         if args.gps:
-            for gps_d in gps_data[:1]:
-                print("GPS: {}, {}".format(gps_d[2]['lon'], gps_d[2]['lat']))\
+            if len(gps_data):
+                print("latlon: {}".format(np.array(gps_data).mean(axis=0)))
         #import ipdb;ipdb.set_trace()
         #ggg
         

@@ -35,7 +35,6 @@ import gst2
 import zmq_wrapper
 import zmq_topics
 import glob
-from tracker.mussel_detector import detect
 
 from tracker.of import OF
 tcv = None 
@@ -64,12 +63,17 @@ def torgb(im):
 parser = argparse.ArgumentParser()
 parser.add_argument("-s","--start_frame",help="start frame",default=0,type=int)
 parser.add_argument("-v","--vision_cameras",help="show vision cameras",default=False,action='store_true')
+parser.add_argument("-d","--detector_view",help="show detector",default=False,action='store_true')
+parser.add_argument("-t","--tracker_mode",help="tracker or mark mode (default)",default=False,action='store_true')
 parser.add_argument("path",help="dir path")
 args = parser.parse_args()
 
 cv2.namedWindow('depth',cv2.WINDOW_NORMAL)
 cv2.namedWindow('rgb',cv2.WINDOW_NORMAL)
-cv2.namedWindow('detect',cv2.WINDOW_NORMAL)
+
+if args.detector_view:
+    cv2.namedWindow('detect',cv2.WINDOW_NORMAL)
+    from tracker.mussel_detector import detect
 
 def read_pkl(pkl_file):
     fd = open(pkl_file,'rb')
@@ -165,32 +169,45 @@ def click(event, x, y, flags, param):
     #if event == cv2.EVENT_MBUTTONDOWN:
         #k=cv2.pollKey()
         #print('===',k)
-
 mark_mode = True
+mark_sz=0
+show_text=True
+
 class ClickWin(object):
     def __init__(self,wname):
         self.wname=wname
         self.draw_state=False
+        #print('=====xxx===',wname)
 
     def click(self,event, x, y, flags, param):
         if self.draw_state:
-            #print('====',self.wname,x,y,event)
             if 'mask' in wins[self.wname]:
                 mim=wins[self.wname]['mask']
-                mg=3
+                #mg=1 if self.wname=='rgb' else 3
+                mg=mark_sz
                 #mim[y-mg:y+mg,x-mg:x+mg]=0 if mark_mode else 1
                 cv2.circle(mim,(x,y),mg,0 if mark_mode else 1 ,mg)
+
                 wins[self.wname]['redraw']=True
+                #print('====',self.wname,x,y,event,self.draw_state)
 
         if event == cv2.EVENT_MBUTTONDOWN:
             self.draw_state=True
+            #print('==ds==down==',self.wname,x,y,event)
         if event == cv2.EVENT_MBUTTONUP:
+            #print('==ds==up==',self.wname,x,y,event)
             self.draw_state=False
 
 cv2.setMouseCallback("depth", click)
-cv2.setMouseCallback("rgb", click)
 shape=[100,100]
 cobjs=[]
+
+if not args.tracker_mode:
+    cw=ClickWin('rgb')
+    cv2.setMouseCallback('rgb',cw.click)
+    cobjs.append(cw)
+else:
+    cv2.setMouseCallback("rgb", click)
 
 def get_mask_stats(mask):
     output = cv2.connectedComponentsWithStats(1-mask,ltype = cv2.CV_16U)
@@ -199,6 +216,7 @@ def get_mask_stats(mask):
     return (numLabels,stats, centroids,n_componnets)
     
 is_depth_image=False
+prev_i=-1
 while 1:
     if pkl_data is not None:
         i=np.clip(i,0,len(pkl_data)-2) 
@@ -246,7 +264,7 @@ while 1:
         fnum=fnums[i]
         is_depth_image=True
 
-    if is_depth_image:
+    if is_depth_image and (prev_i!=i or args.tracker_mode):
         fname = args.path+f'/{fnum:06d}.jpg'
         if not ('rgb' in wins and wins['rgb'].get('file_path')==fname) or wins['rgb'].get('redraw'):
             rgb_img=None
@@ -254,7 +272,8 @@ while 1:
                 try:
                     rgb_img=cv2.imread(args.path+f'/{fnum:06d}.jpg')
                     gray_img=cv2.cvtColor(rgb_img, cv2.COLOR_BGR2GRAY)
-                    detected_img=detect(rgb_img,annotate=True)['img']
+                    if args.detector_view:
+                        detected_img=detect(rgb_img,annotate=True)['img']
                     _ret=of.track(gray_img)
                     #if tcv is not None:
                     #    print('hhh',tcv.update(gray_img))
@@ -268,7 +287,8 @@ while 1:
             posx=0
             if rgb_img is not None:
                 shape=rgb_img.shape[:2]
-                depth_img=np.frombuffer(open(args.path+f'/d{fnum:06d}.bin','rb').read(),'uint16').astype('float').reshape(shape)#*scale_to_mm*config.water_scale
+                depth_fl = args.path+f'/d{fnum:06d}.bin'
+                depth_img=np.frombuffer(open(depth_fl,'rb').read(),'uint16').astype('float').reshape(shape)#*scale_to_mm*config.water_scale
                 #depth_img[depth_img<1]=10000 #10 meters
 
                 ret=rope_detect_depth(depth_img,scale_to_mm,config.water_scale)
@@ -277,22 +297,29 @@ while 1:
                 wins['depth']={'img':torgb(depth_img),'redraw':True}
                 diff=down_validation-up_validation
                 line=f'range {d:.1f},U{up_validation:.1f},D{down_validation:.1f}'
-                cv2.putText(rgb_img,line,(10,40), font, 0.7,(255,0,0),2,cv2.LINE_AA)
-                cv2.putText(rgb_img,f'Df{diff:.1f}',(10,60),font, 0.7,(255,0,0) if diff<150 else (0,0,255),
-                        2,cv2.LINE_AA)
-                cv2.putText(rgb_img,f'{fnum:06d}',(10,90), font, 0.7,(255,0,0),2,cv2.LINE_AA)
+                if show_text:
+                    cv2.putText(rgb_img,line,(10,40), font, 0.7,(255,0,0),2,cv2.LINE_AA)
+                    cv2.putText(rgb_img,f'Df{diff:.1f}',(10,60),font, 0.7,(255,0,0) if diff<150 else (0,0,255),
+                            2,cv2.LINE_AA)
+                    cv2.putText(rgb_img,f'{fnum:06d}',(10,90), font, 0.7,(255,0,0),2,cv2.LINE_AA)
+
                 mrg=50
                 vrow=50
                 nrow=100
                 srow=150
                 for rrr in [srow-vrow,srow,srow+nrow,srow+nrow+vrow]:
                     cv2.line(rgb_img,(posx-mrg,rrr),(posx+mrg,rrr),(255,255,255),thickness=1)
-                #print('maxmin',depth_img.max(),depth_img.min(),ret[0],ret[1])
+                mask_fname=fname[:-3]+'mask.npy'
+                #print('mask file...',mask_fname)
+                if os.path.isfile(mask_fname):
+                    mask=np.load(mask_fname)
+                else:
+                    mask=np.ones(rgb_img.shape[:2],dtype='uint8')
             else:
                 #rgb_img=np.zeros(shape,'uint8')
                 i+=1
                 continue
-            cv2.line(rgb_img,(posx,30),(posx,40),(255,255,255),thickness=4)
+            cv2.line(rgb_img,(posx,30),(posx,40),(255,255,255),thickness=2)
             line=''
             if last_click_data is not None:
                 x,y,z=last_click_data
@@ -305,38 +332,56 @@ while 1:
             if telem_data is not None:
                 td=telem_data[i]
                 depth=td.get('depth',-1)
-                cv2.putText(rgb_img,f'Depth{depth:.1f}',(10,20), font, 0.7,(255,0,0),2,cv2.LINE_AA)
+                if show_text:
+                    cv2.putText(rgb_img,f'Depth{depth:.1f}',(10,20), font, 0.7,(255,0,0),2,cv2.LINE_AA)
             
-            wins['rgb']={'img':rgb_img,'redraw':True,'file_path':fname}
-            wins['detect']={'img':detected_img, 'redraw':True}
+            wins['rgb']={'img':rgb_img,'redraw':True,'file_path':fname, 'mask':mask}
+
+            if args.detector_view:
+                wins['detect']={'img':detected_img, 'redraw':True}
             #cv2.imshow('rgb',rgb_img)
 
     for wname in wins:
         if wins[wname] and wins[wname].get('redraw'):
             img=wins[wname]['img']
-            #print('===',type(detected_img))
             if img is not None:
                 if 'mask' in wins[wname]:
+                    #print('===',wname)
                     img=img.copy()
-                    img[:,:,1]=img[:,:,1]*wins[wname]['mask']
+                    #chs=[1] if wname=='rgb' else [1]
+                    ch=1
+                    if wname=='rgb':
+                        img[:,:,ch]=img[:,:,ch]*wins[wname]['mask']
+                    else:
+                        #img[:,:,1]=img[:,:,1]*wins[wname]['mask']
+                        img[wins[wname]['mask']==0,2]=255
+                        #img[:,:,2]=img[:,:,0]*(1-wins[wname]['mask'])
+
+
                 cv2.imshow(wname,img)
+                    #cv2.imshow(wname,wins[wname]['mask']*255)
                 wins[wname]['redraw']=False
             #print('current index',i)
 
     k=cv2.waitKey(100)%0xff
     #k=cv2.pollKey()%0xff
+    prev_i=i
     if k in [ord(','),81,52]:
-        i=i-3
+        i=i-6
     elif k in [ord('<')]:
-        i=i-10
+        print('===',i)
+        i=i-20
     elif k in [ord('.'),54,83]:
         i=i+1
     elif k in [ord('>')]:
-        i=i+10
+        i=i+20
     elif k in [ord('q')]:
         break
     elif k in [ord('m')]:
         mark_mode=not mark_mode
+    elif k in [ord(x) for x in '1234']:
+        mark_sz=k-ord('1')
+        print('setting mark size to ',mark_sz)
     elif k in [ord('c')]:
         for wname in wins:
             w=wins[wname]
@@ -346,8 +391,10 @@ while 1:
                 #print('number of objects is :',centroids)
                 print('number of objects=',get_mask_stats(w['mask'])[3])
                     
+    elif k in [ord('n')]:
+        show_text = not show_text
                 #cv2.imshow('kkkk',labels)
-    if k!=254:
+    if k!=254 and not args.tracker_mode:
         for wname in wins:
             w=wins[wname]
             if 'mask' in w:
