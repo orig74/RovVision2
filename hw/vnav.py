@@ -56,7 +56,7 @@ def load_reg23_from_file(ser):
 
 def write(ser,cmd):
     ser.write(cmd+b'\n')
-    time.sleep(0.05)
+    time.sleep(0.3)
     ln = 'None'
     while ser.inWaiting():
         ln=ser.readline()
@@ -91,6 +91,10 @@ def init_serial(dev=None):
         dev=detect_usb.devmap['VNAV_USB']
 
     ser = serial.Serial(dev,115200)
+    ser.setDTR(False)
+    time.sleep(0.5)
+    ser.setDTR(True)
+    time.sleep(2.0)
     
     if False:#os.path.isfile('mag_calib.txt'):
         load_reg23_from_file(ser)
@@ -149,7 +153,6 @@ if __name__=='__main__':
     parser.add_argument("--dev", help="device", default=None)
     args = parser.parse_args()
 	
-    time.sleep(2.0)
     ser = init_serial(args.dev)
     if args.calib_mag:
         calibrate_mag(ser)

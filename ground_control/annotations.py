@@ -87,7 +87,7 @@ def draw_mono(img,message_dict,fmt_cnt_l):
     #    cv2.putText(img,line,(sy(300),sx(160)), font, 0.6,(255,255,255),2,cv2.LINE_AA)
 
     if 'dvl_alt' in message_dict:
-        line='alt{:04.1f}'.format(message_dict['dvl_alt'])
+        line='alt{:4.2f}'.format(message_dict['dvl_alt'])
         cv2.putText(img,line,(sy(500),sx(360)), font, 0.6,(255,0,155),2,cv2.LINE_AA)
     if 'dvl_vel' in message_dict:
         line='vel{:4.2f}'.format(message_dict['dvl_vel'])

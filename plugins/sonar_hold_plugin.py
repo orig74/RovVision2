@@ -68,6 +68,14 @@ async def recv_and_process():
             if topic==zmq_topics.topic_imu:
                 pitch,roll=data['pitch'],data['roll']
 
+            if topic==zmq_topics.topic_remote_cmd:
+                print('=== cmd ===',data)
+                if data['cmd']=='depth':
+                    if data['rel']:
+                        target_range-=data['depth']
+                    # else:
+                    #     target_range=data['depth']
+
             if topic==zmq_topics.topic_system_state:
                 _,system_state=data
 
@@ -84,6 +92,7 @@ if __name__=='__main__':
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_axes],zmq_topics.topic_joy_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_imu],zmq_topics.topic_imu_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_sonar],zmq_topics.topic_sonar_port))
+    subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_remote_cmd],zmq_topics.topic_remote_cmd_port))
     subs_socks.append(zmq_wrapper.subscribe([zmq_topics.topic_system_state],zmq_topics.topic_controller_port))
 
     ### plugin outputs

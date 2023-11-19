@@ -44,9 +44,9 @@ if rov_type==4:
     valid_range_mm=(50,1500)
     range_validation_up_down_mm=100
     down_validiation_diff_tresh_rope_detect_mm=800
-    dvl_max_valid_speed=0.25 #m/s
+    dvl_max_valid_speed=1.0#0.25 #m/s
     
-cam_fps=6
+cam_fps=5
 send_modulo=1
 
 #gstreamer

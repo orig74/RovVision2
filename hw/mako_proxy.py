@@ -36,12 +36,12 @@ MASTER_CAM_ID = CAM_IDS[0]
 NUM_CAMS = len(CAM_IDS) + 1
 
 # Min exposure time: 32-30,000us
-CAM_EXPOSURE_US = 400
+CAM_EXPOSURE_US = 1000
 # Camera gain: 0-40
-CAM_GAIN = 20
+CAM_GAIN = 15
 
 CAM_STROBE_DELAY = 50
-CAM_STROBE_DURATION = 300
+CAM_STROBE_DURATION = 900
 
 IMG_SIZE_BYTES = 5065984
 
@@ -353,7 +353,6 @@ class FrameProducer(threading.Thread):
     def try_put_frame(self, frame: Optional[Frame], time_stamp):
         try:
             self.frame_queue.put_nowait((self.cam_id, time_stamp, frame))
-
         except queue.Full:
             pass
 
